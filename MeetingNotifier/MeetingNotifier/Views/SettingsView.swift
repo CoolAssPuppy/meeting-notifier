@@ -2,10 +2,11 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var selectedTab = 0
+    @State private var showingConfig = false
 
     var body: some View {
         VStack(spacing: 0) {
-            tabBar
+            headerBar
 
             Divider()
 
@@ -27,24 +28,32 @@ struct SettingsView: View {
                         Label("Notifications", systemImage: "bell")
                     }
                     .tag(2)
-
-                ConfigTab()
-                    .tabItem {
-                        Label("Config", systemImage: "gearshape")
-                    }
-                    .tag(3)
             }
         }
         .frame(width: 500, height: 600)
+        .sheet(isPresented: $showingConfig) {
+            ConfigTab()
+                .frame(width: 500, height: 400)
+        }
     }
 
-    private var tabBar: some View {
+    private var headerBar: some View {
         HStack {
             Text("MeetingNotifier Settings")
                 .font(.title2)
                 .fontWeight(.semibold)
 
             Spacer()
+
+            Button(action: {
+                showingConfig = true
+            }) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 16))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.borderless)
+            .help("Configuration")
         }
         .padding()
         .background(Color(NSColor.windowBackgroundColor))
