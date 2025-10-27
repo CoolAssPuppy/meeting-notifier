@@ -34,10 +34,20 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>OAuth Callback</string>
+			<string>Google OAuth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.strategicnerds.meetingnotifier</string>
+				<string>com.googleusercontent.apps.191228481940-3kikm89l8pgjn7rsvhbra3jqvtt5f479</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>Microsoft OAuth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>msala325ea11-cc04-4062-b65e-8418044ab444</string>
 			</array>
 		</dict>
 	</array>
