@@ -115,31 +115,13 @@ struct CalendarDropdownView: View {
                 Button(action: {
                     addGoogleAccount()
                 }) {
-                    Label {
-                        Text("Google Calendar")
-                    } icon: {
-                        if let icon = CalendarProvider.google.icon {
-                            Image(nsImage: icon)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 16, height: 16)
-                        }
-                    }
+                    Text("Google Calendar")
                 }
 
                 Button(action: {
                     addMicrosoftAccount()
                 }) {
-                    Label {
-                        Text("Microsoft Calendar")
-                    } icon: {
-                        if let icon = CalendarProvider.microsoft.icon {
-                            Image(nsImage: icon)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 16, height: 16)
-                        }
-                    }
+                    Text("Microsoft Calendar")
                 }
             } label: {
                 HStack(spacing: 4) {

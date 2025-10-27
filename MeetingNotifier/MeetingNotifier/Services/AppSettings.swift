@@ -72,9 +72,17 @@ class AppSettings: ObservableObject {
     }
 
     private func loadAccounts() {
-        if let data = UserDefaults.standard.data(forKey: "accounts"),
-           let decoded = try? JSONDecoder().decode([CalendarAccount].self, from: data) {
-            self.accounts = decoded
+        if let data = UserDefaults.standard.data(forKey: "accounts") {
+            do {
+                let decoded = try JSONDecoder().decode([CalendarAccount].self, from: data)
+                self.accounts = decoded
+                print("Successfully loaded \(decoded.count) accounts")
+            } catch {
+                print("Error loading accounts: \(error)")
+                print("Error details: \(error.localizedDescription)")
+            }
+        } else {
+            print("No account data found in UserDefaults")
         }
     }
 
