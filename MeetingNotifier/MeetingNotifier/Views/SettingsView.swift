@@ -56,7 +56,7 @@ struct SettingsView: View {
             .help("Configuration")
         }
         .padding()
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(.regularMaterial)
     }
 }
 

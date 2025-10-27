@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AccountsTab: View {
     @ObservedObject var settings = AppSettings.shared
+    @State private var accountToRemove: CalendarAccount?
+    @State private var showingRemoveAlert = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -16,6 +18,14 @@ struct AccountsTab: View {
             addAccountButtons
         }
         .padding(20)
+        .alert("Remove Account", isPresented: $showingRemoveAlert, presenting: accountToRemove) { account in
+            Button("Remove", role: .destructive) {
+                settings.removeAccount(account)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { account in
+            Text("Are you sure you want to remove \(account.email)? This will stop syncing events from this account.")
+        }
     }
 
     private var emptyStateView: some View {
@@ -150,16 +160,8 @@ struct AccountsTab: View {
     }
 
     private func removeAccount(_ account: CalendarAccount) {
-        let alert = NSAlert()
-        alert.messageText = "Remove Account"
-        alert.informativeText = "Are you sure you want to remove \(account.email)? This will stop syncing events from this account."
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Remove")
-        alert.addButton(withTitle: "Cancel")
-
-        if alert.runModal() == .alertFirstButtonReturn {
-            settings.removeAccount(account)
-        }
+        accountToRemove = account
+        showingRemoveAlert = true
     }
 
     private func showError(_ message: String) {

@@ -3,45 +3,66 @@ import AppKit
 
 struct ConfigTab: View {
     @ObservedObject var settings = AppSettings.shared
+    @Environment(\.dismiss) var dismiss
+
+    @State private var tempDefaultMeetApp: MeetAppType
+    @State private var tempShowInMenuBar: Bool
+    @State private var tempOnlyShowMeetingsWithAttendees: Bool
+    @State private var tempMuteSounds: Bool
     @State private var showingAppPicker = false
     @State private var customAppURL: URL?
 
+    init() {
+        let settings = AppSettings.shared
+        _tempDefaultMeetApp = State(initialValue: settings.defaultMeetApp)
+        _tempShowInMenuBar = State(initialValue: settings.showInMenuBar)
+        _tempOnlyShowMeetingsWithAttendees = State(initialValue: settings.onlyShowMeetingsWithAttendees)
+        _tempMuteSounds = State(initialValue: settings.muteSounds)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Configuration")
-                .font(.headline)
+        VStack(spacing: 0) {
+            headerBar
 
-            Form {
-                Section {
-                    meetAppPicker
-                } header: {
-                    Text("Meeting Links")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
+            Divider()
 
-                Section {
-                    menuBarToggle
-                    attendeesToggle
-                } header: {
-                    Text("Menu Bar Display")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Form {
+                        Section {
+                            meetAppPicker
+                        } header: {
+                            Text("Meeting Links")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
 
-                Section {
-                    soundsToggle
-                } header: {
-                    Text("Sounds")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
+                        Section {
+                            menuBarToggle
+                            attendeesToggle
+                        } header: {
+                            Text("Menu Bar Display")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+
+                        Section {
+                            soundsToggle
+                        } header: {
+                            Text("Sounds")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                    }
+                    .formStyle(.grouped)
                 }
+                .padding(20)
             }
-            .formStyle(.grouped)
 
-            Spacer()
+            Divider()
+
+            footerBar
         }
-        .padding(20)
         .fileImporter(
             isPresented: $showingAppPicker,
             allowedContentTypes: [.application],
@@ -51,18 +72,56 @@ struct ConfigTab: View {
         }
     }
 
+    private var headerBar: some View {
+        HStack {
+            Text("Configuration")
+                .font(.headline)
+
+            Spacer()
+        }
+        .padding()
+        .background(.regularMaterial)
+    }
+
+    private var footerBar: some View {
+        HStack {
+            Button("Cancel") {
+                dismiss()
+            }
+            .keyboardShortcut(.cancelAction)
+
+            Spacer()
+
+            Button("Save") {
+                saveSettings()
+                dismiss()
+            }
+            .keyboardShortcut(.defaultAction)
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+        .background(.regularMaterial)
+    }
+
+    private func saveSettings() {
+        settings.defaultMeetApp = tempDefaultMeetApp
+        settings.showInMenuBar = tempShowInMenuBar
+        settings.onlyShowMeetingsWithAttendees = tempOnlyShowMeetingsWithAttendees
+        settings.muteSounds = tempMuteSounds
+    }
+
     private var meetAppPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Open Google Meet with:")
                 .font(.body)
 
-            Picker("", selection: $settings.defaultMeetApp) {
+            Picker("", selection: $tempDefaultMeetApp) {
                 ForEach(MeetAppType.availableApps) { app in
                     Text(app.rawValue).tag(app)
                 }
             }
             .pickerStyle(.menu)
-            .onChange(of: settings.defaultMeetApp) { _, newValue in
+            .onChange(of: tempDefaultMeetApp) { _, newValue in
                 if newValue == .custom {
                     showingAppPicker = true
                 }
@@ -92,7 +151,7 @@ struct ConfigTab: View {
 
     private var menuBarToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("Display next meeting in Menu Bar", isOn: $settings.showInMenuBar)
+            Toggle("Display next meeting in Menu Bar", isOn: $tempShowInMenuBar)
 
             Text("Shows meeting title (truncated to 30 characters) with platform icon 15 minutes before it starts")
                 .font(.caption)
@@ -102,18 +161,18 @@ struct ConfigTab: View {
 
     private var attendeesToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("Only show meetings with attendees", isOn: $settings.onlyShowMeetingsWithAttendees)
-                .disabled(!settings.showInMenuBar)
+            Toggle("Only show meetings with attendees", isOn: $tempOnlyShowMeetingsWithAttendees)
+                .disabled(!tempShowInMenuBar)
 
             Text("When enabled, only meetings with other attendees will be shown in the menu bar")
                 .font(.caption)
-                .foregroundColor(settings.showInMenuBar ? .secondary : Color.secondary.opacity(0.5))
+                .foregroundColor(tempShowInMenuBar ? .secondary : Color.secondary.opacity(0.5))
         }
     }
 
     private var soundsToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("Mute sounds", isOn: $settings.muteSounds)
+            Toggle("Mute sounds", isOn: $tempMuteSounds)
 
             Text("When enabled, notification sounds will not play")
                 .font(.caption)

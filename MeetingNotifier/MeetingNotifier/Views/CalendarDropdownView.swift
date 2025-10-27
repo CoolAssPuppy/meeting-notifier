@@ -22,6 +22,7 @@ struct CalendarDropdownView: View {
             footerView
         }
         .frame(width: 350, height: 400)
+        .background(.ultraThinMaterial)
     }
 
     private var headerView: some View {
@@ -52,7 +53,7 @@ struct CalendarDropdownView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(.regularMaterial)
     }
 
     private var meetingListView: some View {
@@ -156,7 +157,7 @@ struct CalendarDropdownView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(.regularMaterial)
     }
 
     private func addGoogleAccount() {
