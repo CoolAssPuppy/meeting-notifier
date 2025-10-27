@@ -206,7 +206,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
            !linkString.isEmpty,
            let url = URL(string: linkString) {
             Task { @MainActor in
-                NSWorkspace.shared.open(url)
+                AppSettings.shared.openURL(url)
             }
         }
 

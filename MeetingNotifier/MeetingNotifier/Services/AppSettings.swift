@@ -147,6 +147,45 @@ class AppSettings: ObservableObject {
             print("Failed to update login item: \(error)")
         }
     }
+
+    func openURL(_ url: URL) {
+        let urlString = url.absoluteString.lowercased()
+        let isGoogleMeet = urlString.contains("meet.google.com") || urlString.contains("hangouts.google.com")
+
+        guard isGoogleMeet else {
+            NSWorkspace.shared.open(url)
+            return
+        }
+
+        switch defaultMeetApp {
+        case .defaultBrowser:
+            NSWorkspace.shared.open(url)
+
+        case .custom:
+            if let customPath = UserDefaults.standard.string(forKey: "customMeetAppPath"),
+               let appURL = URL(fileURLWithPath: customPath) as URL? {
+                NSWorkspace.shared.open(
+                    [url],
+                    withApplicationAt: appURL,
+                    configuration: NSWorkspace.OpenConfiguration()
+                )
+            } else {
+                NSWorkspace.shared.open(url)
+            }
+
+        default:
+            if let bundleId = defaultMeetApp.bundleIdentifier,
+               let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
+                NSWorkspace.shared.open(
+                    [url],
+                    withApplicationAt: appURL,
+                    configuration: NSWorkspace.OpenConfiguration()
+                )
+            } else {
+                NSWorkspace.shared.open(url)
+            }
+        }
+    }
 }
 
 enum MeetAppType: String, CaseIterable, Identifiable {

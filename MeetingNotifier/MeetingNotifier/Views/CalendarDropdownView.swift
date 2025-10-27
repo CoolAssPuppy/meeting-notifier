@@ -182,7 +182,7 @@ struct CalendarDropdownView: View {
             return
         }
 
-        NSWorkspace.shared.open(url)
+        AppSettings.shared.openURL(url)
     }
 }
 
