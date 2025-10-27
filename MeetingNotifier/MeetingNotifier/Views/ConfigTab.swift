@@ -58,11 +58,13 @@ struct ConfigTab: View {
                 }
                 .padding(20)
             }
+            .background(.background)
 
             Divider()
 
             footerBar
         }
+        .background(.ultraThinMaterial)
         .fileImporter(
             isPresented: $showingAppPicker,
             allowedContentTypes: [.application],
@@ -84,11 +86,12 @@ struct ConfigTab: View {
     }
 
     private var footerBar: some View {
-        HStack {
+        HStack(spacing: 12) {
             Button("Cancel") {
                 dismiss()
             }
             .keyboardShortcut(.cancelAction)
+            .controlSize(.large)
 
             Spacer()
 
@@ -98,9 +101,10 @@ struct ConfigTab: View {
             }
             .keyboardShortcut(.defaultAction)
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         }
         .padding()
-        .background(.regularMaterial)
+        .background(.clear)
     }
 
     private func saveSettings() {

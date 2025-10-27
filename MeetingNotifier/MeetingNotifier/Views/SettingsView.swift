@@ -30,6 +30,7 @@ struct SettingsView: View {
                     .tag(2)
             }
         }
+        .background(.ultraThinMaterial)
         .frame(width: 500, height: 600)
         .sheet(isPresented: $showingConfig) {
             ConfigTab()
