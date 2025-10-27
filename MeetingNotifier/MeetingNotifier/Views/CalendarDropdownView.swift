@@ -26,8 +26,9 @@ struct CalendarDropdownView: View {
 
     private var headerView: some View {
         HStack {
-            Text("Upcoming meetings")
-                .font(.headline)
+            Text("Upcoming Meetings")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.primary)
 
             Spacer()
 
@@ -38,17 +39,20 @@ struct CalendarDropdownView: View {
             }) {
                 if dataManager.isLoading {
                     ProgressView()
-                        .scaleEffect(0.7)
-                        .frame(width: 16, height: 16)
+                        .controlSize(.small)
+                        .frame(width: 14, height: 14)
                 } else {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 14))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
                 }
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(.borderless)
             .disabled(dataManager.isLoading)
         }
-        .padding(12)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color(nsColor: .controlBackgroundColor))
     }
 
     private var meetingListView: some View {
@@ -85,12 +89,13 @@ struct CalendarDropdownView: View {
 
     private func sectionHeader(title: String) -> some View {
         Text(title)
-            .font(.caption)
-            .fontWeight(.semibold)
+            .font(.system(size: 11, weight: .semibold))
             .foregroundColor(.secondary)
             .textCase(.uppercase)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .tracking(0.5)
+            .padding(.horizontal, 14)
+            .padding(.top, 12)
+            .padding(.bottom, 6)
     }
 
     private var loadingView: some View {
@@ -106,28 +111,70 @@ struct CalendarDropdownView: View {
 
     private var footerView: some View {
         HStack(spacing: 12) {
-            Button("Add Account") {
-                NotificationCenter.default.post(name: .addAccountRequested, object: nil)
+            Menu {
+                Button(action: {
+                    addGoogleAccount()
+                }) {
+                    Text("Google Calendar")
+                    Image(systemName: "g.circle.fill")
+                }
+
+                Button(action: {
+                    addMicrosoftAccount()
+                }) {
+                    Text("Microsoft Calendar")
+                    Image(systemName: "m.circle.fill")
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text("Add Account")
+                        .font(.system(size: 12))
+                }
             }
-            .buttonStyle(PlainButtonStyle())
-            .foregroundColor(.blue)
+            .menuStyle(.borderlessButton)
+            .foregroundColor(.secondary)
 
             Spacer()
 
-            Button("Settings") {
+            Button(action: {
                 NotificationCenter.default.post(name: .settingsRequested, object: nil)
+            }) {
+                Text("Settings")
+                    .font(.system(size: 12))
             }
-            .buttonStyle(PlainButtonStyle())
-            .foregroundColor(.blue)
+            .buttonStyle(.borderless)
+            .foregroundColor(.secondary)
 
-            Button("Quit") {
+            Button(action: {
                 NSApplication.shared.terminate(nil)
+            }) {
+                Text("Quit")
+                    .font(.system(size: 12))
             }
-            .buttonStyle(PlainButtonStyle())
-            .foregroundColor(.blue)
+            .buttonStyle(.borderless)
+            .foregroundColor(.secondary)
         }
-        .font(.system(size: 12))
-        .padding(12)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    private func addGoogleAccount() {
+        NotificationCenter.default.post(
+            name: .addAccountRequested,
+            object: nil,
+            userInfo: ["provider": "google"]
+        )
+    }
+
+    private func addMicrosoftAccount() {
+        NotificationCenter.default.post(
+            name: .addAccountRequested,
+            object: nil,
+            userInfo: ["provider": "microsoft"]
+        )
     }
 
     private func handleEventTap(_ event: CalendarEvent) {

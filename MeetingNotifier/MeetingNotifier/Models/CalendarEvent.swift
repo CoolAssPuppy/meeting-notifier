@@ -59,6 +59,38 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
     var hasVideoLink: Bool {
         conferenceLink != nil
     }
+
+    var videoPlatform: VideoPlatform? {
+        guard let link = conferenceLink?.lowercased() else { return nil }
+
+        if link.contains("meet.google.com") || link.contains("hangouts.google.com") {
+            return .meet
+        } else if link.contains("zoom.us") || link.contains("zoom.com") {
+            return .zoom
+        } else if link.contains("teams.microsoft.com") || link.contains("teams.live.com") {
+            return .teams
+        } else if link.contains("webex.com") {
+            return .webex
+        }
+
+        return nil
+    }
+}
+
+enum VideoPlatform: String {
+    case meet = "meet"
+    case zoom = "zoom"
+    case teams = "teams"
+    case webex = "webex"
+
+    var iconName: String {
+        switch self {
+        case .meet: return "meet"
+        case .zoom: return "zoom"
+        case .teams: return "teams"
+        case .webex: return "video.fill" // Fallback to SF Symbol
+        }
+    }
 }
 
 struct EventReminder: Codable, Hashable {

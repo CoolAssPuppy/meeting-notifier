@@ -103,9 +103,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    @objc private func handleAddAccountRequest() {
+    @objc private func handleAddAccountRequest(_ notification: Notification) {
         popover?.performClose(nil)
-        addAccount()
+
+        if let provider = notification.userInfo?["provider"] as? String {
+            if provider == "google" {
+                addGoogleAccount()
+            } else if provider == "microsoft" {
+                addMicrosoftAccount()
+            }
+        } else {
+            addAccount()
+        }
     }
 
     @objc private func handleSettingsRequest() {

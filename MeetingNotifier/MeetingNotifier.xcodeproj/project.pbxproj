@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -25,8 +25,13 @@
 		8965316C3F4841EDCDD7696E /* MicrosoftOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */; };
 		8C4857E641290D4F4980ED75 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4799E009A8C6897F7BDD4CC /* EmptyStateView.swift */; };
 		99F4FB49FB388A19F1655209 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */; };
+		A50CC64E33A45541CCB067AD /* MicrosoftOAuthSecret.swift.template in Resources */ = {isa = PBXBuildFile; fileRef = CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */; };
+		AD7530A7C0415650ECC26600 /* teams.png in Resources */ = {isa = PBXBuildFile; fileRef = 8FC3285303293546DEEAB083 /* teams.png */; };
 		BA077D439370F752C04A8452 /* CalendarDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF916CB5D1C8F583CB7B575A /* CalendarDataManager.swift */; };
+		BA1C660C4D2D9683135644DD /* meet.png in Resources */ = {isa = PBXBuildFile; fileRef = 97C2E63AB365F5F779088F39 /* meet.png */; };
+		C450E0A0B426E063217B1306 /* zoom.png in Resources */ = {isa = PBXBuildFile; fileRef = 13BF0360CDF7986C60D9CF2C /* zoom.png */; };
 		C652F7D18D0798CEAD4950F7 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2601E7378274259BCD5445ED /* KeychainManager.swift */; };
+		C66151F3605148105C010D47 /* GoogleOAuthSecret.swift.template in Resources */ = {isa = PBXBuildFile; fileRef = 4205A3237438BB1159863C7A /* GoogleOAuthSecret.swift.template */; };
 		CA2876E62A69C701B6B4874F /* CalendarInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5610777B46B0DE424AA7D5C6 /* CalendarInfo.swift */; };
 		DF244A80DBAAF0C4F17C2948 /* short-chimes.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */; };
 		E5DF351A4562D05A2D080B1D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528350AB38541C048479C7F8 /* SettingsView.swift */; };
@@ -42,11 +47,13 @@
 		017F77775495E428F019E6DA /* long-chimes.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = "long-chimes.aiff"; sourceTree = "<group>"; };
 		0E3FFD5D42715A0F4F02280D /* CalendarsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarsTab.swift; sourceTree = "<group>"; };
 		1112CFED9032AB54B3A4ED09 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		13BF0360CDF7986C60D9CF2C /* zoom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = zoom.png; sourceTree = "<group>"; };
 		24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = "short-chimes.aiff"; sourceTree = "<group>"; };
 		2601E7378274259BCD5445ED /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		2CA9AFE2BED7188EE32F46B6 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2D57E6F2929088ECE386AE64 /* MeetingNotifier.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeetingNotifier.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4205A3237438BB1159863C7A /* GoogleOAuthSecret.swift.template */ = {isa = PBXFileReference; path = GoogleOAuthSecret.swift.template; sourceTree = "<group>"; };
 		43BCEFE8B5DD90C724D70AA9 /* CalendarDropdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDropdownView.swift; sourceTree = "<group>"; };
 		450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrosoftOAuthSecret.swift; sourceTree = "<group>"; };
 		4CF8BE44552F1A7DB440227F /* MeetingRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingRowView.swift; sourceTree = "<group>"; };
@@ -58,11 +65,14 @@
 		7FB94CC8AF849EA0ABE3C67F /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingNotifierApp.swift; sourceTree = "<group>"; };
 		8BB930ABC4D15FA71DACA836 /* CalendarAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAccount.swift; sourceTree = "<group>"; };
+		8FC3285303293546DEEAB083 /* teams.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teams.png; sourceTree = "<group>"; };
+		97C2E63AB365F5F779088F39 /* meet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = meet.png; sourceTree = "<group>"; };
 		A212F3F7C08FDE2C041A044D /* CalendarEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEvent.swift; sourceTree = "<group>"; };
 		A3369D61B617FA8A1C9783DC /* MicrosoftOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrosoftOAuthManager.swift; sourceTree = "<group>"; };
 		A8CE3151B90368012D5C7D67 /* GoogleOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthManager.swift; sourceTree = "<group>"; };
 		AB280D116A6BA40C66783C9C /* AccountsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsTab.swift; sourceTree = "<group>"; };
 		C7A9725B3752DD3D40D9550B /* NotificationTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTracking.swift; sourceTree = "<group>"; };
+		CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */ = {isa = PBXFileReference; path = MicrosoftOAuthSecret.swift.template; sourceTree = "<group>"; };
 		D0F918F2DB127BF903FF7CC1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D4799E009A8C6897F7BDD4CC /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthSecret.swift; sourceTree = "<group>"; };
@@ -127,9 +137,11 @@
 				6E301D2D473AD68869340219 /* GoogleCalendarManager.swift */,
 				A8CE3151B90368012D5C7D67 /* GoogleOAuthManager.swift */,
 				D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */,
+				4205A3237438BB1159863C7A /* GoogleOAuthSecret.swift.template */,
 				68D727670FEA4120BE81D4B4 /* MicrosoftCalendarManager.swift */,
 				A3369D61B617FA8A1C9783DC /* MicrosoftOAuthManager.swift */,
 				450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */,
+				CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */,
 				5326575BF5C8A6B7163F6C59 /* NotificationManager.swift */,
 			);
 			path = Managers;
@@ -161,8 +173,11 @@
 			isa = PBXGroup;
 			children = (
 				017F77775495E428F019E6DA /* long-chimes.aiff */,
+				97C2E63AB365F5F779088F39 /* meet.png */,
 				1112CFED9032AB54B3A4ED09 /* README.md */,
 				24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */,
+				8FC3285303293546DEEAB083 /* teams.png */,
+				13BF0360CDF7986C60D9CF2C /* zoom.png */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -208,6 +223,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					BC2D3AB9B58F4B9C36B1381B = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -225,6 +241,7 @@
 			packageReferences = (
 				1B5ED245660DF698EB59539A /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -238,10 +255,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C66151F3605148105C010D47 /* GoogleOAuthSecret.swift.template in Resources */,
+				A50CC64E33A45541CCB067AD /* MicrosoftOAuthSecret.swift.template in Resources */,
 				67438B5598F66418775E2BBA /* README.md in Resources */,
 				675C63DCFC4F4DA589809274 /* create_project.sh in Resources */,
 				66D1ACB8A3249A96477A99C1 /* long-chimes.aiff in Resources */,
+				BA1C660C4D2D9683135644DD /* meet.png in Resources */,
 				DF244A80DBAAF0C4F17C2948 /* short-chimes.aiff in Resources */,
+				AD7530A7C0415650ECC26600 /* teams.png in Resources */,
+				C450E0A0B426E063217B1306 /* zoom.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,7 +310,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 955GSY56UT;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MeetingNotifier/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -428,7 +450,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 955GSY56UT;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MeetingNotifier/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
