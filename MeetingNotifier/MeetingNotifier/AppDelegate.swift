@@ -188,12 +188,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         AuthManager.shared.addGoogleAccount { result in
             Task { @MainActor in
                 switch result {
-                case .success(let account):
-                    let alert = NSAlert()
-                    alert.messageText = "Account Added"
-                    alert.informativeText = "Successfully added Google account: \(account.email)"
-                    alert.alertStyle = .informational
-                    alert.runModal()
+                case .success:
+                    break
                 case .failure(let error):
                     let alert = NSAlert()
                     alert.messageText = "Failed to Add Account"
@@ -209,12 +205,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         AuthManager.shared.addMicrosoftAccount { result in
             Task { @MainActor in
                 switch result {
-                case .success(let account):
-                    let alert = NSAlert()
-                    alert.messageText = "Account Added"
-                    alert.informativeText = "Successfully added Microsoft account: \(account.email)"
-                    alert.alertStyle = .informational
-                    alert.runModal()
+                case .success:
+                    break
                 case .failure(let error):
                     let alert = NSAlert()
                     alert.messageText = "Failed to Add Account"

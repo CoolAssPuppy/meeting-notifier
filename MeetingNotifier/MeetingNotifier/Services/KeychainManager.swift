@@ -4,7 +4,7 @@ import Security
 @MainActor
 class KeychainManager {
     static let shared = KeychainManager()
-    private let serviceName = "com.meetingnotifier.app"
+    private let serviceName = "com.strategicnerds.meetingnotifier"
 
     private init() {}
 

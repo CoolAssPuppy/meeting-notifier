@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7C3FD3C7AC24649A43166F85 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = DE8FA79514E34BEE86117520 /* AppIcon.icns */; };
 		0EFC651EB43D4B9D9BB58687 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5326575BF5C8A6B7163F6C59 /* NotificationManager.swift */; };
 		1B5B2FA00653E24598C8FDCD /* MeetingNotifierApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */; };
 		28FC0A3BB60B42E65BE0F7D0 /* GoogleCalendarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E301D2D473AD68869340219 /* GoogleCalendarManager.swift */; };
@@ -27,6 +26,7 @@
 		7073ACC50C6F18B1E3318E5B /* ConfigTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 776D3E787DE246BB9E182B1C /* ConfigTab.swift */; };
 		8965316C3F4841EDCDD7696E /* MicrosoftOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */; };
 		8C4857E641290D4F4980ED75 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4799E009A8C6897F7BDD4CC /* EmptyStateView.swift */; };
+		8F597A002EB033940062856D /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8F5979FF2EB033940062856D /* AppIcon.icns */; };
 		8FD8617D2EB0093500C6D442 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8FD8617C2EB0093500C6D442 /* StoreKit.framework */; };
 		99F4FB49FB388A19F1655209 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */; };
 		A243DDD94D49FA5439144A4F /* microsoft.png in Resources */ = {isa = PBXBuildFile; fileRef = AD899C544CCC4FBF71F6F194 /* microsoft.png */; };
@@ -51,7 +51,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		DE8FA79514E34BEE86117520 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = AppIcon.icns; path = MeetingNotifier/Resources/AppIcon.icns; sourceTree = SOURCE_ROOT; };
 		017F77775495E428F019E6DA /* long-chimes.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = "long-chimes.aiff"; sourceTree = "<group>"; };
 		0E3FFD5D42715A0F4F02280D /* CalendarsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarsTab.swift; sourceTree = "<group>"; };
 		1112CFED9032AB54B3A4ED09 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -76,6 +75,7 @@
 		82514AD2E14FAD31E0743670 /* CoffeeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoffeeView.swift; sourceTree = "<group>"; };
 		863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingNotifierApp.swift; sourceTree = "<group>"; };
 		8BB930ABC4D15FA71DACA836 /* CalendarAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAccount.swift; sourceTree = "<group>"; };
+		8F5979FF2EB033940062856D /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		8FC3285303293546DEEAB083 /* teams.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teams.png; sourceTree = "<group>"; };
 		8FD8617C2EB0093500C6D442 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		8FD8617E2EB00AF300C6D442 /* Configuration.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
@@ -201,6 +201,7 @@
 		E3F3209F47A9369E4CC8A726 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8F5979FF2EB033940062856D /* AppIcon.icns */,
 				A4D9826C6DC9F4AFD0F08816 /* google.png */,
 				017F77775495E428F019E6DA /* long-chimes.aiff */,
 				97C2E63AB365F5F779088F39 /* meet.png */,
@@ -285,12 +286,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7C3FD3C7AC24649A43166F85 /* AppIcon.icns in Resources */,
 				C66151F3605148105C010D47 /* GoogleOAuthSecret.swift.template in Resources */,
 				A50CC64E33A45541CCB067AD /* MicrosoftOAuthSecret.swift.template in Resources */,
 				67438B5598F66418775E2BBA /* README.md in Resources */,
 				675C63DCFC4F4DA589809274 /* create_project.sh in Resources */,
 				A4F08C706C6731554F907AA4 /* google.png in Resources */,
+				8F597A002EB033940062856D /* AppIcon.icns in Resources */,
 				66D1ACB8A3249A96477A99C1 /* long-chimes.aiff in Resources */,
 				BA1C660C4D2D9683135644DD /* meet.png in Resources */,
 				A243DDD94D49FA5439144A4F /* microsoft.png in Resources */,
