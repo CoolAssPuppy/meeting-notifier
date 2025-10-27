@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7C3FD3C7AC24649A43166F85 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = DE8FA79514E34BEE86117520 /* AppIcon.icns */; };
 		0EFC651EB43D4B9D9BB58687 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5326575BF5C8A6B7163F6C59 /* NotificationManager.swift */; };
 		1B5B2FA00653E24598C8FDCD /* MeetingNotifierApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */; };
 		28FC0A3BB60B42E65BE0F7D0 /* GoogleCalendarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E301D2D473AD68869340219 /* GoogleCalendarManager.swift */; };
@@ -50,6 +51,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DE8FA79514E34BEE86117520 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = AppIcon.icns; path = MeetingNotifier/Resources/AppIcon.icns; sourceTree = SOURCE_ROOT; };
 		017F77775495E428F019E6DA /* long-chimes.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = "long-chimes.aiff"; sourceTree = "<group>"; };
 		0E3FFD5D42715A0F4F02280D /* CalendarsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarsTab.swift; sourceTree = "<group>"; };
 		1112CFED9032AB54B3A4ED09 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -283,6 +285,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7C3FD3C7AC24649A43166F85 /* AppIcon.icns in Resources */,
 				C66151F3605148105C010D47 /* GoogleOAuthSecret.swift.template in Resources */,
 				A50CC64E33A45541CCB067AD /* MicrosoftOAuthSecret.swift.template in Resources */,
 				67438B5598F66418775E2BBA /* README.md in Resources */,
@@ -340,7 +343,7 @@
 		4F6630351C823A0D57077BDA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MeetingNotifier/MeetingNotifier.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -490,7 +493,7 @@
 		F757E10BB14EF5FEFE12F6FB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MeetingNotifier/MeetingNotifier.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
