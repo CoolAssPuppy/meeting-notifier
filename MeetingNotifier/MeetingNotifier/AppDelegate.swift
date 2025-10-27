@@ -14,6 +14,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         startMenuBarUpdates()
         NSApp.setActivationPolicy(.accessory)
 
+        _ = NotificationManager.shared
+
         NSAppleEventManager.shared().setEventHandler(
             self,
             andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
