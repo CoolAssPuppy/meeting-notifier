@@ -1,0 +1,59 @@
+# Claude Code and MCP configuration
+.claude/settings.local.json
+CLAUDE.local.md
+mcp.json
+.mcp.json
+
+# Xcode
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+DerivedData/
+build/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+project.xcworkspace/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+
+# CocoaPods (if used)
+Pods/
+
+# Carthage (if used)
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# OAuth secrets (if storing locally)
+*Secret.swift
+
+# Environment and local config
+.env
+.env.local
+*.local
+
+# Archives
+*.xcarchive
