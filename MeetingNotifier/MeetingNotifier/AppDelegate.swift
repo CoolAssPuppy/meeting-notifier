@@ -9,6 +9,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
         NSApp.setActivationPolicy(.accessory)
+
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
+            forEventClass: AEEventClass(kInternetEventClass),
+            andEventID: AEEventID(kAEGetURL)
+        )
+    }
+
+    @objc func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
+        guard let urlString = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue,
+              let url = URL(string: urlString) else {
+            return
+        }
+
+        Task { @MainActor in
+            _ = AuthManager.shared.handleURLCallback(url)
+        }
     }
 
     private func setupMenuBar() {
@@ -66,7 +84,62 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func addAccount() {
-        print("Add account tapped")
+        let alert = NSAlert()
+        alert.messageText = "Add Account"
+        alert.informativeText = "Choose the type of account to add:"
+        alert.addButton(withTitle: "Google")
+        alert.addButton(withTitle: "Microsoft")
+        alert.addButton(withTitle: "Cancel")
+
+        let response = alert.runModal()
+
+        if response == .alertFirstButtonReturn {
+            addGoogleAccount()
+        } else if response == .alertSecondButtonReturn {
+            addMicrosoftAccount()
+        }
+    }
+
+    private func addGoogleAccount() {
+        AuthManager.shared.addGoogleAccount { result in
+            Task { @MainActor in
+                switch result {
+                case .success(let account):
+                    let alert = NSAlert()
+                    alert.messageText = "Account Added"
+                    alert.informativeText = "Successfully added Google account: \(account.email)"
+                    alert.alertStyle = .informational
+                    alert.runModal()
+                case .failure(let error):
+                    let alert = NSAlert()
+                    alert.messageText = "Failed to Add Account"
+                    alert.informativeText = error.localizedDescription
+                    alert.alertStyle = .critical
+                    alert.runModal()
+                }
+            }
+        }
+    }
+
+    private func addMicrosoftAccount() {
+        AuthManager.shared.addMicrosoftAccount { result in
+            Task { @MainActor in
+                switch result {
+                case .success(let account):
+                    let alert = NSAlert()
+                    alert.messageText = "Account Added"
+                    alert.informativeText = "Successfully added Microsoft account: \(account.email)"
+                    alert.alertStyle = .informational
+                    alert.runModal()
+                case .failure(let error):
+                    let alert = NSAlert()
+                    alert.messageText = "Failed to Add Account"
+                    alert.informativeText = error.localizedDescription
+                    alert.alertStyle = .critical
+                    alert.runModal()
+                }
+            }
+        }
     }
 
     @objc private func openSettings() {
