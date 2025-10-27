@@ -22,12 +22,20 @@ enum CalendarProvider: String, Codable {
     }
 }
 
+enum AuthStatus: String, Codable {
+    case valid
+    case expired
+    case revoked
+}
+
 struct CalendarAccount: Codable, Identifiable, Hashable {
     var id: String { email }
     var email: String
     var provider: CalendarProvider
     var isEnabled: Bool = true
     var selectedCalendarIds: Set<String> = []
+    var authStatus: AuthStatus = .valid
+    var lastAuthError: Date?
 
     var displayName: String {
         email

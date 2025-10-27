@@ -159,6 +159,29 @@ class NotificationManager: NSObject, ObservableObject {
         tracking.cleanup(events: events)
         AppSettings.shared.notificationTracking = tracking
     }
+
+    func showAuthFailureNotification(forAccount account: CalendarAccount) {
+        let content = UNMutableNotificationContent()
+        content.title = "Authentication Expired"
+        content.body = "Calendar access for \(account.email) has expired. Click to reconnect."
+        content.sound = UNNotificationSound.default
+        content.userInfo = [
+            "type": "authFailure",
+            "accountEmail": account.email
+        ]
+
+        let identifier = "auth_failure_\(account.email)"
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+
+        Task {
+            do {
+                try await UNUserNotificationCenter.current().add(request)
+                print("Auth failure notification shown for \(account.email)")
+            } catch {
+                print("Error showing auth failure notification: \(error)")
+            }
+        }
+    }
 }
 
 extension NotificationManager: UNUserNotificationCenterDelegate {

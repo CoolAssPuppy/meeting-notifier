@@ -61,37 +61,70 @@ struct AccountsTab: View {
     }
 
     private func accountRow(_ account: CalendarAccount) -> some View {
-        HStack(spacing: 12) {
-            if let icon = account.provider.icon {
-                Image(nsImage: icon)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 20, height: 20)
-            } else {
-                Image(systemName: account.provider == .google ? "g.circle.fill" : "cloud.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(account.provider == .google ? .red : .blue)
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                if let icon = account.provider.icon {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 20, height: 20)
+                } else {
+                    Image(systemName: account.provider == .google ? "g.circle.fill" : "cloud.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(account.provider == .google ? .red : .blue)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(account.email)
+                        .font(.system(size: 13))
+
+                    Text(account.providerName)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Button("Remove") {
+                    removeAccount(account)
+                }
+                .buttonStyle(.borderless)
+                .foregroundColor(.red)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(account.email)
-                    .font(.system(size: 13))
+            // Auth status warning
+            if account.authStatus != .valid {
+                Divider()
+                    .padding(.vertical, 8)
 
-                Text(account.providerName)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 14))
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Authentication expired")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.orange)
+
+                        Text("Click Reconnect to restore calendar access")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+
+                    Button("Reconnect") {
+                        reconnectAccount(account)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+                    .controlSize(.small)
+                }
             }
-
-            Spacer()
-
-            Button("Remove") {
-                removeAccount(account)
-            }
-            .buttonStyle(.borderless)
-            .foregroundColor(.red)
         }
         .padding(12)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        .background(account.authStatus != .valid ? Color.orange.opacity(0.1) : Color(nsColor: .controlBackgroundColor).opacity(0.5))
         .cornerRadius(6)
     }
 
@@ -162,6 +195,34 @@ struct AccountsTab: View {
     private func removeAccount(_ account: CalendarAccount) {
         accountToRemove = account
         showingRemoveAlert = true
+    }
+
+    private func reconnectAccount(_ account: CalendarAccount) {
+        // Re-trigger OAuth flow for the account
+        switch account.provider {
+        case .google:
+            AuthManager.shared.addGoogleAccount { result in
+                Task { @MainActor in
+                    switch result {
+                    case .success:
+                        break
+                    case .failure(let error):
+                        showError(error.localizedDescription)
+                    }
+                }
+            }
+        case .microsoft:
+            AuthManager.shared.addMicrosoftAccount { result in
+                Task { @MainActor in
+                    switch result {
+                    case .success:
+                        break
+                    case .failure(let error):
+                        showError(error.localizedDescription)
+                    }
+                }
+            }
+        }
     }
 
     private func showError(_ message: String) {

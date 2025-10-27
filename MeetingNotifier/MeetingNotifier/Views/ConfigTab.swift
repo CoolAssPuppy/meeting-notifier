@@ -9,8 +9,10 @@ struct ConfigTab: View {
     @State private var tempShowInMenuBar: Bool
     @State private var tempOnlyShowMeetingsWithAttendees: Bool
     @State private var tempMuteSounds: Bool
+    @State private var tempLaunchAtLogin: Bool
     @State private var showingAppPicker = false
     @State private var customAppURL: URL?
+    @State private var showingCoffee = false
 
     init() {
         let settings = AppSettings.shared
@@ -18,6 +20,7 @@ struct ConfigTab: View {
         _tempShowInMenuBar = State(initialValue: settings.showInMenuBar)
         _tempOnlyShowMeetingsWithAttendees = State(initialValue: settings.onlyShowMeetingsWithAttendees)
         _tempMuteSounds = State(initialValue: settings.muteSounds)
+        _tempLaunchAtLogin = State(initialValue: settings.launchAtLogin)
     }
 
     var body: some View {
@@ -50,6 +53,22 @@ struct ConfigTab: View {
                             soundsToggle
                         } header: {
                             Text("Sounds")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+
+                        Section {
+                            launchAtLoginToggle
+                        } header: {
+                            Text("Startup")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+
+                        Section {
+                            buyMeCoffeeButton
+                        } header: {
+                            Text("Support")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                         }
@@ -112,6 +131,7 @@ struct ConfigTab: View {
         settings.showInMenuBar = tempShowInMenuBar
         settings.onlyShowMeetingsWithAttendees = tempOnlyShowMeetingsWithAttendees
         settings.muteSounds = tempMuteSounds
+        settings.launchAtLogin = tempLaunchAtLogin
     }
 
     private var meetAppPicker: some View {
@@ -181,6 +201,38 @@ struct ConfigTab: View {
             Text("When enabled, notification sounds will not play")
                 .font(.caption)
                 .foregroundColor(.secondary)
+        }
+    }
+
+    private var launchAtLoginToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Launch at login", isOn: $tempLaunchAtLogin)
+
+            Text("Automatically start MeetingNotifier when you log in")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var buyMeCoffeeButton: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button(action: {
+                showingCoffee = true
+            }) {
+                HStack {
+                    Image(systemName: "cup.and.saucer.fill")
+                        .foregroundColor(.orange)
+                    Text("Buy Me Coffee")
+                }
+            }
+
+            Text("Support MeetingNotifier development")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .sheet(isPresented: $showingCoffee) {
+            CoffeeView()
+                .frame(width: 500, height: 500)
         }
     }
 

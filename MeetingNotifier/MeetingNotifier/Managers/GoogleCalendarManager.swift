@@ -6,7 +6,7 @@ class GoogleCalendarManager {
 
     private init() {}
 
-    func fetchCalendarList(forAccount account: CalendarAccount) async throws -> [CalendarInfo] {
+    func fetchCalendarList(forAccount account: CalendarAccount, retryCount: Int = 0) async throws -> [CalendarInfo] {
         let accessToken = try await getValidToken(forAccount: account)
 
         let url = URL(string: "https://www.googleapis.com/calendar/v3/users/me/calendarList")!
@@ -15,9 +15,30 @@ class GoogleCalendarManager {
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw CalendarError.apiError("Failed to fetch calendar list")
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw CalendarError.apiError("Invalid response")
         }
+
+        // Handle 401 Unauthorized - token expired
+        if httpResponse.statusCode == 401 && retryCount == 0 {
+            print("Access token expired for \(account.email), refreshing...")
+            // Clear cached token to force refresh
+            _ = KeychainManager.shared.deleteAccessToken(forAccount: account.email)
+
+            // Retry once with refreshed token
+            return try await fetchCalendarList(forAccount: account, retryCount: 1)
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            // Mark account as having auth issues if retry also failed
+            if httpResponse.statusCode == 401 {
+                await markAccountAuthFailed(account, status: .expired)
+            }
+            throw CalendarError.apiError("Failed to fetch calendar list (HTTP \(httpResponse.statusCode))")
+        }
+
+        // Success - mark account as valid
+        await markAccountAuthValid(account)
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let items = json["items"] as? [[String: Any]] else {
@@ -56,7 +77,8 @@ class GoogleCalendarManager {
         forCalendar calendarId: String,
         account: CalendarAccount,
         startDate: Date,
-        endDate: Date
+        endDate: Date,
+        retryCount: Int = 0
     ) async throws -> [CalendarEvent] {
         let accessToken = try await getValidToken(forAccount: account)
 
@@ -77,9 +99,36 @@ class GoogleCalendarManager {
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw CalendarError.apiError("Failed to fetch events")
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw CalendarError.apiError("Invalid response")
         }
+
+        // Handle 401 Unauthorized - token expired
+        if httpResponse.statusCode == 401 && retryCount == 0 {
+            print("Access token expired for \(account.email), refreshing...")
+            // Clear cached token to force refresh
+            _ = KeychainManager.shared.deleteAccessToken(forAccount: account.email)
+
+            // Retry once with refreshed token
+            return try await fetchEvents(
+                forCalendar: calendarId,
+                account: account,
+                startDate: startDate,
+                endDate: endDate,
+                retryCount: 1
+            )
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            // Mark account as having auth issues if retry also failed
+            if httpResponse.statusCode == 401 {
+                await markAccountAuthFailed(account, status: .expired)
+            }
+            throw CalendarError.apiError("Failed to fetch events (HTTP \(httpResponse.statusCode))")
+        }
+
+        // Success - mark account as valid
+        await markAccountAuthValid(account)
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let items = json["items"] as? [[String: Any]] else {
@@ -255,6 +304,30 @@ class GoogleCalendarManager {
             "9": "#16A765", "10": "#43B581", "11": "#0B8043", "12": "#16A765"
         ]
         return colors[colorId] ?? "#4285F4"
+    }
+
+    private func markAccountAuthFailed(_ account: CalendarAccount, status: AuthStatus) async {
+        await MainActor.run {
+            var updatedAccount = account
+            updatedAccount.authStatus = status
+            updatedAccount.lastAuthError = Date()
+            AppSettings.shared.updateAccount(updatedAccount)
+
+            // Show notification
+            NotificationManager.shared.showAuthFailureNotification(forAccount: account)
+        }
+    }
+
+    private func markAccountAuthValid(_ account: CalendarAccount) async {
+        // Only update if status changed to avoid unnecessary writes
+        guard account.authStatus != .valid else { return }
+
+        await MainActor.run {
+            var updatedAccount = account
+            updatedAccount.authStatus = .valid
+            updatedAccount.lastAuthError = nil
+            AppSettings.shared.updateAccount(updatedAccount)
+        }
     }
 }
 

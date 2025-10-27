@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import AppKit
+import ServiceManagement
 
 @MainActor
 class AppSettings: ObservableObject {
@@ -54,6 +55,13 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var launchAtLogin: Bool {
+        didSet {
+            UserDefaults.standard.set(launchAtLogin, forKey: "launchAtLogin")
+            updateLoginItem()
+        }
+    }
+
     private init() {
         self.accounts = []
         self.notificationsEnabled = UserDefaults.standard.object(forKey: "notificationsEnabled") as? Bool ?? true
@@ -66,6 +74,7 @@ class AppSettings: ObservableObject {
         self.showInMenuBar = UserDefaults.standard.object(forKey: "showInMenuBar") as? Bool ?? false
         self.onlyShowMeetingsWithAttendees = UserDefaults.standard.object(forKey: "onlyShowMeetingsWithAttendees") as? Bool ?? false
         self.muteSounds = UserDefaults.standard.object(forKey: "muteSounds") as? Bool ?? false
+        self.launchAtLogin = UserDefaults.standard.object(forKey: "launchAtLogin") as? Bool ?? false
 
         loadAccounts()
         loadNotificationTracking()
@@ -125,6 +134,18 @@ class AppSettings: ObservableObject {
 
     func account(forEmail email: String) -> CalendarAccount? {
         accounts.first { $0.email == email }
+    }
+
+    private func updateLoginItem() {
+        do {
+            if launchAtLogin {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            print("Failed to update login item: \(error)")
+        }
     }
 }
 

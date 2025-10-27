@@ -77,7 +77,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateMenuBarText() {
         guard let button = statusItem?.button else { return }
 
-        if AppSettings.shared.showInMenuBar {
+        // Check if any account has auth issues
+        let hasAuthIssues = AppSettings.shared.accounts.contains { $0.authStatus != .valid }
+
+        if hasAuthIssues {
+            button.title = "⚠️"
+            button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar - Authentication Issue")
+        } else if AppSettings.shared.showInMenuBar {
             if let nextMeeting = getNextMeetingForMenuBar() {
                 let truncatedTitle = truncateTitle(nextMeeting.title, maxLength: 30)
                 let icon = getIconForEvent(nextMeeting)
