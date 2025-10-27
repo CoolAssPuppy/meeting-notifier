@@ -19,6 +19,7 @@
 		542922B088E340771E9B600C /* CalendarAccount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB930ABC4D15FA71DACA836 /* CalendarAccount.swift */; };
 		5757E1FA5B8B1F354C6E49A6 /* CalendarEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A212F3F7C08FDE2C041A044D /* CalendarEvent.swift */; };
 		5C62125D8187ECF9CA6B3A5D /* CalendarDropdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43BCEFE8B5DD90C724D70AA9 /* CalendarDropdownView.swift */; };
+		66D1ACB8A3249A96477A99C1 /* long-chimes.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 017F77775495E428F019E6DA /* long-chimes.aiff */; };
 		67438B5598F66418775E2BBA /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1112CFED9032AB54B3A4ED09 /* README.md */; };
 		675C63DCFC4F4DA589809274 /* create_project.sh in Resources */ = {isa = PBXBuildFile; fileRef = DA7FEDDBF3BD6E0E8597EB07 /* create_project.sh */; };
 		8965316C3F4841EDCDD7696E /* MicrosoftOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */; };
@@ -27,6 +28,7 @@
 		BA077D439370F752C04A8452 /* CalendarDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF916CB5D1C8F583CB7B575A /* CalendarDataManager.swift */; };
 		C652F7D18D0798CEAD4950F7 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2601E7378274259BCD5445ED /* KeychainManager.swift */; };
 		CA2876E62A69C701B6B4874F /* CalendarInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5610777B46B0DE424AA7D5C6 /* CalendarInfo.swift */; };
+		DF244A80DBAAF0C4F17C2948 /* short-chimes.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */; };
 		E5DF351A4562D05A2D080B1D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528350AB38541C048479C7F8 /* SettingsView.swift */; };
 		EACF75B30F09777B54E6F7C0 /* GoogleOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */; };
 		EEE47FEC991F4EB2FCAB1316 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FB94CC8AF849EA0ABE3C67F /* AuthManager.swift */; };
@@ -37,8 +39,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		017F77775495E428F019E6DA /* long-chimes.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = "long-chimes.aiff"; sourceTree = "<group>"; };
 		0E3FFD5D42715A0F4F02280D /* CalendarsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarsTab.swift; sourceTree = "<group>"; };
 		1112CFED9032AB54B3A4ED09 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = "short-chimes.aiff"; sourceTree = "<group>"; };
 		2601E7378274259BCD5445ED /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		2CA9AFE2BED7188EE32F46B6 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -156,7 +160,9 @@
 		E3F3209F47A9369E4CC8A726 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				017F77775495E428F019E6DA /* long-chimes.aiff */,
 				1112CFED9032AB54B3A4ED09 /* README.md */,
+				24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -236,6 +242,8 @@
 			files = (
 				67438B5598F66418775E2BBA /* README.md in Resources */,
 				675C63DCFC4F4DA589809274 /* create_project.sh in Resources */,
+				66D1ACB8A3249A96477A99C1 /* long-chimes.aiff in Resources */,
+				DF244A80DBAAF0C4F17C2948 /* short-chimes.aiff in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

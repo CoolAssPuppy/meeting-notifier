@@ -2,19 +2,12 @@
 
 This directory contains app resources like sounds and images.
 
-## Required Files
+## Sound Files
 
-### chime.aiff
-A custom chime sound file for one-minute meeting warnings.
+### short-chimes.aiff
+Custom chime sound for one-minute meeting warnings. This is a brief, attention-grabbing sound that plays exactly 1 minute before a meeting starts.
 
-To add the chime sound:
-1. Find or create a short (1-2 second) pleasant chime sound
-2. Convert it to AIFF format
-3. Name it `chime.aiff`
-4. Place it in this directory
-5. Add it to the Xcode project target
+### long-chimes.aiff
+Custom chime sound for calendar-based reminder notifications. This longer sound plays at custom reminder times configured in your calendar events (e.g., 10 minutes before, 15 minutes before).
 
-Alternatively, you can use the system default sound by modifying NotificationManager to use:
-```swift
-content.sound = .default
-```
+Both sound files are included in the Xcode project target and will be bundled with the app.

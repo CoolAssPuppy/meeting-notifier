@@ -89,7 +89,7 @@ class NotificationManager: NSObject, ObservableObject {
         let content = UNMutableNotificationContent()
         content.title = "Meeting starting soon"
         content.body = "\(event.title) starts in 1 minute"
-        content.sound = UNNotificationSound(named: UNNotificationSoundName("chime.aiff"))
+        content.sound = UNNotificationSound(named: UNNotificationSoundName("short-chimes.aiff"))
         content.userInfo = [
             "eventId": event.id,
             "conferenceLink": event.conferenceLink ?? ""
@@ -125,7 +125,7 @@ class NotificationManager: NSObject, ObservableObject {
             let content = UNMutableNotificationContent()
             content.title = event.title
             content.body = "Starts in \(reminder.minutesBefore) minute\(reminder.minutesBefore == 1 ? "" : "s")"
-            content.sound = .default
+            content.sound = UNNotificationSound(named: UNNotificationSoundName("long-chimes.aiff"))
             content.userInfo = [
                 "eventId": event.id,
                 "conferenceLink": event.conferenceLink ?? ""
