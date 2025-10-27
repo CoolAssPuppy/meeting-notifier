@@ -5,9 +5,13 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
+    private var popover: NSPopover?
+    private var menuBarUpdateTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
+        setupPopover()
+        startMenuBarUpdates()
         NSApp.setActivationPolicy(.accessory)
 
         NSAppleEventManager.shared().setEventHandler(
@@ -15,6 +19,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
             forEventClass: AEEventClass(kInternetEventClass),
             andEventID: AEEventID(kAEGetURL)
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAddAccountRequest),
+            name: .addAccountRequested,
+            object: nil
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSettingsRequest),
+            name: .settingsRequested,
+            object: nil
         )
     }
 
@@ -33,54 +51,64 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
-            button.title = "📅"
+            updateMenuBarText()
             button.action = #selector(menuBarButtonClicked)
             button.target = self
         }
     }
 
-    @objc private func menuBarButtonClicked() {
-        let menu = buildMenu()
-        statusItem?.menu = menu
-        statusItem?.button?.performClick(nil)
+    private func setupPopover() {
+        popover = NSPopover()
+        popover?.contentViewController = NSHostingController(rootView: CalendarDropdownView())
+        popover?.behavior = .transient
+    }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.statusItem?.menu = nil
+    private func startMenuBarUpdates() {
+        menuBarUpdateTimer?.invalidate()
+        menuBarUpdateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateMenuBarText()
+            }
         }
     }
 
-    private func buildMenu() -> NSMenu {
-        let menu = NSMenu()
-        menu.autoenablesItems = false
-        menu.minimumWidth = 350
+    private func updateMenuBarText() {
+        guard let button = statusItem?.button else { return }
 
-        let headerItem = NSMenuItem(title: "Upcoming meetings", action: nil, keyEquivalent: "")
-        headerItem.isEnabled = false
-        menu.addItem(headerItem)
+        if let nextMeeting = CalendarDataManager.shared.nextMeetingWithin(minutes: 15) {
+            let truncatedTitle = truncateTitle(nextMeeting.title, maxLength: 25)
+            button.title = "📅 \(truncatedTitle) at \(nextMeeting.formattedTime)"
+        } else {
+            button.title = "📅"
+        }
+    }
 
-        menu.addItem(NSMenuItem.separator())
+    private func truncateTitle(_ title: String, maxLength: Int) -> String {
+        if title.count <= maxLength {
+            return title
+        }
+        let index = title.index(title.startIndex, offsetBy: maxLength - 3)
+        return String(title[..<index]) + "..."
+    }
 
-        let noMeetingsItem = NSMenuItem(title: "No upcoming meetings", action: nil, keyEquivalent: "")
-        noMeetingsItem.isEnabled = false
-        menu.addItem(noMeetingsItem)
+    @objc private func menuBarButtonClicked() {
+        guard let button = statusItem?.button else { return }
 
-        menu.addItem(NSMenuItem.separator())
+        if popover?.isShown == true {
+            popover?.performClose(nil)
+        } else {
+            popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        }
+    }
 
-        let addAccountItem = NSMenuItem(title: "Add Account", action: #selector(addAccount), keyEquivalent: "")
-        addAccountItem.target = self
-        menu.addItem(addAccountItem)
+    @objc private func handleAddAccountRequest() {
+        popover?.performClose(nil)
+        addAccount()
+    }
 
-        let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
-        settingsItem.target = self
-        menu.addItem(settingsItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        let quitItem = NSMenuItem(title: "Quit MeetingNotifier", action: #selector(quitApp), keyEquivalent: "q")
-        quitItem.target = self
-        menu.addItem(quitItem)
-
-        return menu
+    @objc private func handleSettingsRequest() {
+        popover?.performClose(nil)
+        openSettings()
     }
 
     @objc private func addAccount() {

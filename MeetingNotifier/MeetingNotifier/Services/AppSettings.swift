@@ -73,8 +73,8 @@ class AppSettings: ObservableObject {
 
     func removeAccount(_ account: CalendarAccount) {
         accounts.removeAll { $0.id == account.id }
-        KeychainManager.shared.deleteAccessToken(forAccount: account.email)
-        KeychainManager.shared.deleteRefreshToken(forAccount: account.email)
+        _ = KeychainManager.shared.deleteAccessToken(forAccount: account.email)
+        _ = KeychainManager.shared.deleteRefreshToken(forAccount: account.email)
     }
 
     func updateAccount(_ account: CalendarAccount) {
