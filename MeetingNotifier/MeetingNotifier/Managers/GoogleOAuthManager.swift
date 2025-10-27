@@ -5,8 +5,8 @@ import AppAuth
 class GoogleOAuthManager {
     static let shared = GoogleOAuthManager()
 
-    static let clientID = "629178373267-j9cbevkq2p2sbtc12mrrdjeodjo8djvl.apps.googleusercontent.com"
-    static let clientSecret: String? = nil  // iOS apps use PKCE, no secret needed
+    static let clientID = "629178373267-231fgipboj4pb20vhgi672lqm2917ha2.apps.googleusercontent.com"
+    static let clientSecret = GoogleOAuthSecret.secret
     static let redirectURL = "com.googleusercontent.apps.629178373267:/oauthredirect"
 
     private var currentAuthorizationFlow: OIDExternalUserAgentSession?
