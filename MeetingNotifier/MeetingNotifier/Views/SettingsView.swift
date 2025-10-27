@@ -27,6 +27,12 @@ struct SettingsView: View {
                         Label("Notifications", systemImage: "bell")
                     }
                     .tag(2)
+
+                ConfigTab()
+                    .tabItem {
+                        Label("Config", systemImage: "gearshape")
+                    }
+                    .tag(3)
             }
         }
         .frame(width: 500, height: 600)

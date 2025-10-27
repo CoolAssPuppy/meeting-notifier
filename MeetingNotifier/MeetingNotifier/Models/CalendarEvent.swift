@@ -13,6 +13,7 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
     var calendarColorHex: String
     var provider: CalendarProvider
     var reminders: [EventReminder] = []
+    var attendeeCount: Int = 0
 
     var timeUntilStart: String {
         let now = Date()
@@ -58,6 +59,10 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
 
     var hasVideoLink: Bool {
         conferenceLink != nil
+    }
+
+    var hasAttendees: Bool {
+        attendeeCount > 0
     }
 
     var videoPlatform: VideoPlatform? {

@@ -121,6 +121,9 @@ class GoogleCalendarManager {
 
         let reminders = parseReminders(from: item)
 
+        let attendees = item["attendees"] as? [[String: Any]] ?? []
+        let attendeeCount = attendees.count
+
         return CalendarEvent(
             id: eventId,
             title: summary,
@@ -133,7 +136,8 @@ class GoogleCalendarManager {
             calendarName: calendarInfo.name,
             calendarColorHex: calendarInfo.colorHex,
             provider: .google,
-            reminders: reminders
+            reminders: reminders,
+            attendeeCount: attendeeCount
         )
     }
 

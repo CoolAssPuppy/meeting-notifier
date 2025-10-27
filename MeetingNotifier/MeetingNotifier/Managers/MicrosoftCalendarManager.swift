@@ -115,6 +115,9 @@ class MicrosoftCalendarManager {
 
         let reminders = parseReminders(from: item)
 
+        let attendees = item["attendees"] as? [[String: Any]] ?? []
+        let attendeeCount = attendees.count
+
         return CalendarEvent(
             id: eventId,
             title: subject,
@@ -127,7 +130,8 @@ class MicrosoftCalendarManager {
             calendarName: calendarInfo.name,
             calendarColorHex: calendarInfo.colorHex,
             provider: .microsoft,
-            reminders: reminders
+            reminders: reminders,
+            attendeeCount: attendeeCount
         )
     }
 

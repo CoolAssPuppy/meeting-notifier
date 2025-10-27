@@ -77,12 +77,51 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateMenuBarText() {
         guard let button = statusItem?.button else { return }
 
-        if let nextMeeting = CalendarDataManager.shared.nextMeetingWithin(minutes: 15) {
-            let truncatedTitle = truncateTitle(nextMeeting.title, maxLength: 25)
-            button.title = "📅 \(truncatedTitle) at \(nextMeeting.formattedTime)"
+        if AppSettings.shared.showInMenuBar {
+            if let nextMeeting = getNextMeetingForMenuBar() {
+                let truncatedTitle = truncateTitle(nextMeeting.title, maxLength: 30)
+                let icon = getIconForEvent(nextMeeting)
+                button.title = "\(icon) \(truncatedTitle)"
+                button.image = nil
+            } else {
+                button.title = ""
+                button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
+            }
         } else {
-            button.title = "📅"
+            button.title = ""
+            button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
         }
+    }
+
+    private func getNextMeetingForMenuBar() -> CalendarEvent? {
+        let now = Date()
+        let threshold = now.addingTimeInterval(15 * 60)
+
+        let upcomingMeetings = CalendarDataManager.shared.events.filter { event in
+            event.startDate >= now && event.startDate <= threshold && event.endDate >= now
+        }
+
+        if AppSettings.shared.onlyShowMeetingsWithAttendees {
+            return upcomingMeetings.first { $0.hasAttendees }
+        } else {
+            return upcomingMeetings.first
+        }
+    }
+
+    private func getIconForEvent(_ event: CalendarEvent) -> String {
+        if let platform = event.videoPlatform {
+            switch platform {
+            case .meet:
+                return "📞"
+            case .zoom:
+                return "💻"
+            case .teams:
+                return "👥"
+            case .webex:
+                return "📹"
+            }
+        }
+        return "📅"
     }
 
     private func truncateTitle(_ title: String, maxLength: Int) -> String {
