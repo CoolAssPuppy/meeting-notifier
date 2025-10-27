@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1B5B2FA00653E24598C8FDCD /* MeetingNotifierApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */; };
+		28FC0A3BB60B42E65BE0F7D0 /* GoogleCalendarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E301D2D473AD68869340219 /* GoogleCalendarManager.swift */; };
 		2B74E69F17C19B1BD56A1A71 /* NotificationTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A9725B3752DD3D40D9550B /* NotificationTracking.swift */; };
 		3499D9FC4A3127DFEC48C122 /* MicrosoftOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3369D61B617FA8A1C9783DC /* MicrosoftOAuthManager.swift */; };
 		46348A2F57F37A46468CA6E2 /* AppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = B71D4203DD432764F0184D4C /* AppAuth */; };
@@ -17,11 +18,13 @@
 		675C63DCFC4F4DA589809274 /* create_project.sh in Resources */ = {isa = PBXBuildFile; fileRef = DA7FEDDBF3BD6E0E8597EB07 /* create_project.sh */; };
 		8965316C3F4841EDCDD7696E /* MicrosoftOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */; };
 		99F4FB49FB388A19F1655209 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */; };
+		BA077D439370F752C04A8452 /* CalendarDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF916CB5D1C8F583CB7B575A /* CalendarDataManager.swift */; };
 		C652F7D18D0798CEAD4950F7 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2601E7378274259BCD5445ED /* KeychainManager.swift */; };
 		CA2876E62A69C701B6B4874F /* CalendarInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5610777B46B0DE424AA7D5C6 /* CalendarInfo.swift */; };
 		EACF75B30F09777B54E6F7C0 /* GoogleOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */; };
 		EEE47FEC991F4EB2FCAB1316 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FB94CC8AF849EA0ABE3C67F /* AuthManager.swift */; };
 		F2651BD8E3E8E23356BF7FAE /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA9AFE2BED7188EE32F46B6 /* AppSettings.swift */; };
+		FB3DC9BA85247D28FC65624B /* MicrosoftCalendarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68D727670FEA4120BE81D4B4 /* MicrosoftCalendarManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +34,8 @@
 		2D57E6F2929088ECE386AE64 /* MeetingNotifier.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeetingNotifier.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrosoftOAuthSecret.swift; sourceTree = "<group>"; };
 		5610777B46B0DE424AA7D5C6 /* CalendarInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarInfo.swift; sourceTree = "<group>"; };
+		68D727670FEA4120BE81D4B4 /* MicrosoftCalendarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrosoftCalendarManager.swift; sourceTree = "<group>"; };
+		6E301D2D473AD68869340219 /* GoogleCalendarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleCalendarManager.swift; sourceTree = "<group>"; };
 		7FB94CC8AF849EA0ABE3C67F /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingNotifierApp.swift; sourceTree = "<group>"; };
 		8BB930ABC4D15FA71DACA836 /* CalendarAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAccount.swift; sourceTree = "<group>"; };
@@ -41,6 +46,7 @@
 		D0F918F2DB127BF903FF7CC1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthSecret.swift; sourceTree = "<group>"; };
 		DA7FEDDBF3BD6E0E8597EB07 /* create_project.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_project.sh; sourceTree = "<group>"; };
+		DF916CB5D1C8F583CB7B575A /* CalendarDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDataManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,8 +99,11 @@
 			isa = PBXGroup;
 			children = (
 				7FB94CC8AF849EA0ABE3C67F /* AuthManager.swift */,
+				DF916CB5D1C8F583CB7B575A /* CalendarDataManager.swift */,
+				6E301D2D473AD68869340219 /* GoogleCalendarManager.swift */,
 				A8CE3151B90368012D5C7D67 /* GoogleOAuthManager.swift */,
 				D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */,
+				68D727670FEA4120BE81D4B4 /* MicrosoftCalendarManager.swift */,
 				A3369D61B617FA8A1C9783DC /* MicrosoftOAuthManager.swift */,
 				450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */,
 			);
@@ -197,12 +206,15 @@
 				F2651BD8E3E8E23356BF7FAE /* AppSettings.swift in Sources */,
 				EEE47FEC991F4EB2FCAB1316 /* AuthManager.swift in Sources */,
 				542922B088E340771E9B600C /* CalendarAccount.swift in Sources */,
+				BA077D439370F752C04A8452 /* CalendarDataManager.swift in Sources */,
 				5757E1FA5B8B1F354C6E49A6 /* CalendarEvent.swift in Sources */,
 				CA2876E62A69C701B6B4874F /* CalendarInfo.swift in Sources */,
+				28FC0A3BB60B42E65BE0F7D0 /* GoogleCalendarManager.swift in Sources */,
 				4CA823206BA08E8C0FE3B013 /* GoogleOAuthManager.swift in Sources */,
 				EACF75B30F09777B54E6F7C0 /* GoogleOAuthSecret.swift in Sources */,
 				C652F7D18D0798CEAD4950F7 /* KeychainManager.swift in Sources */,
 				1B5B2FA00653E24598C8FDCD /* MeetingNotifierApp.swift in Sources */,
+				FB3DC9BA85247D28FC65624B /* MicrosoftCalendarManager.swift in Sources */,
 				3499D9FC4A3127DFEC48C122 /* MicrosoftOAuthManager.swift in Sources */,
 				8965316C3F4841EDCDD7696E /* MicrosoftOAuthSecret.swift in Sources */,
 				2B74E69F17C19B1BD56A1A71 /* NotificationTracking.swift in Sources */,
