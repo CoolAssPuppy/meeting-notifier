@@ -190,8 +190,7 @@ MeetingNotifier/
 │   ├── GoogleCalendarManager.swift   # Google Calendar API
 │   ├── MicrosoftCalendarManager.swift # Microsoft Graph API
 │   ├── CalendarDataManager.swift     # Data coordination
-│   ├── NotificationManager.swift     # Notification scheduling
-│   └── KeychainManager.swift         # Secure token storage
+│   └── NotificationManager.swift     # Notification scheduling
 ├── Views/
 │   ├── CalendarDropdownView.swift    # Main dropdown UI
 │   ├── MeetingRowView.swift          # Meeting list item
@@ -202,7 +201,7 @@ MeetingNotifier/
 │   └── NotificationsTab.swift        # Notification preferences
 ├── Services/
 │   ├── AppSettings.swift             # UserDefaults wrapper
-│   └── MeetingLinkDetector.swift     # Video link detection
+│   └── KeychainManager.swift         # Secure token storage
 └── Resources/
     ├── Assets.xcassets               # App icons and images
     ├── chime.aiff                    # One minute warning sound
