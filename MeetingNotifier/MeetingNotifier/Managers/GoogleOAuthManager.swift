@@ -7,7 +7,7 @@ class GoogleOAuthManager {
 
     static let clientID = "191228481940-3kikm89l8pgjn7rsvhbra3jqvtt5f479.apps.googleusercontent.com"
     static let clientSecret = GoogleOAuthSecret.secret
-    static let redirectURL = "com.googleusercontent.apps.191228481940-3kikm89l8pgjn7rsvhbra3jqvtt5f479:/oauthredirect"
+    static let redirectURL = "com.strategicnerds.meetingnotifier:/oauthredirect"
 
     private var currentAuthorizationFlow: OIDExternalUserAgentSession?
 

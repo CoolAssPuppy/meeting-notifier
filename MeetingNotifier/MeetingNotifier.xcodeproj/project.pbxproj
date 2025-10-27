@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -208,7 +208,6 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					BC2D3AB9B58F4B9C36B1381B = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -226,7 +225,6 @@
 			packageReferences = (
 				1B5ED245660DF698EB59539A /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -290,7 +288,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 955GSY56UT;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MeetingNotifier/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -298,7 +296,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.meetingnotifier.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.strategicnerds.meetingnotifier;
 				PRODUCT_NAME = MeetingNotifier;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 6.0;
@@ -430,7 +428,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 955GSY56UT;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MeetingNotifier/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -438,7 +436,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.meetingnotifier.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.strategicnerds.meetingnotifier;
 				PRODUCT_NAME = MeetingNotifier;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 6.0;

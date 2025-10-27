@@ -1,6 +1,6 @@
 name: MeetingNotifier
 options:
-  bundleIdPrefix: com.meetingnotifier
+  bundleIdPrefix: com.strategicnerds
   deploymentTarget:
     macOS: "14.0"
 packages:
@@ -28,7 +28,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: MeetingNotifier
-        PRODUCT_BUNDLE_IDENTIFIER: com.meetingnotifier.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.strategicnerds.meetingnotifier
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         INFOPLIST_FILE: MeetingNotifier/Info.plist

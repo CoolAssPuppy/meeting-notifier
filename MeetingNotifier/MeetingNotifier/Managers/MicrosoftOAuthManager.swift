@@ -7,7 +7,7 @@ class MicrosoftOAuthManager {
 
     static let clientID = "a325ea11-cc04-4062-b65e-8418044ab444"
     static let clientSecret = MicrosoftOAuthSecret.secret
-    static let redirectURL = "msala325ea11-cc04-4062-b65e-8418044ab444://auth/"
+    static let redirectURL = "com.strategicnerds.meetingnotifier:/oauthredirect"
 
     private var currentAuthorizationFlow: OIDExternalUserAgentSession?
 
