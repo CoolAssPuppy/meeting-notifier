@@ -11,11 +11,10 @@
 #   fastlane bump_minor        - Increment minor version (1.0.0 -> 1.1.0)
 #   fastlane bump_major        - Increment major version (1.0.0 -> 2.0.0)
 
-# Import environment variables from .env file
-import_from_git(
-  url: "https://github.com/fastlane/fastlane",
-  path: "fastlane/Fastfile"
-) rescue nil
+# Load environment variables from .env file
+require 'dotenv'
+env_file = File.expand_path('../.env', __dir__)
+Dotenv.load(env_file) if File.exist?(env_file)
 
 default_platform(:mac)
 
@@ -25,7 +24,7 @@ platform :mac do
   # ========================================
 
   SCHEME = "MeetingNotifier"
-  XCODEPROJ = "./MeetingNotifier.xcodeproj"
+  XCODEPROJ = "MeetingNotifier.xcodeproj"
   APP_IDENTIFIER = "com.strategicnerds.meetingnotifier"
 
   # ========================================
@@ -53,17 +52,20 @@ platform :mac do
     # Check for API key
     if ENV["APP_STORE_CONNECT_API_KEY_ID"] && !ENV["APP_STORE_CONNECT_API_KEY_ID"].empty?
       api_key_path = ENV["APP_STORE_CONNECT_API_KEY_PATH"] || "fastlane/app_store_connect_api_key.p8"
-      unless File.exist?(api_key_path)
-        UI.user_error!("App Store Connect API key file not found at: #{api_key_path}")
+      # Make path relative to parent directory if it starts with fastlane/
+      full_path = api_key_path.start_with?("fastlane/") ? File.expand_path("../#{api_key_path}", __dir__) : File.expand_path(api_key_path, __dir__)
+      unless File.exist?(full_path)
+        UI.user_error!("App Store Connect API key file not found at: #{api_key_path} (resolved to #{full_path})")
       end
-      UI.success "✅ App Store Connect API key found"
+      UI.success "✅ App Store Connect API key found at: #{api_key_path}"
     else
       UI.important "⚠️  No API key configured - will use Apple ID authentication (requires 2FA)"
     end
 
     # Verify Xcode project exists
-    unless File.exist?(XCODEPROJ)
-      UI.user_error!("Xcode project not found at: #{XCODEPROJ}")
+    xcodeproj_path = File.expand_path("../#{XCODEPROJ}", __dir__)
+    unless File.exist?(xcodeproj_path)
+      UI.user_error!("Xcode project not found at: #{xcodeproj_path}")
     end
 
     UI.success "✅ All pre-flight checks passed!"
@@ -96,61 +98,49 @@ platform :mac do
 
   desc "Increment patch version (1.0.0 -> 1.0.1)"
   lane :bump_patch do
-    increment_version_number_in_xcodeproj(
-      version_number: increment_version_number(
-        bump_type: "patch",
-        xcodeproj: XCODEPROJ
-      ),
-      xcodeproj: XCODEPROJ
-    )
+    current_version = sh("plutil -extract CFBundleShortVersionString raw ../MeetingNotifier/Info.plist").strip
+    parts = current_version.split('.').map(&:to_i)
+    new_version = "#{parts[0]}.#{parts[1]}.#{parts[2] + 1}"
 
-    version = get_version_number(xcodeproj: XCODEPROJ, target: SCHEME)
-    UI.success "✅ Version bumped to #{version}"
+    sh("plutil -replace CFBundleShortVersionString -string '#{new_version}' ../MeetingNotifier/Info.plist")
+    UI.success "✅ Version bumped to #{new_version}"
 
     # Commit version bump
     git_commit(
-      path: [XCODEPROJ],
-      message: "Bump version to #{version}"
+      path: ["MeetingNotifier/Info.plist"],
+      message: "Bump version to #{new_version}"
     )
   end
 
   desc "Increment minor version (1.0.0 -> 1.1.0)"
   lane :bump_minor do
-    increment_version_number_in_xcodeproj(
-      version_number: increment_version_number(
-        bump_type: "minor",
-        xcodeproj: XCODEPROJ
-      ),
-      xcodeproj: XCODEPROJ
-    )
+    current_version = sh("plutil -extract CFBundleShortVersionString raw ../MeetingNotifier/Info.plist").strip
+    parts = current_version.split('.').map(&:to_i)
+    new_version = "#{parts[0]}.#{parts[1] + 1}.0"
 
-    version = get_version_number(xcodeproj: XCODEPROJ, target: SCHEME)
-    UI.success "✅ Version bumped to #{version}"
+    sh("plutil -replace CFBundleShortVersionString -string '#{new_version}' ../MeetingNotifier/Info.plist")
+    UI.success "✅ Version bumped to #{new_version}"
 
     # Commit version bump
     git_commit(
-      path: [XCODEPROJ],
-      message: "Bump version to #{version}"
+      path: ["MeetingNotifier/Info.plist"],
+      message: "Bump version to #{new_version}"
     )
   end
 
   desc "Increment major version (1.0.0 -> 2.0.0)"
   lane :bump_major do
-    increment_version_number_in_xcodeproj(
-      version_number: increment_version_number(
-        bump_type: "major",
-        xcodeproj: XCODEPROJ
-      ),
-      xcodeproj: XCODEPROJ
-    )
+    current_version = sh("plutil -extract CFBundleShortVersionString raw ../MeetingNotifier/Info.plist").strip
+    parts = current_version.split('.').map(&:to_i)
+    new_version = "#{parts[0] + 1}.0.0"
 
-    version = get_version_number(xcodeproj: XCODEPROJ, target: SCHEME)
-    UI.success "✅ Version bumped to #{version}"
+    sh("plutil -replace CFBundleShortVersionString -string '#{new_version}' ../MeetingNotifier/Info.plist")
+    UI.success "✅ Version bumped to #{new_version}"
 
     # Commit version bump
     git_commit(
-      path: [XCODEPROJ],
-      message: "Bump version to #{version}"
+      path: ["MeetingNotifier/Info.plist"],
+      message: "Bump version to #{new_version}"
     )
   end
 
@@ -162,25 +152,31 @@ platform :mac do
   lane :build do
     UI.message "🔨 Building MeetingNotifier..."
 
-    # Increment build number
-    increment_build_number_in_xcodeproj(
-      xcodeproj: XCODEPROJ
-    )
+    # Get current build number and increment it
+    build_number = sh("xcodebuild -project #{XCODEPROJ} -showBuildSettings | grep -w CURRENT_PROJECT_VERSION | awk '{print $3}'").strip.to_i
+    new_build_number = build_number + 1
 
-    build_number = get_build_number(xcodeproj: XCODEPROJ)
-    version = get_version_number(xcodeproj: XCODEPROJ, target: SCHEME)
+    # Update build number using PlistBuddy (works without agvtool)
+    sh("plutil -replace CFBundleVersion -string '#{new_build_number}' ../MeetingNotifier/Info.plist")
 
-    UI.message "Building version #{version} (#{build_number})"
+    # Get version from plist
+    version = sh("plutil -extract CFBundleShortVersionString raw ../MeetingNotifier/Info.plist").strip
+
+    UI.message "Building version #{version} (#{new_build_number})"
 
     # Build and archive
-    build_mac_app(
+    # For macOS App Store, we need to build with automatic signing
+    # Xcode will create the provisioning profile automatically
+    gym(
       scheme: SCHEME,
-      export_method: "app-store",
       output_directory: "./fastlane/builds",
-      clean: true
+      output_name: "MeetingNotifier",
+      clean: true,
+      export_method: "app-store",
+      xcargs: "CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM=955GSY56UT -allowProvisioningUpdates"
     )
 
-    UI.success "✅ Build complete: #{version} (#{build_number})"
+    UI.success "✅ Build complete: #{version} (#{new_build_number})"
   end
 
   # ========================================
@@ -200,20 +196,30 @@ platform :mac do
     # Build the app
     build
 
-    # Upload to TestFlight
-    upload_to_testflight(
-      app_identifier: APP_IDENTIFIER,
-      skip_waiting_for_build_processing: true,
-      distribute_external: false,  # Only internal testers initially
-      changelog: ENV["TESTFLIGHT_CHANGELOG"] || "New build from CI/CD",
-      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+    # Set up App Store Connect API key
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_filepath: File.expand_path("../fastlane/app_store_connect_api_key.p8", __dir__)
     )
 
-    version = get_version_number(xcodeproj: XCODEPROJ, target: SCHEME)
-    build_number = get_build_number(xcodeproj: XCODEPROJ)
+    # Get version info before upload
+    version = sh("plutil -extract CFBundleShortVersionString raw ../MeetingNotifier/Info.plist").strip
+    build_number = sh("plutil -extract CFBundleVersion raw ../MeetingNotifier/Info.plist").strip
+
+    # Upload to TestFlight
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      skip_waiting_for_build_processing: true,
+      skip_submission: true,  # Don't wait for processing
+      distribute_external: false,  # Only internal testers initially
+      changelog: ENV["TESTFLIGHT_CHANGELOG"] || "New build from CI/CD"
+    )
 
     UI.success "✅ Successfully deployed #{version} (#{build_number}) to TestFlight!"
     UI.important "📱 Build will be available for testing after App Store processing (~10 minutes)"
+    UI.important "📱 Check App Store Connect for build status"
   end
 
   # ========================================
@@ -235,15 +241,22 @@ platform :mac do
       # Build the app
       build
 
+      # Set up App Store Connect API key
+      api_key = app_store_connect_api_key(
+        key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+        issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+        key_filepath: File.expand_path("../fastlane/app_store_connect_api_key.p8", __dir__)
+      )
+
       # Upload to App Store
       upload_to_app_store(
+        api_key: api_key,
         app_identifier: APP_IDENTIFIER,
         skip_screenshots: true,
         skip_metadata: true,
         precheck_include_in_app_purchases: false,
         submit_for_review: false,  # Manual submission recommended
-        automatic_release: false,
-        api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+        automatic_release: false
       )
 
       version = get_version_number(xcodeproj: XCODEPROJ, target: SCHEME)
