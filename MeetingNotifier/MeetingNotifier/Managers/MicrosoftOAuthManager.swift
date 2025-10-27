@@ -5,9 +5,9 @@ import AppAuth
 class MicrosoftOAuthManager {
     static let shared = MicrosoftOAuthManager()
 
-    static let clientID = "a325ea11-cc04-4062-b65e-8418044ab444"
+    static let clientID = "1a831c66-9273-46ed-a38b-9ed5eb5e80d8"
     static let clientSecret = MicrosoftOAuthSecret.secret
-    static let redirectURL = "msala325ea11-cc04-4062-b65e-8418044ab444://auth/"
+    static let redirectURL = "com.strategicnerds.meetingnotifier://oauthredirect"
 
     private var currentAuthorizationFlow: OIDExternalUserAgentSession?
 

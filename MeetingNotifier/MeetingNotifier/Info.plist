@@ -47,7 +47,7 @@
 			<string>Microsoft OAuth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>msala325ea11-cc04-4062-b65e-8418044ab444</string>
+				<string>com.strategicnerds.meetingnotifier</string>
 			</array>
 		</dict>
 	</array>
