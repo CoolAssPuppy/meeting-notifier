@@ -59,7 +59,13 @@ cd meeting-notifier
 open MeetingNotifier/MeetingNotifier.xcodeproj
 ```
 
-3. Configure OAuth credentials (see OAuth Setup below)
+3. Configure OAuth credentials:
+   ```bash
+   cd MeetingNotifier/MeetingNotifier/Managers/
+   cp GoogleOAuthSecret.swift.template GoogleOAuthSecret.swift
+   cp MicrosoftOAuthSecret.swift.template MicrosoftOAuthSecret.swift
+   ```
+   Then follow the detailed setup instructions in [OAUTH_SETUP.md](OAUTH_SETUP.md)
 
 4. Build and run:
    - Select Product > Run (⌘ + R)
@@ -67,30 +73,27 @@ open MeetingNotifier/MeetingNotifier.xcodeproj
 
 ## OAuth setup
 
-### Google Calendar
+**Quick Start:** Follow the detailed step-by-step guide in [OAUTH_SETUP.md](OAUTH_SETUP.md)
 
-To use your own Google OAuth credentials:
+### Overview
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing one
-3. Enable the Google Calendar API
-4. Create OAuth 2.0 credentials (Desktop application type)
-5. Configure OAuth consent screen with scope: `https://www.googleapis.com/auth/calendar.readonly`
-6. Update `GoogleOAuthManager.swift` with your client ID and secret
-7. Add URL scheme to Info.plist: `com.googleusercontent.apps.YOUR_CLIENT_ID`
+MeetingNotifier requires OAuth credentials to access Google Calendar and Microsoft Outlook:
 
-### Microsoft Outlook
+**Google Calendar:**
+- Create a Google Cloud project
+- Enable Google Calendar API
+- Create Desktop app OAuth credentials
+- Add your email as a test user
+- Copy Client ID and Secret to `GoogleOAuthSecret.swift`
 
-To use your own Microsoft OAuth credentials:
+**Microsoft Outlook:**
+- Create an Azure App Registration
+- Add Calendars.Read and offline_access permissions
+- Configure redirect URI
+- Create client secret
+- Copy Application ID and Secret to `MicrosoftOAuthSecret.swift`
 
-1. Go to [Azure Portal](https://portal.azure.com/)
-2. Register a new application
-3. Add required Graph API permissions: `Calendars.Read`, `offline_access`
-4. Configure redirect URI to match the app
-5. Update `MicrosoftOAuthManager.swift` with your client ID and secret
-6. Add URL scheme to Info.plist
-
-Note: The app comes with pre-configured OAuth credentials for testing, using the same credentials as Mail Notifier.
+**Security:** OAuth secret files (`*Secret.swift`) are gitignored and never committed to the repository. Template files are provided for setup.
 
 ## Usage
 
