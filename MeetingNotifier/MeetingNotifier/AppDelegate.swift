@@ -193,8 +193,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
 
-            let settingsView = Text("Settings View")
-                .frame(width: 500, height: 600)
+            let settingsView = SettingsView()
 
             let newWindow = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
