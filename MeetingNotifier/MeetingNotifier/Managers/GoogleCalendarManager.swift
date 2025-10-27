@@ -30,8 +30,15 @@ class GoogleCalendarManager {
                 return nil
             }
 
-            let colorId = item["colorId"] as? String ?? "1"
-            let colorHex = googleColorIdToHex(colorId)
+            // Prefer backgroundColor (actual color) over colorId (preset palette)
+            let colorHex: String
+            if let backgroundColor = item["backgroundColor"] as? String {
+                colorHex = backgroundColor
+            } else {
+                let colorId = item["colorId"] as? String ?? "1"
+                colorHex = googleColorIdToHex(colorId)
+            }
+
             let isPrimary = item["primary"] as? Bool ?? false
 
             return CalendarInfo(

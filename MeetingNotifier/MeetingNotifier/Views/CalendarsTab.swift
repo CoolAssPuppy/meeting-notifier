@@ -64,13 +64,20 @@ struct CalendarsTab: View {
 
     private func accountSection(_ account: CalendarAccount) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: account.provider == .google ? "g.circle.fill" : "cloud.fill")
-                    .foregroundColor(account.provider == .google ? .red : .blue)
+            HStack(spacing: 8) {
+                if let icon = account.provider.icon {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 16, height: 16)
+                } else {
+                    Image(systemName: account.provider == .google ? "g.circle.fill" : "cloud.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(account.provider == .google ? .red : .blue)
+                }
 
                 Text(account.email)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(size: 13, weight: .medium))
             }
 
             if let accountCalendars = calendars[account.email] {

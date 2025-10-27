@@ -25,6 +25,8 @@
 		8965316C3F4841EDCDD7696E /* MicrosoftOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */; };
 		8C4857E641290D4F4980ED75 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4799E009A8C6897F7BDD4CC /* EmptyStateView.swift */; };
 		99F4FB49FB388A19F1655209 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */; };
+		A243DDD94D49FA5439144A4F /* microsoft.png in Resources */ = {isa = PBXBuildFile; fileRef = AD899C544CCC4FBF71F6F194 /* microsoft.png */; };
+		A4F08C706C6731554F907AA4 /* google.png in Resources */ = {isa = PBXBuildFile; fileRef = A4D9826C6DC9F4AFD0F08816 /* google.png */; };
 		A50CC64E33A45541CCB067AD /* MicrosoftOAuthSecret.swift.template in Resources */ = {isa = PBXBuildFile; fileRef = CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */; };
 		AD7530A7C0415650ECC26600 /* teams.png in Resources */ = {isa = PBXBuildFile; fileRef = 8FC3285303293546DEEAB083 /* teams.png */; };
 		BA077D439370F752C04A8452 /* CalendarDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF916CB5D1C8F583CB7B575A /* CalendarDataManager.swift */; };
@@ -69,8 +71,10 @@
 		97C2E63AB365F5F779088F39 /* meet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = meet.png; sourceTree = "<group>"; };
 		A212F3F7C08FDE2C041A044D /* CalendarEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEvent.swift; sourceTree = "<group>"; };
 		A3369D61B617FA8A1C9783DC /* MicrosoftOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrosoftOAuthManager.swift; sourceTree = "<group>"; };
+		A4D9826C6DC9F4AFD0F08816 /* google.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = google.png; sourceTree = "<group>"; };
 		A8CE3151B90368012D5C7D67 /* GoogleOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthManager.swift; sourceTree = "<group>"; };
 		AB280D116A6BA40C66783C9C /* AccountsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsTab.swift; sourceTree = "<group>"; };
+		AD899C544CCC4FBF71F6F194 /* microsoft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = microsoft.png; sourceTree = "<group>"; };
 		C7A9725B3752DD3D40D9550B /* NotificationTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTracking.swift; sourceTree = "<group>"; };
 		CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */ = {isa = PBXFileReference; path = MicrosoftOAuthSecret.swift.template; sourceTree = "<group>"; };
 		D0F918F2DB127BF903FF7CC1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -172,8 +176,10 @@
 		E3F3209F47A9369E4CC8A726 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				A4D9826C6DC9F4AFD0F08816 /* google.png */,
 				017F77775495E428F019E6DA /* long-chimes.aiff */,
 				97C2E63AB365F5F779088F39 /* meet.png */,
+				AD899C544CCC4FBF71F6F194 /* microsoft.png */,
 				1112CFED9032AB54B3A4ED09 /* README.md */,
 				24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */,
 				8FC3285303293546DEEAB083 /* teams.png */,
@@ -259,8 +265,10 @@
 				A50CC64E33A45541CCB067AD /* MicrosoftOAuthSecret.swift.template in Resources */,
 				67438B5598F66418775E2BBA /* README.md in Resources */,
 				675C63DCFC4F4DA589809274 /* create_project.sh in Resources */,
+				A4F08C706C6731554F907AA4 /* google.png in Resources */,
 				66D1ACB8A3249A96477A99C1 /* long-chimes.aiff in Resources */,
 				BA1C660C4D2D9683135644DD /* meet.png in Resources */,
+				A243DDD94D49FA5439144A4F /* microsoft.png in Resources */,
 				DF244A80DBAAF0C4F17C2948 /* short-chimes.aiff in Resources */,
 				AD7530A7C0415650ECC26600 /* teams.png in Resources */,
 				C450E0A0B426E063217B1306 /* zoom.png in Resources */,

@@ -26,25 +26,15 @@
 	<string></string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>NSUserNotificationsUsageDescription</key>
-	<string>MeetingNotifier needs notification permissions to alert you about upcoming meetings.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>Google OAuth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.629178373267-231fgipboj4pb20vhgi672lqm2917ha2</string>
 			</array>
 		</dict>
 		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>Microsoft OAuth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.strategicnerds.meetingnotifier</string>

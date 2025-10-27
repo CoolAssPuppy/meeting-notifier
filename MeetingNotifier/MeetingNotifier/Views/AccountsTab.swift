@@ -52,16 +52,23 @@ struct AccountsTab: View {
 
     private func accountRow(_ account: CalendarAccount) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: account.provider == .google ? "g.circle.fill" : "cloud.fill")
-                .font(.system(size: 24))
-                .foregroundColor(account.provider == .google ? .red : .blue)
+            if let icon = account.provider.icon {
+                Image(nsImage: icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+            } else {
+                Image(systemName: account.provider == .google ? "g.circle.fill" : "cloud.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(account.provider == .google ? .red : .blue)
+            }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(account.email)
-                    .font(.body)
+                    .font(.system(size: 13))
 
                 Text(account.providerName)
-                    .font(.caption)
+                    .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
 
@@ -70,28 +77,49 @@ struct AccountsTab: View {
             Button("Remove") {
                 removeAccount(account)
             }
+            .buttonStyle(.borderless)
             .foregroundColor(.red)
         }
         .padding(12)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        .cornerRadius(6)
     }
 
     private var addAccountButtons: some View {
         HStack(spacing: 12) {
             Button(action: addGoogleAccount) {
-                HStack {
-                    Image(systemName: "g.circle.fill")
+                HStack(spacing: 8) {
+                    if let icon = CalendarProvider.google.icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 16, height: 16)
+                    } else {
+                        Image(systemName: "g.circle.fill")
+                            .font(.system(size: 16))
+                    }
                     Text("Add Google Account")
+                        .font(.system(size: 13))
                 }
             }
+            .buttonStyle(.bordered)
 
             Button(action: addMicrosoftAccount) {
-                HStack {
-                    Image(systemName: "cloud.fill")
+                HStack(spacing: 8) {
+                    if let icon = CalendarProvider.microsoft.icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 16, height: 16)
+                    } else {
+                        Image(systemName: "cloud.fill")
+                            .font(.system(size: 16))
+                    }
                     Text("Add Microsoft Account")
+                        .font(.system(size: 13))
                 }
             }
+            .buttonStyle(.bordered)
         }
     }
 
