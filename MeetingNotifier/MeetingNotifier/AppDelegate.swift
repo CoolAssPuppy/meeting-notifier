@@ -109,41 +109,45 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let nextMeeting = getNextMeetingForMenuBar()
         let settings = AppSettings.shared
 
-        // Apply display mode
+        // Apply display mode based on checkbox selections
         if let meeting = nextMeeting, settings.showInMenuBar {
-            switch settings.menuBarDisplayMode {
-            case .iconOnly:
-                if let iconImage = getIconImageForEvent(meeting) {
-                    button.image = iconImage
-                    button.title = ""
-                } else {
-                    button.image = nil
-                    button.title = getIconForEvent(meeting)
-                }
+            var displayComponents: [String] = []
 
-            case .iconAndTitle:
+            // Build display string based on selected options
+            if settings.menuBarShowTime {
+                displayComponents.append(meeting.formattedTime)
+            }
+
+            if settings.menuBarShowCountdown {
+                displayComponents.append(meeting.timeUntilStart)
+            }
+
+            if settings.menuBarShowTitle {
                 let truncatedTitle = truncateTitle(meeting.title, maxLength: 25)
+                displayComponents.append(truncatedTitle)
+            }
+
+            // Handle icon
+            if settings.menuBarShowIcon {
                 if let iconImage = getIconImageForEvent(meeting) {
                     button.image = iconImage
-                    button.title = " \(truncatedTitle)"
                 } else {
-                    button.image = nil
+                    // If no PNG icon available, add emoji to title
                     let icon = getIconForEvent(meeting)
-                    button.title = "\(icon) \(truncatedTitle)"
+                    displayComponents.insert(icon, at: 0)
+                    button.image = nil
                 }
-
-            case .timeOnly:
+            } else {
                 button.image = nil
-                button.title = meeting.formattedTime
+            }
 
-            case .timeAndTitle:
-                button.image = nil
-                let truncatedTitle = truncateTitle(meeting.title, maxLength: 20)
-                button.title = "\(meeting.formattedTime) \(truncatedTitle)"
+            // Set the title with all selected components
+            button.title = displayComponents.joined(separator: " ")
 
-            case .countdown:
-                button.image = nil
-                button.title = meeting.timeUntilStart
+            // If no options are selected, show default calendar icon
+            if !settings.menuBarShowIcon && !settings.menuBarShowTitle && !settings.menuBarShowTime && !settings.menuBarShowCountdown {
+                button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
+                button.title = ""
             }
 
             // Add meeting count badge if enabled

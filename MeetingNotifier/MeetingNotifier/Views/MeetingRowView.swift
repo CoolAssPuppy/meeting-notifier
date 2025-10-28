@@ -30,30 +30,10 @@ struct MeetingRowView: View {
             }
         }) {
             HStack(alignment: .top, spacing: 0) {
-                // Vibrant calendar color stripe with glow
-                ZStack(alignment: .leading) {
-                    // Glow effect
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color(hex: event.calendarColorHex))
-                        .frame(width: 4)
-                        .blur(radius: 4)
-                        .opacity(0.6)
-
-                    // Solid color bar
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(hex: event.calendarColorHex),
-                                    Color(hex: event.calendarColorHex).opacity(0.8)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(width: 4)
-                }
-                .frame(width: 4)
+                // Vibrant calendar color stripe - solid like Google Calendar
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color(hex: event.calendarColorHex))
+                    .frame(width: 4)
 
                 Spacer()
                     .frame(width: 12)
@@ -334,7 +314,7 @@ extension Color {
         }
 
         self.init(
-            .sRGB,
+            .displayP3,
             red: Double(r) / 255,
             green: Double(g) / 255,
             blue:  Double(b) / 255,

@@ -10,7 +10,10 @@ struct ConfigTab: View {
     @State private var tempOnlyShowMeetingsWithAttendees: Bool
     @State private var tempMuteSounds: Bool
     @State private var tempLaunchAtLogin: Bool
-    @State private var tempMenuBarDisplayMode: MenuBarDisplayMode
+    @State private var tempMenuBarShowIcon: Bool
+    @State private var tempMenuBarShowTitle: Bool
+    @State private var tempMenuBarShowTime: Bool
+    @State private var tempMenuBarShowCountdown: Bool
     @State private var tempMenuBarThresholdMinutes: Int
     @State private var tempShowAllDayInMenuBar: Bool
     @State private var tempShowMeetingCountBadge: Bool
@@ -27,7 +30,10 @@ struct ConfigTab: View {
         _tempOnlyShowMeetingsWithAttendees = State(initialValue: settings.onlyShowMeetingsWithAttendees)
         _tempMuteSounds = State(initialValue: settings.muteSounds)
         _tempLaunchAtLogin = State(initialValue: settings.launchAtLogin)
-        _tempMenuBarDisplayMode = State(initialValue: settings.menuBarDisplayMode)
+        _tempMenuBarShowIcon = State(initialValue: settings.menuBarShowIcon)
+        _tempMenuBarShowTitle = State(initialValue: settings.menuBarShowTitle)
+        _tempMenuBarShowTime = State(initialValue: settings.menuBarShowTime)
+        _tempMenuBarShowCountdown = State(initialValue: settings.menuBarShowCountdown)
         _tempMenuBarThresholdMinutes = State(initialValue: settings.menuBarThresholdMinutes)
         _tempShowAllDayInMenuBar = State(initialValue: settings.showAllDayInMenuBar)
         _tempShowMeetingCountBadge = State(initialValue: settings.showMeetingCountBadge)
@@ -165,7 +171,10 @@ struct ConfigTab: View {
         settings.onlyShowMeetingsWithAttendees = tempOnlyShowMeetingsWithAttendees
         settings.muteSounds = tempMuteSounds
         settings.launchAtLogin = tempLaunchAtLogin
-        settings.menuBarDisplayMode = tempMenuBarDisplayMode
+        settings.menuBarShowIcon = tempMenuBarShowIcon
+        settings.menuBarShowTitle = tempMenuBarShowTitle
+        settings.menuBarShowTime = tempMenuBarShowTime
+        settings.menuBarShowCountdown = tempMenuBarShowCountdown
         settings.menuBarThresholdMinutes = tempMenuBarThresholdMinutes
         settings.showAllDayInMenuBar = tempShowAllDayInMenuBar
         settings.showMeetingCountBadge = tempShowMeetingCountBadge
@@ -271,18 +280,45 @@ struct ConfigTab: View {
     }
 
     private var displayModePicker: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Display Style:")
                 .font(.body)
 
-            Picker("", selection: $tempMenuBarDisplayMode) {
-                ForEach(MenuBarDisplayMode.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("Icon", isOn: Binding(
+                    get: { tempMenuBarShowIcon },
+                    set: { newValue in
+                        tempMenuBarShowIcon = newValue
+                        settings.menuBarShowIcon = newValue
+                    }
+                ))
 
-            Text(tempMenuBarDisplayMode.description)
+                Toggle("Title", isOn: Binding(
+                    get: { tempMenuBarShowTitle },
+                    set: { newValue in
+                        tempMenuBarShowTitle = newValue
+                        settings.menuBarShowTitle = newValue
+                    }
+                ))
+
+                Toggle("Time", isOn: Binding(
+                    get: { tempMenuBarShowTime },
+                    set: { newValue in
+                        tempMenuBarShowTime = newValue
+                        settings.menuBarShowTime = newValue
+                    }
+                ))
+
+                Toggle("Countdown", isOn: Binding(
+                    get: { tempMenuBarShowCountdown },
+                    set: { newValue in
+                        tempMenuBarShowCountdown = newValue
+                        settings.menuBarShowCountdown = newValue
+                    }
+                ))
+            }
+
+            Text("Select which elements to show in the menu bar. If no Icon is selected, the default calendar icon will be shown.")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

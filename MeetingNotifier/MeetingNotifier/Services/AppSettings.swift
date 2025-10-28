@@ -63,9 +63,27 @@ class AppSettings: ObservableObject {
     }
 
     // New settings for enhanced features
-    @Published var menuBarDisplayMode: MenuBarDisplayMode {
+    @Published var menuBarShowIcon: Bool {
         didSet {
-            UserDefaults.standard.set(menuBarDisplayMode.rawValue, forKey: "menuBarDisplayMode")
+            UserDefaults.standard.set(menuBarShowIcon, forKey: "menuBarShowIcon")
+        }
+    }
+
+    @Published var menuBarShowTitle: Bool {
+        didSet {
+            UserDefaults.standard.set(menuBarShowTitle, forKey: "menuBarShowTitle")
+        }
+    }
+
+    @Published var menuBarShowTime: Bool {
+        didSet {
+            UserDefaults.standard.set(menuBarShowTime, forKey: "menuBarShowTime")
+        }
+    }
+
+    @Published var menuBarShowCountdown: Bool {
+        didSet {
+            UserDefaults.standard.set(menuBarShowCountdown, forKey: "menuBarShowCountdown")
         }
     }
 
@@ -114,8 +132,10 @@ class AppSettings: ObservableObject {
         self.launchAtLogin = UserDefaults.standard.object(forKey: "launchAtLogin") as? Bool ?? false
 
         // Initialize new settings
-        let displayModeRaw = UserDefaults.standard.string(forKey: "menuBarDisplayMode") ?? MenuBarDisplayMode.iconAndTitle.rawValue
-        self.menuBarDisplayMode = MenuBarDisplayMode(rawValue: displayModeRaw) ?? .iconAndTitle
+        self.menuBarShowIcon = UserDefaults.standard.object(forKey: "menuBarShowIcon") as? Bool ?? true
+        self.menuBarShowTitle = UserDefaults.standard.object(forKey: "menuBarShowTitle") as? Bool ?? true
+        self.menuBarShowTime = UserDefaults.standard.object(forKey: "menuBarShowTime") as? Bool ?? false
+        self.menuBarShowCountdown = UserDefaults.standard.object(forKey: "menuBarShowCountdown") as? Bool ?? false
 
         self.menuBarThresholdMinutes = UserDefaults.standard.object(forKey: "menuBarThresholdMinutes") as? Int ?? 15
         self.showAllDayInMenuBar = UserDefaults.standard.object(forKey: "showAllDayInMenuBar") as? Bool ?? false
@@ -272,33 +292,6 @@ enum MeetAppType: String, CaseIterable, Identifiable {
 
     static var availableApps: [MeetAppType] {
         return MeetAppType.allCases.filter { $0.isInstalled }
-    }
-}
-
-// MARK: - Menu Bar Display Mode
-
-enum MenuBarDisplayMode: String, CaseIterable, Identifiable {
-    case iconOnly = "Icon Only"
-    case iconAndTitle = "Icon + Title"
-    case timeOnly = "Time Only"
-    case timeAndTitle = "Time + Title"
-    case countdown = "Countdown"
-
-    var id: String { rawValue }
-
-    var description: String {
-        switch self {
-        case .iconOnly:
-            return "Show calendar icon only"
-        case .iconAndTitle:
-            return "Show meeting icon and truncated title"
-        case .timeOnly:
-            return "Show meeting time (e.g., 2:30 PM)"
-        case .timeAndTitle:
-            return "Show time and title (e.g., 2:30 PM Team Standup)"
-        case .countdown:
-            return "Show countdown timer (e.g., in 15m)"
-        }
     }
 }
 
