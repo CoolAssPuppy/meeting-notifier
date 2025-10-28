@@ -26,7 +26,6 @@
 		7073ACC50C6F18B1E3318E5B /* ConfigTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 776D3E787DE246BB9E182B1C /* ConfigTab.swift */; };
 		8965316C3F4841EDCDD7696E /* MicrosoftOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */; };
 		8C4857E641290D4F4980ED75 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4799E009A8C6897F7BDD4CC /* EmptyStateView.swift */; };
-		8F597A002EB033940062856D /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8F5979FF2EB033940062856D /* AppIcon.icns */; };
 		8FD8617D2EB0093500C6D442 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8FD8617C2EB0093500C6D442 /* StoreKit.framework */; };
 		99F4FB49FB388A19F1655209 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */; };
 		A243DDD94D49FA5439144A4F /* microsoft.png in Resources */ = {isa = PBXBuildFile; fileRef = AD899C544CCC4FBF71F6F194 /* microsoft.png */; };
@@ -51,6 +50,7 @@
 		AA11BB22CC33DD44EE55FF66 /* KeyboardShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AA22BB33CC44DD55EE66FF /* KeyboardShortcutManager.swift */; };
 		BB22CC33DD44EE55FF66AA77 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BB33CC44DD55EE66FF77AA /* LocationManager.swift */; };
 		CC33DD44EE55FF66AA77BB88 /* LocationCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC44DD55EE66FF77AA88BB /* LocationCardView.swift */; };
+		266F0D65ABA548E7A7C5723C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E8BF6C0109BF4C859C61415C /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -78,7 +78,6 @@
 		82514AD2E14FAD31E0743670 /* CoffeeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoffeeView.swift; sourceTree = "<group>"; };
 		863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingNotifierApp.swift; sourceTree = "<group>"; };
 		8BB930ABC4D15FA71DACA836 /* CalendarAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarAccount.swift; sourceTree = "<group>"; };
-		8F5979FF2EB033940062856D /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		8FC3285303293546DEEAB083 /* teams.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teams.png; sourceTree = "<group>"; };
 		8FD8617C2EB0093500C6D442 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		8FD8617E2EB00AF300C6D442 /* Configuration.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
@@ -100,6 +99,7 @@
 		11AA22BB33CC44DD55EE66FF /* KeyboardShortcutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutManager.swift; sourceTree = "<group>"; };
 		22BB33CC44DD55EE66FF77AA /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		33CC44DD55EE66FF77AA88BB /* LocationCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationCardView.swift; sourceTree = "<group>"; };
+		E8BF6C0109BF4C859C61415C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +140,7 @@
 			isa = PBXGroup;
 			children = (
 				2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */,
+				E8BF6C0109BF4C859C61415C /* Assets.xcassets */,
 				DA7FEDDBF3BD6E0E8597EB07 /* create_project.sh */,
 				D0F918F2DB127BF903FF7CC1 /* Info.plist */,
 				863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */,
@@ -210,7 +211,6 @@
 		E3F3209F47A9369E4CC8A726 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				8F5979FF2EB033940062856D /* AppIcon.icns */,
 				A4D9826C6DC9F4AFD0F08816 /* google.png */,
 				017F77775495E428F019E6DA /* long-chimes.aiff */,
 				97C2E63AB365F5F779088F39 /* meet.png */,
@@ -295,12 +295,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				266F0D65ABA548E7A7C5723C /* Assets.xcassets in Resources */,
 				C66151F3605148105C010D47 /* GoogleOAuthSecret.swift.template in Resources */,
 				A50CC64E33A45541CCB067AD /* MicrosoftOAuthSecret.swift.template in Resources */,
 				67438B5598F66418775E2BBA /* README.md in Resources */,
 				675C63DCFC4F4DA589809274 /* create_project.sh in Resources */,
 				A4F08C706C6731554F907AA4 /* google.png in Resources */,
-				8F597A002EB033940062856D /* AppIcon.icns in Resources */,
 				66D1ACB8A3249A96477A99C1 /* long-chimes.aiff in Resources */,
 				BA1C660C4D2D9683135644DD /* meet.png in Resources */,
 				A243DDD94D49FA5439144A4F /* microsoft.png in Resources */,
@@ -356,6 +356,7 @@
 		4F6630351C823A0D57077BDA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = MeetingNotifier/MeetingNotifier.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -506,6 +507,7 @@
 		F757E10BB14EF5FEFE12F6FB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = MeetingNotifier/MeetingNotifier.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
