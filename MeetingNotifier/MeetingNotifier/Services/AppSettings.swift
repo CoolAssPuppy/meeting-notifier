@@ -62,6 +62,43 @@ class AppSettings: ObservableObject {
         }
     }
 
+    // New settings for enhanced features
+    @Published var menuBarDisplayMode: MenuBarDisplayMode {
+        didSet {
+            UserDefaults.standard.set(menuBarDisplayMode.rawValue, forKey: "menuBarDisplayMode")
+        }
+    }
+
+    @Published var menuBarThresholdMinutes: Int {
+        didSet {
+            UserDefaults.standard.set(menuBarThresholdMinutes, forKey: "menuBarThresholdMinutes")
+        }
+    }
+
+    @Published var showAllDayInMenuBar: Bool {
+        didSet {
+            UserDefaults.standard.set(showAllDayInMenuBar, forKey: "showAllDayInMenuBar")
+        }
+    }
+
+    @Published var showMeetingCountBadge: Bool {
+        didSet {
+            UserDefaults.standard.set(showMeetingCountBadge, forKey: "showMeetingCountBadge")
+        }
+    }
+
+    @Published var showTravelTimeAlerts: Bool {
+        didSet {
+            UserDefaults.standard.set(showTravelTimeAlerts, forKey: "showTravelTimeAlerts")
+        }
+    }
+
+    @Published var defaultTravelMode: TravelMode {
+        didSet {
+            UserDefaults.standard.set(defaultTravelMode.rawValue, forKey: "defaultTravelMode")
+        }
+    }
+
     private init() {
         self.accounts = []
         self.notificationsEnabled = UserDefaults.standard.object(forKey: "notificationsEnabled") as? Bool ?? true
@@ -75,6 +112,18 @@ class AppSettings: ObservableObject {
         self.onlyShowMeetingsWithAttendees = UserDefaults.standard.object(forKey: "onlyShowMeetingsWithAttendees") as? Bool ?? false
         self.muteSounds = UserDefaults.standard.object(forKey: "muteSounds") as? Bool ?? false
         self.launchAtLogin = UserDefaults.standard.object(forKey: "launchAtLogin") as? Bool ?? false
+
+        // Initialize new settings
+        let displayModeRaw = UserDefaults.standard.string(forKey: "menuBarDisplayMode") ?? MenuBarDisplayMode.iconAndTitle.rawValue
+        self.menuBarDisplayMode = MenuBarDisplayMode(rawValue: displayModeRaw) ?? .iconAndTitle
+
+        self.menuBarThresholdMinutes = UserDefaults.standard.object(forKey: "menuBarThresholdMinutes") as? Int ?? 15
+        self.showAllDayInMenuBar = UserDefaults.standard.object(forKey: "showAllDayInMenuBar") as? Bool ?? false
+        self.showMeetingCountBadge = UserDefaults.standard.object(forKey: "showMeetingCountBadge") as? Bool ?? true
+        self.showTravelTimeAlerts = UserDefaults.standard.object(forKey: "showTravelTimeAlerts") as? Bool ?? true
+
+        let travelModeRaw = UserDefaults.standard.string(forKey: "defaultTravelMode") ?? TravelMode.driving.rawValue
+        self.defaultTravelMode = TravelMode(rawValue: travelModeRaw) ?? .driving
 
         loadAccounts()
         loadNotificationTracking()
@@ -223,5 +272,50 @@ enum MeetAppType: String, CaseIterable, Identifiable {
 
     static var availableApps: [MeetAppType] {
         return MeetAppType.allCases.filter { $0.isInstalled }
+    }
+}
+
+// MARK: - Menu Bar Display Mode
+
+enum MenuBarDisplayMode: String, CaseIterable, Identifiable {
+    case iconOnly = "Icon Only"
+    case iconAndTitle = "Icon + Title"
+    case timeOnly = "Time Only"
+    case timeAndTitle = "Time + Title"
+    case countdown = "Countdown"
+
+    var id: String { rawValue }
+
+    var description: String {
+        switch self {
+        case .iconOnly:
+            return "Show calendar icon only"
+        case .iconAndTitle:
+            return "Show meeting icon and truncated title"
+        case .timeOnly:
+            return "Show meeting time (e.g., 2:30 PM)"
+        case .timeAndTitle:
+            return "Show time and title (e.g., 2:30 PM Team Standup)"
+        case .countdown:
+            return "Show countdown timer (e.g., in 15m)"
+        }
+    }
+}
+
+// MARK: - Travel Mode
+
+enum TravelMode: String, CaseIterable, Identifiable {
+    case driving = "Driving"
+    case walking = "Walking"
+    case transit = "Transit"
+
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .driving: return "car.fill"
+        case .walking: return "figure.walk"
+        case .transit: return "bus.fill"
+        }
     }
 }

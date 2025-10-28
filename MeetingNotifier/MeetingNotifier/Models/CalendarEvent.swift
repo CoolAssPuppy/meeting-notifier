@@ -15,6 +15,17 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
     var reminders: [EventReminder] = []
     var attendeeCount: Int = 0
 
+    // Travel time properties
+    var travelTimeMinutes: Int?
+    var leaveByTime: Date?
+    var hasPhysicalLocation: Bool {
+        guard let loc = location, !loc.isEmpty else { return false }
+        // Check if location looks like an address (not just a room name)
+        return loc.contains(",") || loc.lowercased().contains("street") ||
+               loc.lowercased().contains("avenue") || loc.lowercased().contains("road") ||
+               loc.lowercased().contains("drive") || loc.lowercased().contains("boulevard")
+    }
+
     var timeUntilStart: String {
         let now = Date()
         let interval = startDate.timeIntervalSince(now)

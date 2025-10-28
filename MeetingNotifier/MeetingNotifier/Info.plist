@@ -45,5 +45,9 @@
 	<string></string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Meeting Notifier needs your location to calculate travel time to meeting locations and provide timely departure reminders.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Meeting Notifier uses your location to calculate accurate travel times for meetings with physical locations.</string>
 </dict>
 </plist>

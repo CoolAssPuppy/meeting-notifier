@@ -10,6 +10,12 @@ struct ConfigTab: View {
     @State private var tempOnlyShowMeetingsWithAttendees: Bool
     @State private var tempMuteSounds: Bool
     @State private var tempLaunchAtLogin: Bool
+    @State private var tempMenuBarDisplayMode: MenuBarDisplayMode
+    @State private var tempMenuBarThresholdMinutes: Int
+    @State private var tempShowAllDayInMenuBar: Bool
+    @State private var tempShowMeetingCountBadge: Bool
+    @State private var tempShowTravelTimeAlerts: Bool
+    @State private var tempDefaultTravelMode: TravelMode
     @State private var showingAppPicker = false
     @State private var customAppURL: URL?
     @State private var showingCoffee = false
@@ -21,6 +27,12 @@ struct ConfigTab: View {
         _tempOnlyShowMeetingsWithAttendees = State(initialValue: settings.onlyShowMeetingsWithAttendees)
         _tempMuteSounds = State(initialValue: settings.muteSounds)
         _tempLaunchAtLogin = State(initialValue: settings.launchAtLogin)
+        _tempMenuBarDisplayMode = State(initialValue: settings.menuBarDisplayMode)
+        _tempMenuBarThresholdMinutes = State(initialValue: settings.menuBarThresholdMinutes)
+        _tempShowAllDayInMenuBar = State(initialValue: settings.showAllDayInMenuBar)
+        _tempShowMeetingCountBadge = State(initialValue: settings.showMeetingCountBadge)
+        _tempShowTravelTimeAlerts = State(initialValue: settings.showTravelTimeAlerts)
+        _tempDefaultTravelMode = State(initialValue: settings.defaultTravelMode)
     }
 
     var body: some View {
@@ -35,49 +47,70 @@ struct ConfigTab: View {
                         Section {
                             meetAppPicker
                         } header: {
-                            Text("Meeting Links")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
+                            sectionHeader(icon: "link.circle.fill", title: "Meeting Links", gradient: [.blue, .cyan])
                         }
 
                         Section {
                             menuBarToggle
+                            if tempShowInMenuBar {
+                                displayModePicker
+                                thresholdSlider
+                                showAllDayToggle
+                            }
                             attendeesToggle
+                            meetingCountBadgeToggle
                         } header: {
-                            Text("Menu Bar Display")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
+                            sectionHeader(icon: "menubar.rectangle", title: "Menu Bar Display", gradient: [.purple, .pink])
+                        }
+
+                        Section {
+                            travelTimeAlertsToggle
+                            if tempShowTravelTimeAlerts {
+                                travelModePicker
+                            }
+                        } header: {
+                            sectionHeader(icon: "location.circle.fill", title: "Travel & Location", gradient: [.green, .mint])
                         }
 
                         Section {
                             soundsToggle
                         } header: {
-                            Text("Sounds")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
+                            sectionHeader(icon: "speaker.wave.2.fill", title: "Sounds", gradient: [.orange, .yellow])
                         }
 
                         Section {
                             launchAtLoginToggle
                         } header: {
-                            Text("Startup")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
+                            sectionHeader(icon: "power.circle.fill", title: "Startup", gradient: [.indigo, .blue])
+                        }
+
+                        Section {
+                            keyboardShortcutsInfo
+                        } header: {
+                            sectionHeader(icon: "command.circle.fill", title: "Keyboard Shortcuts", gradient: [.red, .orange])
                         }
 
                         Section {
                             buyMeCoffeeButton
                         } header: {
-                            Text("Support")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
+                            sectionHeader(icon: "cup.and.saucer.fill", title: "Support", gradient: [.brown, .orange])
                         }
                     }
                     .formStyle(.grouped)
                 }
                 .padding(20)
             }
-            .background(.background)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color.accentColor.opacity(0.02),
+                        Color.clear,
+                        Color.purple.opacity(0.01)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
 
             Divider()
 
@@ -132,6 +165,29 @@ struct ConfigTab: View {
         settings.onlyShowMeetingsWithAttendees = tempOnlyShowMeetingsWithAttendees
         settings.muteSounds = tempMuteSounds
         settings.launchAtLogin = tempLaunchAtLogin
+        settings.menuBarDisplayMode = tempMenuBarDisplayMode
+        settings.menuBarThresholdMinutes = tempMenuBarThresholdMinutes
+        settings.showAllDayInMenuBar = tempShowAllDayInMenuBar
+        settings.showMeetingCountBadge = tempShowMeetingCountBadge
+        settings.showTravelTimeAlerts = tempShowTravelTimeAlerts
+        settings.defaultTravelMode = tempDefaultTravelMode
+    }
+
+    private func sectionHeader(icon: String, title: String, gradient: [Color]) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: gradient,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            Text(title)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.primary)
+        }
     }
 
     private var meetAppPicker: some View {
@@ -211,6 +267,134 @@ struct ConfigTab: View {
             Text("Automatically start MeetingNotifier when you log in")
                 .font(.caption)
                 .foregroundColor(.secondary)
+        }
+    }
+
+    private var displayModePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Display Style:")
+                .font(.body)
+
+            Picker("", selection: $tempMenuBarDisplayMode) {
+                ForEach(MenuBarDisplayMode.allCases) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Text(tempMenuBarDisplayMode.description)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var thresholdSlider: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Show meetings within:")
+                    .font(.body)
+                Spacer()
+                Text("\(tempMenuBarThresholdMinutes) min")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+            }
+
+            Slider(value: Binding(
+                get: { Double(tempMenuBarThresholdMinutes) },
+                set: { tempMenuBarThresholdMinutes = Int($0) }
+            ), in: 5...60, step: 5)
+            .disabled(tempShowAllDayInMenuBar)
+
+            Text("Controls how far in advance to display upcoming meetings")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var showAllDayToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Always show next meeting", isOn: $tempShowAllDayInMenuBar)
+
+            Text("When enabled, always shows the next meeting regardless of time")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var meetingCountBadgeToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Show meeting count badge", isOn: $tempShowMeetingCountBadge)
+
+            Text("Display number of remaining meetings today")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var travelTimeAlertsToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Enable travel time alerts", isOn: $tempShowTravelTimeAlerts)
+
+            Text("Get notifications when it's time to leave for meetings with physical locations")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var travelModePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Default travel mode:")
+                .font(.body)
+
+            Picker("", selection: $tempDefaultTravelMode) {
+                ForEach(TravelMode.allCases) { mode in
+                    Label(mode.rawValue, systemImage: mode.icon).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Text("Used to calculate travel time and route to physical meeting locations")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var keyboardShortcutsInfo: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            shortcutRow(keys: "⌘⇧M", description: "Join next meeting")
+            shortcutRow(keys: "⌘⇧O", description: "Open/close dropdown")
+            shortcutRow(keys: "⌘⇧R", description: "Refresh meetings")
+
+            Text("Global keyboard shortcuts for quick access")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+        }
+    }
+
+    private func shortcutRow(keys: String, description: String) -> some View {
+        HStack {
+            Text(keys)
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundColor(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [.gray.opacity(0.8), .gray.opacity(0.6)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                )
+
+            Text(description)
+                .font(.system(size: 12))
+                .foregroundColor(.primary)
+
+            Spacer()
         }
     }
 

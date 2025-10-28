@@ -5,76 +5,284 @@ struct MeetingRowView: View {
     let event: CalendarEvent
     let onTap: () -> Void
     @State private var isHovered = false
+    @State private var isPressed = false
+    @State private var showLocationDetails = false
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(alignment: .top, spacing: 12) {
-                // Calendar color indicator
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color(hex: event.calendarColorHex))
-                    .frame(width: 3)
+        VStack(alignment: .leading, spacing: 8) {
+            mainMeetingCard
 
-                VStack(alignment: .leading, spacing: 6) {
-                    // Time and countdown
-                    HStack(spacing: 6) {
-                        Text(event.formattedTime)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.primary)
+            // Location card if available
+            if event.hasPhysicalLocation {
+                LocationCardView(event: event)
+                    .padding(.horizontal, 8)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+    }
 
-                        Text("•")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
+    private var mainMeetingCard: some View {
+        Button(action: {
+            if event.hasVideoLink {
+                onTap()
+            }
+        }) {
+            HStack(alignment: .top, spacing: 0) {
+                // Vibrant calendar color stripe with glow
+                ZStack(alignment: .leading) {
+                    // Glow effect
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color(hex: event.calendarColorHex))
+                        .frame(width: 4)
+                        .blur(radius: 4)
+                        .opacity(0.6)
 
-                        Text(event.timeUntilStart)
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                    // Solid color bar
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(hex: event.calendarColorHex),
+                                    Color(hex: event.calendarColorHex).opacity(0.8)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 4)
+                }
+                .frame(width: 4)
+
+                Spacer()
+                    .frame(width: 12)
+
+                // Content area
+                VStack(alignment: .leading, spacing: 8) {
+                    // Time badge and status
+                    HStack(spacing: 8) {
+                        // Time badge with glass effect
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.blue, .cyan],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+
+                            Text(event.formattedTime)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.primary)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(
+                            Capsule()
+                                .fill(.regularMaterial)
+                                .shadow(color: Color.blue.opacity(0.1), radius: 4, x: 0, y: 2)
+                        )
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [Color.blue.opacity(0.3), Color.cyan.opacity(0.2)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+
+                        // Countdown badge
+                        countdownBadge
                     }
 
-                    // Meeting title
+                    // Meeting title with elegant typography
                     Text(event.title)
-                        .font(.system(size: 13))
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
                         .foregroundColor(.primary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                    // Location (if available)
-                    if let location = event.location, !location.isEmpty {
+                    // Metadata row
+                    HStack(spacing: 10) {
+                        // Calendar name
                         HStack(spacing: 4) {
-                            Image(systemName: "location.fill")
-                                .font(.system(size: 9))
-                                .foregroundColor(.secondary)
-                            Text(location)
+                            Circle()
+                                .fill(Color(hex: event.calendarColorHex))
+                                .frame(width: 6, height: 6)
+                            Text(event.calendarName)
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
-                                .lineLimit(1)
+                        }
+
+                        // Attendee count if available
+                        if event.attendeeCount > 0 {
+                            HStack(spacing: 4) {
+                                Image(systemName: "person.2.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.secondary)
+                                Text("\(event.attendeeCount)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: 12)
 
-                // Video platform icon
+                // Video platform icon with glassmorphic button
                 if let platform = event.videoPlatform {
-                    videoPlatformIcon(platform)
-                        .frame(width: 20, height: 20)
+                    videoPlatformButton(platform)
                 }
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
+            .padding(14)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isHovered ? Color(nsColor: .controlAccentColor).opacity(0.08) : Color.clear)
+                ZStack {
+                    // Base glass layer
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(.ultraThinMaterial)
+
+                    // Hover effect layer
+                    if isHovered && event.hasVideoLink {
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.08),
+                                        Color.accentColor.opacity(0.04)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .transition(.opacity)
+                    }
+
+                    // Pressed effect
+                    if isPressed {
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.primary.opacity(0.05))
+                    }
+                }
             )
-            .contentShape(Rectangle())
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.primary.opacity(isHovered ? 0.15 : 0.08),
+                                Color.primary.opacity(isHovered ? 0.08 : 0.04)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(
+                color: Color.black.opacity(isHovered ? 0.08 : 0.04),
+                radius: isHovered ? 12 : 6,
+                x: 0,
+                y: isHovered ? 6 : 3
+            )
+            .scaleEffect(isPressed ? 0.98 : 1.0)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    withAnimation(.easeOut(duration: 0.1)) {
+                        isPressed = true
+                    }
+                }
+                .onEnded { _ in
+                    withAnimation(.easeOut(duration: 0.1)) {
+                        isPressed = false
+                    }
+                }
+        )
         .onHover { hovering in
-            isHovered = hovering
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
             if hovering && event.hasVideoLink {
                 NSCursor.pointingHand.push()
             } else if !hovering {
                 NSCursor.pop()
             }
+        }
+    }
+
+    private var countdownBadge: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(timeUntilStartColor)
+                .frame(width: 6, height: 6)
+
+            Text(event.timeUntilStart)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            Capsule()
+                .fill(.regularMaterial)
+        )
+    }
+
+    private var timeUntilStartColor: Color {
+        let interval = event.startDate.timeIntervalSince(Date())
+        let minutes = Int(interval / 60)
+
+        if minutes <= 5 {
+            return .red
+        } else if minutes <= 15 {
+            return .orange
+        } else {
+            return .green
+        }
+    }
+
+    private func videoPlatformButton(_ platform: VideoPlatform) -> some View {
+        ZStack {
+            // Glassmorphic background
+            Circle()
+                .fill(.regularMaterial)
+                .frame(width: 42, height: 42)
+                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+
+            // Platform-specific gradient overlay
+            Circle()
+                .fill(platformGradient(for: platform).opacity(0.15))
+                .frame(width: 42, height: 42)
+
+            // Icon
+            videoPlatformIcon(platform)
+                .frame(width: 22, height: 22)
+        }
+        .overlay(
+            Circle()
+                .strokeBorder(platformGradient(for: platform).opacity(0.3), lineWidth: 1.5)
+        )
+    }
+
+    private func platformGradient(for platform: VideoPlatform) -> LinearGradient {
+        switch platform {
+        case .meet:
+            return LinearGradient(colors: [.green, .mint], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .zoom:
+            return LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .teams:
+            return LinearGradient(colors: [.purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .webex:
+            return LinearGradient(colors: [.orange, .yellow], startPoint: .topLeading, endPoint: .bottomTrailing)
         }
     }
 

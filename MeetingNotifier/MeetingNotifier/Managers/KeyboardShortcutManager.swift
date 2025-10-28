@@ -1,0 +1,182 @@
+import Cocoa
+import Carbon
+
+@MainActor
+class KeyboardShortcutManager: ObservableObject {
+    static let shared = KeyboardShortcutManager()
+
+    private var eventHandlers: [EventHotKeyID: () -> Void] = [:]
+    private var installedHotKeys: [EventHotKeyRef?] = []
+
+    private init() {
+        setupDefaultShortcuts()
+    }
+
+    private func setupDefaultShortcuts() {
+        // ⌘⇧M - Join next meeting
+        registerShortcut(
+            keyCode: kVK_ANSI_M,
+            modifiers: [.command, .shift],
+            identifier: "joinNextMeeting"
+        ) { [weak self] in
+            self?.joinNextMeeting()
+        }
+
+        // ⌘⇧O - Open dropdown menu
+        registerShortcut(
+            keyCode: kVK_ANSI_O,
+            modifiers: [.command, .shift],
+            identifier: "openDropdown"
+        ) { [weak self] in
+            self?.openDropdown()
+        }
+
+        // ⌘⇧R - Refresh meetings
+        registerShortcut(
+            keyCode: kVK_ANSI_R,
+            modifiers: [.command, .shift],
+            identifier: "refreshMeetings"
+        ) { [weak self] in
+            self?.refreshMeetings()
+        }
+    }
+
+    private func registerShortcut(
+        keyCode: UInt32,
+        modifiers: [ShortcutModifier],
+        identifier: String,
+        handler: @escaping () -> Void
+    ) {
+        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        var hotKeyRef: EventHotKeyRef?
+
+        let hotKeyID = EventHotKeyID(signature: OSType(identifier.hashValue), id: UInt32(identifier.hashValue))
+
+        let carbonModifiers = modifiers.reduce(UInt32(0)) { result, modifier in
+            result | modifier.carbonModifier
+        }
+
+        let status = RegisterEventHotKey(
+            keyCode,
+            carbonModifiers,
+            hotKeyID,
+            GetEventDispatcherTarget(),
+            0,
+            &hotKeyRef
+        )
+
+        if status == noErr {
+            installedHotKeys.append(hotKeyRef)
+            eventHandlers[hotKeyID] = handler
+
+            // Install event handler
+            InstallEventHandler(
+                GetEventDispatcherTarget(),
+                { (_, inEvent, _) -> OSStatus in
+                    var hotKeyID = EventHotKeyID()
+                    GetEventParameter(
+                        inEvent,
+                        EventParamName(kEventParamDirectObject),
+                        EventParamType(typeEventHotKeyID),
+                        nil,
+                        MemoryLayout<EventHotKeyID>.size,
+                        nil,
+                        &hotKeyID
+                    )
+
+                    Task { @MainActor in
+                        KeyboardShortcutManager.shared.handleHotKey(hotKeyID)
+                    }
+
+                    return noErr
+                },
+                1,
+                &eventType,
+                nil,
+                nil
+            )
+        }
+    }
+
+    private func handleHotKey(_ hotKeyID: EventHotKeyID) {
+        eventHandlers[hotKeyID]?()
+    }
+
+    private func joinNextMeeting() {
+        let events = CalendarDataManager.shared.events
+        let now = Date()
+
+        // Find the next meeting with a video link
+        if let nextMeeting = events.first(where: { $0.startDate >= now && $0.hasVideoLink }) {
+            if let conferenceLink = nextMeeting.conferenceLink,
+               let url = URL(string: conferenceLink) {
+                AppSettings.shared.openURL(url)
+
+                // Show notification
+                showNotification(
+                    title: "Joining Meeting",
+                    message: nextMeeting.title
+                )
+            }
+        } else {
+            showNotification(
+                title: "No Upcoming Meetings",
+                message: "No meetings with video links found"
+            )
+        }
+    }
+
+    private func openDropdown() {
+        // Post notification to trigger dropdown
+        NotificationCenter.default.post(name: .toggleDropdown, object: nil)
+    }
+
+    private func refreshMeetings() {
+        Task {
+            await CalendarDataManager.shared.refreshEvents()
+            showNotification(
+                title: "Meetings Refreshed",
+                message: "Your calendar has been updated"
+            )
+        }
+    }
+
+    private func showNotification(title: String, message: String) {
+        let notification = NSUserNotification()
+        notification.title = title
+        notification.informativeText = message
+        notification.soundName = nil
+        NSUserNotificationCenter.default.deliver(notification)
+    }
+
+    deinit {
+        // Unregister all hot keys
+        for hotKeyRef in installedHotKeys {
+            if let ref = hotKeyRef {
+                UnregisterEventHotKey(ref)
+            }
+        }
+    }
+}
+
+// MARK: - Supporting Types
+
+enum ShortcutModifier {
+    case command
+    case shift
+    case option
+    case control
+
+    var carbonModifier: UInt32 {
+        switch self {
+        case .command: return UInt32(cmdKey)
+        case .shift: return UInt32(shiftKey)
+        case .option: return UInt32(optionKey)
+        case .control: return UInt32(controlKey)
+        }
+    }
+}
+
+extension Notification.Name {
+    static let toggleDropdown = Notification.Name("toggleDropdown")
+}

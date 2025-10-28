@@ -15,6 +15,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
 
         _ = NotificationManager.shared
+        _ = KeyboardShortcutManager.shared
+        _ = LocationManager.shared
 
         NSAppleEventManager.shared().setEventHandler(
             self,
@@ -36,6 +38,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             name: .settingsRequested,
             object: nil
         )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(toggleDropdown),
+            name: .toggleDropdown,
+            object: nil
+        )
+    }
+
+    @objc private func toggleDropdown() {
+        guard let button = statusItem?.button else { return }
+
+        if popover?.isShown == true {
+            popover?.performClose(nil)
+        } else {
+            popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        }
     }
 
     @objc func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
@@ -82,26 +101,74 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if hasAuthIssues {
             button.title = "⚠️"
-            button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar - Authentication Issue")
-        } else if AppSettings.shared.showInMenuBar {
-            if let nextMeeting = getNextMeetingForMenuBar() {
-                let truncatedTitle = truncateTitle(nextMeeting.title, maxLength: 30)
-                let icon = getIconForEvent(nextMeeting)
+            button.image = NSImage(systemSymbolName: "calendar.badge.exclamationmark", accessibilityDescription: "Calendar - Authentication Issue")
+            return
+        }
+
+        let nextMeeting = getNextMeetingForMenuBar()
+        let settings = AppSettings.shared
+
+        // Apply display mode
+        if let meeting = nextMeeting, settings.showInMenuBar {
+            button.image = nil
+
+            switch settings.menuBarDisplayMode {
+            case .iconOnly:
+                button.title = getIconForEvent(meeting)
+
+            case .iconAndTitle:
+                let truncatedTitle = truncateTitle(meeting.title, maxLength: 25)
+                let icon = getIconForEvent(meeting)
                 button.title = "\(icon) \(truncatedTitle)"
-                button.image = nil
-            } else {
-                button.title = ""
-                button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
+
+            case .timeOnly:
+                button.title = meeting.formattedTime
+
+            case .timeAndTitle:
+                let truncatedTitle = truncateTitle(meeting.title, maxLength: 20)
+                button.title = "\(meeting.formattedTime) \(truncatedTitle)"
+
+            case .countdown:
+                button.title = meeting.timeUntilStart
             }
+
+            // Add meeting count badge if enabled
+            if settings.showMeetingCountBadge {
+                let todayMeetingsCount = CalendarDataManager.shared.todayEvents().count
+                if todayMeetingsCount > 1 {
+                    button.title = (button.title ?? "") + " (\(todayMeetingsCount))"
+                }
+            }
+
         } else {
+            // No meeting or showInMenuBar is false
             button.title = ""
-            button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
+            let calendarImage = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
+
+            // Add badge indicator for today's meeting count
+            if settings.showMeetingCountBadge {
+                let todayMeetingsCount = CalendarDataManager.shared.todayEvents().count
+                if todayMeetingsCount > 0 {
+                    // Create an attributed string with badge
+                    button.title = String(todayMeetingsCount)
+                    button.image = calendarImage
+                } else {
+                    button.image = calendarImage
+                }
+            } else {
+                button.image = calendarImage
+            }
         }
     }
 
     private func getNextMeetingForMenuBar() -> CalendarEvent? {
         let now = Date()
-        let threshold = now.addingTimeInterval(15 * 60)
+        let settings = AppSettings.shared
+
+        // Use configurable threshold or show all day
+        let threshold = settings.showAllDayInMenuBar ?
+            Calendar.current.date(byAdding: .day, value: 1, to: now)! :
+            now.addingTimeInterval(Double(settings.menuBarThresholdMinutes * 60))
 
         let upcomingMeetings = CalendarDataManager.shared.events.filter { event in
             event.startDate >= now && event.startDate <= threshold && event.endDate >= now
