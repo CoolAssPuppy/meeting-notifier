@@ -25,8 +25,12 @@ class LocationManager: NSObject, ObservableObject {
 
         switch status {
         case .notDetermined:
+            #if os(iOS)
             locationManager.requestWhenInUseAuthorization()
-        case .authorizedWhenInUse, .authorizedAlways:
+            #else
+            locationManager.requestAlwaysAuthorization()
+            #endif
+        case .authorized, .authorizedAlways:
             locationManager.requestLocation()
         default:
             break
@@ -179,10 +183,10 @@ extension LocationManager: CLLocationManagerDelegate {
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
         Task { @MainActor in
-            if manager.authorizationStatus == .authorizedWhenInUse ||
-               manager.authorizationStatus == .authorizedAlways {
-                manager.requestLocation()
+            if status == .authorized || status == .authorizedAlways {
+                self.locationManager.requestLocation()
             }
         }
     }

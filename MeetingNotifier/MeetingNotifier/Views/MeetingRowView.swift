@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import MapKit
 
 struct MeetingRowView: View {
     let event: CalendarEvent

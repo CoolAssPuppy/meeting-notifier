@@ -6,8 +6,6 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIconFile</key>
-	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -18,36 +16,19 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.629178373267-231fgipboj4pb20vhgi672lqm2917ha2</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.strategicnerds.meetingnotifier</string>
-			</array>
-		</dict>
-	</array>
 	<key>CFBundleVersion</key>
-	<string>2029</string>
-	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.productivity</string>
+	<string>1</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
+	<key>NSLocationUsageDescription</key>
+	<string>MeetingNotifier needs your location to calculate travel time to meeting locations.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MeetingNotifier needs your location to calculate travel time to meeting locations.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Meeting Notifier needs your location to calculate travel time to meeting locations and provide timely departure reminders.</string>
-	<key>NSLocationUsageDescription</key>
-	<string>Meeting Notifier uses your location to calculate accurate travel times for meetings with physical locations.</string>
 </dict>
 </plist>

@@ -7,6 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     private var popover: NSPopover?
     private var menuBarUpdateTimer: Timer?
+    private var eventMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
@@ -48,12 +49,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func toggleDropdown() {
-        guard let button = statusItem?.button else { return }
+        guard statusItem?.button != nil else { return }
 
         if popover?.isShown == true {
-            popover?.performClose(nil)
+            closePopover()
         } else {
-            popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            showPopover()
         }
     }
 
@@ -110,25 +111,38 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Apply display mode
         if let meeting = nextMeeting, settings.showInMenuBar {
-            button.image = nil
-
             switch settings.menuBarDisplayMode {
             case .iconOnly:
-                button.title = getIconForEvent(meeting)
+                if let iconImage = getIconImageForEvent(meeting) {
+                    button.image = iconImage
+                    button.title = ""
+                } else {
+                    button.image = nil
+                    button.title = getIconForEvent(meeting)
+                }
 
             case .iconAndTitle:
                 let truncatedTitle = truncateTitle(meeting.title, maxLength: 25)
-                let icon = getIconForEvent(meeting)
-                button.title = "\(icon) \(truncatedTitle)"
+                if let iconImage = getIconImageForEvent(meeting) {
+                    button.image = iconImage
+                    button.title = " \(truncatedTitle)"
+                } else {
+                    button.image = nil
+                    let icon = getIconForEvent(meeting)
+                    button.title = "\(icon) \(truncatedTitle)"
+                }
 
             case .timeOnly:
+                button.image = nil
                 button.title = meeting.formattedTime
 
             case .timeAndTitle:
+                button.image = nil
                 let truncatedTitle = truncateTitle(meeting.title, maxLength: 20)
                 button.title = "\(meeting.formattedTime) \(truncatedTitle)"
 
             case .countdown:
+                button.image = nil
                 button.title = meeting.timeUntilStart
             }
 
@@ -136,7 +150,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if settings.showMeetingCountBadge {
                 let todayMeetingsCount = CalendarDataManager.shared.todayEvents().count
                 if todayMeetingsCount > 1 {
-                    button.title = (button.title ?? "") + " (\(todayMeetingsCount))"
+                    button.title = button.title + " (\(todayMeetingsCount))"
                 }
             }
 
@@ -197,6 +211,46 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return "📅"
     }
 
+    private func getIconImageForEvent(_ event: CalendarEvent) -> NSImage? {
+        // If there's a recognized video platform, load its icon
+        if let platform = event.videoPlatform {
+            switch platform {
+            case .meet:
+                if let imagePath = Bundle.main.path(forResource: "meet", ofType: "png"),
+                   let image = NSImage(contentsOfFile: imagePath) {
+                    image.size = NSSize(width: 16, height: 16)
+                    return image
+                }
+            case .zoom:
+                if let imagePath = Bundle.main.path(forResource: "zoom", ofType: "png"),
+                   let image = NSImage(contentsOfFile: imagePath) {
+                    image.size = NSSize(width: 16, height: 16)
+                    return image
+                }
+            case .teams:
+                if let imagePath = Bundle.main.path(forResource: "teams", ofType: "png"),
+                   let image = NSImage(contentsOfFile: imagePath) {
+                    image.size = NSSize(width: 16, height: 16)
+                    return image
+                }
+            case .webex:
+                if let image = NSImage(systemSymbolName: "video.fill", accessibilityDescription: "Webex") {
+                    image.size = NSSize(width: 16, height: 16)
+                    return image
+                }
+            }
+        } else if event.conferenceLink != nil {
+            // Has a conference link but no recognized platform - likely a phone number
+            if let image = NSImage(systemSymbolName: "phone.fill", accessibilityDescription: "Phone") {
+                image.size = NSSize(width: 16, height: 16)
+                return image
+            }
+        }
+
+        // No conference link - return nil to use emoji fallback
+        return nil
+    }
+
     private func truncateTitle(_ title: String, maxLength: Int) -> String {
         if title.count <= maxLength {
             return title
@@ -206,17 +260,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func menuBarButtonClicked() {
-        guard let button = statusItem?.button else { return }
+        guard statusItem?.button != nil else { return }
 
         if popover?.isShown == true {
-            popover?.performClose(nil)
+            closePopover()
         } else {
-            popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            showPopover()
+        }
+    }
+
+    private func showPopover() {
+        guard let button = statusItem?.button else { return }
+        popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        startMonitoringForClicksOutsidePopover()
+    }
+
+    private func closePopover() {
+        popover?.performClose(nil)
+        stopMonitoringForClicksOutsidePopover()
+    }
+
+    private func startMonitoringForClicksOutsidePopover() {
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            if self?.popover?.isShown == true {
+                self?.closePopover()
+            }
+        }
+    }
+
+    private func stopMonitoringForClicksOutsidePopover() {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
         }
     }
 
     @objc private func handleAddAccountRequest(_ notification: Notification) {
-        popover?.performClose(nil)
+        closePopover()
 
         if let provider = notification.userInfo?["provider"] as? String {
             if provider == "google" {
@@ -230,7 +310,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func handleSettingsRequest() {
-        popover?.performClose(nil)
+        closePopover()
         openSettings()
     }
 

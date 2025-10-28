@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 import AppAuth
 
 @MainActor
@@ -34,21 +35,43 @@ class GoogleOAuthManager {
             additionalParameters: ["prompt": "select_account"]
         )
 
-        currentAuthorizationFlow = OIDAuthState.authState(
-            byPresenting: request,
-            callback: { [weak self] state, error in
-                self?.currentAuthorizationFlow = nil
-                if let state = state {
-                    completion(.success(state))
-                } else {
-                    completion(.failure(error ?? NSError(
-                        domain: "GoogleOAuth",
-                        code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: "Google OAuth failed"]
-                    )))
+        if #available(macOS 10.15, *) {
+            let window = NSApplication.shared.windows.first ?? NSWindow()
+            currentAuthorizationFlow = OIDAuthState.authState(
+                byPresenting: request,
+                presenting: window,
+                callback: { [weak self] state, error in
+                    self?.currentAuthorizationFlow = nil
+                    if let state = state {
+                        completion(.success(state))
+                    } else {
+                        completion(.failure(error ?? NSError(
+                            domain: "GoogleOAuth",
+                            code: -1,
+                            userInfo: [NSLocalizedDescriptionKey: "Google OAuth failed"]
+                        )))
+                    }
                 }
-            }
-        )
+            )
+        } else {
+            #if compiler(<6.0)
+            currentAuthorizationFlow = OIDAuthState.authState(
+                byPresenting: request,
+                callback: { [weak self] state, error in
+                    self?.currentAuthorizationFlow = nil
+                    if let state = state {
+                        completion(.success(state))
+                    } else {
+                        completion(.failure(error ?? NSError(
+                            domain: "GoogleOAuth",
+                            code: -1,
+                            userInfo: [NSLocalizedDescriptionKey: "Google OAuth failed"]
+                        )))
+                    }
+                }
+            )
+            #endif
+        }
     }
 
     func resumeAuthFlow(url: URL) -> Bool {

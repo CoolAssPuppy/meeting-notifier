@@ -5,8 +5,9 @@ import Carbon
 class KeyboardShortcutManager: ObservableObject {
     static let shared = KeyboardShortcutManager()
 
-    private var eventHandlers: [EventHotKeyID: () -> Void] = [:]
+    private var eventHandlers: [UInt32: () -> Void] = [:]
     private var installedHotKeys: [EventHotKeyRef?] = []
+    private var nextHotKeyID: UInt32 = 1
 
     private init() {
         setupDefaultShortcuts()
@@ -15,27 +16,24 @@ class KeyboardShortcutManager: ObservableObject {
     private func setupDefaultShortcuts() {
         // ⌘⇧M - Join next meeting
         registerShortcut(
-            keyCode: kVK_ANSI_M,
-            modifiers: [.command, .shift],
-            identifier: "joinNextMeeting"
+            keyCode: UInt32(kVK_ANSI_M),
+            modifiers: [.command, .shift]
         ) { [weak self] in
             self?.joinNextMeeting()
         }
 
         // ⌘⇧O - Open dropdown menu
         registerShortcut(
-            keyCode: kVK_ANSI_O,
-            modifiers: [.command, .shift],
-            identifier: "openDropdown"
+            keyCode: UInt32(kVK_ANSI_O),
+            modifiers: [.command, .shift]
         ) { [weak self] in
             self?.openDropdown()
         }
 
         // ⌘⇧R - Refresh meetings
         registerShortcut(
-            keyCode: kVK_ANSI_R,
-            modifiers: [.command, .shift],
-            identifier: "refreshMeetings"
+            keyCode: UInt32(kVK_ANSI_R),
+            modifiers: [.command, .shift]
         ) { [weak self] in
             self?.refreshMeetings()
         }
@@ -44,13 +42,16 @@ class KeyboardShortcutManager: ObservableObject {
     private func registerShortcut(
         keyCode: UInt32,
         modifiers: [ShortcutModifier],
-        identifier: String,
         handler: @escaping () -> Void
     ) {
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         var hotKeyRef: EventHotKeyRef?
 
-        let hotKeyID = EventHotKeyID(signature: OSType(identifier.hashValue), id: UInt32(identifier.hashValue))
+        let currentID = nextHotKeyID
+        nextHotKeyID += 1
+
+        // "MNTF" as FourCharCode = 0x4D4E5446
+        let hotKeyID = EventHotKeyID(signature: 0x4D4E5446, id: currentID)
 
         let carbonModifiers = modifiers.reduce(UInt32(0)) { result, modifier in
             result | modifier.carbonModifier
@@ -67,7 +68,7 @@ class KeyboardShortcutManager: ObservableObject {
 
         if status == noErr {
             installedHotKeys.append(hotKeyRef)
-            eventHandlers[hotKeyID] = handler
+            eventHandlers[currentID] = handler
 
             // Install event handler
             InstallEventHandler(
@@ -85,7 +86,7 @@ class KeyboardShortcutManager: ObservableObject {
                     )
 
                     Task { @MainActor in
-                        KeyboardShortcutManager.shared.handleHotKey(hotKeyID)
+                        KeyboardShortcutManager.shared.eventHandlers[hotKeyID.id]?()
                     }
 
                     return noErr
@@ -96,10 +97,6 @@ class KeyboardShortcutManager: ObservableObject {
                 nil
             )
         }
-    }
-
-    private func handleHotKey(_ hotKeyID: EventHotKeyID) {
-        eventHandlers[hotKeyID]?()
     }
 
     private func joinNextMeeting() {
@@ -147,15 +144,6 @@ class KeyboardShortcutManager: ObservableObject {
         notification.informativeText = message
         notification.soundName = nil
         NSUserNotificationCenter.default.deliver(notification)
-    }
-
-    deinit {
-        // Unregister all hot keys
-        for hotKeyRef in installedHotKeys {
-            if let ref = hotKeyRef {
-                UnregisterEventHotKey(ref)
-            }
-        }
     }
 }
 

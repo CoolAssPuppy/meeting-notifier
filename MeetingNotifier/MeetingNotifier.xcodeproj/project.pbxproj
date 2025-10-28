@@ -48,6 +48,9 @@
 		F36CC532F0F7352936E7ADBB /* MeetingRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF8BE44552F1A7DB440227F /* MeetingRowView.swift */; };
 		F79D179861F84FEDB8602D18 /* NotificationsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF827963E378A79042A96F8 /* NotificationsTab.swift */; };
 		FB3DC9BA85247D28FC65624B /* MicrosoftCalendarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68D727670FEA4120BE81D4B4 /* MicrosoftCalendarManager.swift */; };
+		AA11BB22CC33DD44EE55FF66 /* KeyboardShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AA22BB33CC44DD55EE66FF /* KeyboardShortcutManager.swift */; };
+		BB22CC33DD44EE55FF66AA77 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BB33CC44DD55EE66FF77AA /* LocationManager.swift */; };
+		CC33DD44EE55FF66AA77BB88 /* LocationCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC44DD55EE66FF77AA88BB /* LocationCardView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -94,6 +97,9 @@
 		DA7FEDDBF3BD6E0E8597EB07 /* create_project.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_project.sh; sourceTree = "<group>"; };
 		DAF827963E378A79042A96F8 /* NotificationsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsTab.swift; sourceTree = "<group>"; };
 		DF916CB5D1C8F583CB7B575A /* CalendarDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDataManager.swift; sourceTree = "<group>"; };
+		11AA22BB33CC44DD55EE66FF /* KeyboardShortcutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutManager.swift; sourceTree = "<group>"; };
+		22BB33CC44DD55EE66FF77AA /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		33CC44DD55EE66FF77AA88BB /* LocationCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationCardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -163,6 +169,8 @@
 				A8CE3151B90368012D5C7D67 /* GoogleOAuthManager.swift */,
 				D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */,
 				4205A3237438BB1159863C7A /* GoogleOAuthSecret.swift.template */,
+				11AA22BB33CC44DD55EE66FF /* KeyboardShortcutManager.swift */,
+				22BB33CC44DD55EE66FF77AA /* LocationManager.swift */,
 				68D727670FEA4120BE81D4B4 /* MicrosoftCalendarManager.swift */,
 				A3369D61B617FA8A1C9783DC /* MicrosoftOAuthManager.swift */,
 				450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */,
@@ -190,6 +198,7 @@
 				0E3FFD5D42715A0F4F02280D /* CalendarsTab.swift */,
 				776D3E787DE246BB9E182B1C /* ConfigTab.swift */,
 				D4799E009A8C6897F7BDD4CC /* EmptyStateView.swift */,
+				33CC44DD55EE66FF77AA88BB /* LocationCardView.swift */,
 				4CF8BE44552F1A7DB440227F /* MeetingRowView.swift */,
 				DAF827963E378A79042A96F8 /* NotificationsTab.swift */,
 				528350AB38541C048479C7F8 /* SettingsView.swift */,
@@ -335,6 +344,9 @@
 				E5DF351A4562D05A2D080B1D /* SettingsView.swift in Sources */,
 				F2FDA8C3F5C28357E62CE98A /* CoffeeView.swift in Sources */,
 				6693B8210ECFC7343C66EAE1 /* StoreKitManager.swift in Sources */,
+				AA11BB22CC33DD44EE55FF66 /* KeyboardShortcutManager.swift in Sources */,
+				BB22CC33DD44EE55FF66AA77 /* LocationManager.swift in Sources */,
+				CC33DD44EE55FF66AA77BB88 /* LocationCardView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
