@@ -15,7 +15,8 @@ class KeychainManager {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: account,
-            kSecValueData as String: tokenData
+            kSecValueData as String: tokenData,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
         ]
 
         SecItemDelete(query as CFDictionary)
