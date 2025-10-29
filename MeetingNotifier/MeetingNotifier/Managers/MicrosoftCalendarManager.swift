@@ -79,14 +79,21 @@ class MicrosoftCalendarManager {
         let startString = dateFormatter.string(from: startDate)
         let endString = dateFormatter.string(from: endDate)
 
-        var components = URLComponents(string: "https://graph.microsoft.com/v1.0/me/calendars/\(calendarId)/events")!
+        guard var components = URLComponents(string: "https://graph.microsoft.com/v1.0/me/calendars/\(calendarId)/events") else {
+            throw CalendarError.apiError("Invalid calendar ID")
+        }
+
         components.queryItems = [
             URLQueryItem(name: "$filter", value: "start/dateTime ge '\(startString)' and end/dateTime le '\(endString)'"),
             URLQueryItem(name: "$orderby", value: "start/dateTime"),
             URLQueryItem(name: "$select", value: "id,subject,start,end,location,bodyPreview,onlineMeeting,isReminderOn,reminderMinutesBeforeStart,attendees")
         ]
 
-        var request = URLRequest(url: components.url!)
+        guard let url = components.url else {
+            throw CalendarError.apiError("Failed to construct URL")
+        }
+
+        var request = URLRequest(url: url)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
 
         let (data, response) = try await URLSession.shared.data(for: request)

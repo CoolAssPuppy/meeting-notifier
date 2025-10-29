@@ -1,5 +1,6 @@
 import Cocoa
 import Carbon
+import UserNotifications
 
 @MainActor
 class KeyboardShortcutManager: ObservableObject {
@@ -139,11 +140,21 @@ class KeyboardShortcutManager: ObservableObject {
     }
 
     private func showNotification(title: String, message: String) {
-        let notification = NSUserNotification()
-        notification.title = title
-        notification.informativeText = message
-        notification.soundName = nil
-        NSUserNotificationCenter.default.deliver(notification)
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = message
+        content.sound = nil
+
+        let identifier = "keyboard_shortcut_\(UUID().uuidString)"
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+
+        Task {
+            do {
+                try await UNUserNotificationCenter.current().add(request)
+            } catch {
+                print("Error showing keyboard shortcut notification: \(error)")
+            }
+        }
     }
 }
 

@@ -98,11 +98,22 @@ class CalendarDataManager: ObservableObject {
 
     func fetchCalendarsForAccount(_ account: CalendarAccount) async -> [CalendarInfo] {
         do {
+            var calendars: [CalendarInfo]
             switch account.provider {
             case .google:
-                return try await GoogleCalendarManager.shared.fetchCalendarList(forAccount: account)
+                calendars = try await GoogleCalendarManager.shared.fetchCalendarList(forAccount: account)
             case .microsoft:
-                return try await MicrosoftCalendarManager.shared.fetchCalendarList(forAccount: account)
+                calendars = try await MicrosoftCalendarManager.shared.fetchCalendarList(forAccount: account)
+            }
+
+            // Apply custom colors if available
+            return calendars.map { calendar in
+                if let customColor = AppSettings.shared.getCustomColor(forCalendar: calendar.id, account: account.email) {
+                    var updatedCalendar = calendar
+                    updatedCalendar.colorHex = customColor
+                    return updatedCalendar
+                }
+                return calendar
             }
         } catch {
             print("Error fetching calendars for \(account.email): \(error)")

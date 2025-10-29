@@ -19,6 +19,7 @@ struct ConfigTab: View {
     @State private var tempShowMeetingCountBadge: Bool
     @State private var tempShowTravelTimeAlerts: Bool
     @State private var tempDefaultTravelMode: TravelMode
+    @State private var tempPreferredMapProvider: MapProvider
     @State private var showingAppPicker = false
     @State private var customAppURL: URL?
     @State private var showingCoffee = false
@@ -39,6 +40,7 @@ struct ConfigTab: View {
         _tempShowMeetingCountBadge = State(initialValue: settings.showMeetingCountBadge)
         _tempShowTravelTimeAlerts = State(initialValue: settings.showTravelTimeAlerts)
         _tempDefaultTravelMode = State(initialValue: settings.defaultTravelMode)
+        _tempPreferredMapProvider = State(initialValue: settings.preferredMapProvider)
     }
 
     var body: some View {
@@ -74,6 +76,7 @@ struct ConfigTab: View {
                             if tempShowTravelTimeAlerts {
                                 travelModePicker
                             }
+                            mapProviderPicker
                         } header: {
                             sectionHeader(icon: "location.circle.fill", title: "Travel & Location", gradient: [.green, .mint])
                         }
@@ -180,6 +183,7 @@ struct ConfigTab: View {
         settings.showMeetingCountBadge = tempShowMeetingCountBadge
         settings.showTravelTimeAlerts = tempShowTravelTimeAlerts
         settings.defaultTravelMode = tempDefaultTravelMode
+        settings.preferredMapProvider = tempPreferredMapProvider
     }
 
     private func sectionHeader(icon: String, title: String, gradient: [Color]) -> some View {
@@ -390,6 +394,24 @@ struct ConfigTab: View {
             .pickerStyle(.segmented)
 
             Text("Used to calculate travel time and route to physical meeting locations")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var mapProviderPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Preferred map:")
+                .font(.body)
+
+            Picker("", selection: $tempPreferredMapProvider) {
+                ForEach(MapProvider.allCases) { provider in
+                    Label(provider.rawValue, systemImage: provider.icon).tag(provider)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Text("Choose which map app to use when opening location directions")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

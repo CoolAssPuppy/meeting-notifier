@@ -199,9 +199,13 @@ struct TravelTimeInfo: Codable {
     let travelTimeMinutes: Int
     let distance: Double
     let formattedAddress: String
-    let coordinate: CLLocationCoordinate2D
+    private let coordinateData: CodableCoordinate
     let calculatedAt: Date
     let leaveByTime: Date
+
+    var coordinate: CLLocationCoordinate2D {
+        coordinateData.clCoordinate
+    }
 
     var shouldLeaveNow: Bool {
         Date() >= leaveByTime
@@ -222,25 +226,30 @@ struct TravelTimeInfo: Codable {
             return "Leave in \(hours)h \(mins)m"
         }
     }
+
+    init(eventId: String, travelTimeMinutes: Int, distance: Double, formattedAddress: String, coordinate: CLLocationCoordinate2D, calculatedAt: Date, leaveByTime: Date) {
+        self.eventId = eventId
+        self.travelTimeMinutes = travelTimeMinutes
+        self.distance = distance
+        self.formattedAddress = formattedAddress
+        self.coordinateData = CodableCoordinate(coordinate)
+        self.calculatedAt = calculatedAt
+        self.leaveByTime = leaveByTime
+    }
 }
 
-extension CLLocationCoordinate2D: Codable {
-    enum CodingKeys: String, CodingKey {
-        case latitude
-        case longitude
+// Wrapper to make CLLocationCoordinate2D Codable without extending imported type
+struct CodableCoordinate: Codable {
+    let latitude: CLLocationDegrees
+    let longitude: CLLocationDegrees
+
+    var clCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let latitude = try container.decode(CLLocationDegrees.self, forKey: .latitude)
-        let longitude = try container.decode(CLLocationDegrees.self, forKey: .longitude)
-        self.init(latitude: latitude, longitude: longitude)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(latitude, forKey: .latitude)
-        try container.encode(longitude, forKey: .longitude)
+    init(_ coordinate: CLLocationCoordinate2D) {
+        self.latitude = coordinate.latitude
+        self.longitude = coordinate.longitude
     }
 }
 

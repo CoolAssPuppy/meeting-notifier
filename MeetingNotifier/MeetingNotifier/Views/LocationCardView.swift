@@ -191,10 +191,11 @@ struct LocationCardView: View {
     }
 
     private func mapSection(region: MKCoordinateRegion, coordinate: CLLocationCoordinate2D) -> some View {
-        Map(coordinateRegion: .constant(region),
-            annotationItems: [MapAnnotation(coordinate: coordinate)]) { item in
-            MapMarker(coordinate: item.coordinate, tint: .blue)
+        Map {
+            Marker("", coordinate: coordinate)
+                .tint(.blue)
         }
+        .mapStyle(.standard)
         .frame(height: 120)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
@@ -212,9 +213,9 @@ struct LocationCardView: View {
                 openInMaps(coordinate: travelInfo.coordinate)
             }) {
                 HStack(spacing: 6) {
-                    Image(systemName: "map.fill")
+                    Image(systemName: AppSettings.shared.preferredMapProvider.icon)
                         .font(.system(size: 12))
-                    Text("Open in Maps")
+                    Text("Open in \(AppSettings.shared.preferredMapProvider.rawValue)")
                         .font(.system(size: 12, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
@@ -266,12 +267,35 @@ struct LocationCardView: View {
     }
 
     private func openInMaps(coordinate: CLLocationCoordinate2D) {
-        let placemark = MKPlacemark(coordinate: coordinate)
-        let mapItem = MKMapItem(placemark: placemark)
-        mapItem.name = event.location
-        mapItem.openInMaps(launchOptions: [
-            MKLaunchOptionsDirectionsModeKey: travelModeForMaps()
-        ])
+        switch AppSettings.shared.preferredMapProvider {
+        case .apple:
+            let placemark = MKPlacemark(coordinate: coordinate)
+            let mapItem = MKMapItem(placemark: placemark)
+            mapItem.name = event.location
+            mapItem.openInMaps(launchOptions: [
+                MKLaunchOptionsDirectionsModeKey: travelModeForMaps()
+            ])
+
+        case .google:
+            // Open Google Maps directions in default browser
+            var urlString = "https://www.google.com/maps/dir/?api=1&destination=\(coordinate.latitude),\(coordinate.longitude)"
+
+            // Add travel mode parameter
+            let travelMode: String
+            switch AppSettings.shared.defaultTravelMode {
+            case .driving:
+                travelMode = "driving"
+            case .walking:
+                travelMode = "walking"
+            case .transit:
+                travelMode = "transit"
+            }
+            urlString += "&travelmode=\(travelMode)"
+
+            if let url = URL(string: urlString) {
+                NSWorkspace.shared.open(url)
+            }
+        }
     }
 
     private func travelModeForMaps() -> String {
@@ -290,13 +314,6 @@ struct LocationCardView: View {
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
     }
-}
-
-// MARK: - Supporting Types
-
-struct MapAnnotation: Identifiable {
-    let id = UUID()
-    let coordinate: CLLocationCoordinate2D
 }
 
 // MARK: - Preview

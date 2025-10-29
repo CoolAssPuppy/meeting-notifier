@@ -7,6 +7,8 @@ import ServiceManagement
 class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
+    private let iCloudStore = NSUbiquitousKeyValueStore.default
+
     @Published var accounts: [CalendarAccount] {
         didSet {
             saveAccounts()
@@ -15,13 +17,13 @@ class AppSettings: ObservableObject {
 
     @Published var notificationsEnabled: Bool {
         didSet {
-            UserDefaults.standard.set(notificationsEnabled, forKey: "notificationsEnabled")
+            saveSetting(notificationsEnabled, forKey: "notificationsEnabled")
         }
     }
 
     @Published var oneMinuteWarningEnabled: Bool {
         didSet {
-            UserDefaults.standard.set(oneMinuteWarningEnabled, forKey: "oneMinuteWarningEnabled")
+            saveSetting(oneMinuteWarningEnabled, forKey: "oneMinuteWarningEnabled")
         }
     }
 
@@ -33,31 +35,31 @@ class AppSettings: ObservableObject {
 
     @Published var defaultMeetApp: MeetAppType {
         didSet {
-            UserDefaults.standard.set(defaultMeetApp.rawValue, forKey: "defaultMeetApp")
+            saveSetting(defaultMeetApp.rawValue, forKey: "defaultMeetApp")
         }
     }
 
     @Published var showInMenuBar: Bool {
         didSet {
-            UserDefaults.standard.set(showInMenuBar, forKey: "showInMenuBar")
+            saveSetting(showInMenuBar, forKey: "showInMenuBar")
         }
     }
 
     @Published var onlyShowMeetingsWithAttendees: Bool {
         didSet {
-            UserDefaults.standard.set(onlyShowMeetingsWithAttendees, forKey: "onlyShowMeetingsWithAttendees")
+            saveSetting(onlyShowMeetingsWithAttendees, forKey: "onlyShowMeetingsWithAttendees")
         }
     }
 
     @Published var muteSounds: Bool {
         didSet {
-            UserDefaults.standard.set(muteSounds, forKey: "muteSounds")
+            saveSetting(muteSounds, forKey: "muteSounds")
         }
     }
 
     @Published var launchAtLogin: Bool {
         didSet {
-            UserDefaults.standard.set(launchAtLogin, forKey: "launchAtLogin")
+            saveSetting(launchAtLogin, forKey: "launchAtLogin")
             updateLoginItem()
         }
     }
@@ -65,55 +67,68 @@ class AppSettings: ObservableObject {
     // New settings for enhanced features
     @Published var menuBarShowIcon: Bool {
         didSet {
-            UserDefaults.standard.set(menuBarShowIcon, forKey: "menuBarShowIcon")
+            saveSetting(menuBarShowIcon, forKey: "menuBarShowIcon")
         }
     }
 
     @Published var menuBarShowTitle: Bool {
         didSet {
-            UserDefaults.standard.set(menuBarShowTitle, forKey: "menuBarShowTitle")
+            saveSetting(menuBarShowTitle, forKey: "menuBarShowTitle")
         }
     }
 
     @Published var menuBarShowTime: Bool {
         didSet {
-            UserDefaults.standard.set(menuBarShowTime, forKey: "menuBarShowTime")
+            saveSetting(menuBarShowTime, forKey: "menuBarShowTime")
         }
     }
 
     @Published var menuBarShowCountdown: Bool {
         didSet {
-            UserDefaults.standard.set(menuBarShowCountdown, forKey: "menuBarShowCountdown")
+            saveSetting(menuBarShowCountdown, forKey: "menuBarShowCountdown")
         }
     }
 
     @Published var menuBarThresholdMinutes: Int {
         didSet {
-            UserDefaults.standard.set(menuBarThresholdMinutes, forKey: "menuBarThresholdMinutes")
+            saveSetting(menuBarThresholdMinutes, forKey: "menuBarThresholdMinutes")
         }
     }
 
     @Published var showAllDayInMenuBar: Bool {
         didSet {
-            UserDefaults.standard.set(showAllDayInMenuBar, forKey: "showAllDayInMenuBar")
+            saveSetting(showAllDayInMenuBar, forKey: "showAllDayInMenuBar")
         }
     }
 
     @Published var showMeetingCountBadge: Bool {
         didSet {
-            UserDefaults.standard.set(showMeetingCountBadge, forKey: "showMeetingCountBadge")
+            saveSetting(showMeetingCountBadge, forKey: "showMeetingCountBadge")
         }
     }
 
     @Published var showTravelTimeAlerts: Bool {
         didSet {
-            UserDefaults.standard.set(showTravelTimeAlerts, forKey: "showTravelTimeAlerts")
+            saveSetting(showTravelTimeAlerts, forKey: "showTravelTimeAlerts")
         }
     }
 
     @Published var defaultTravelMode: TravelMode {
         didSet {
-            UserDefaults.standard.set(defaultTravelMode.rawValue, forKey: "defaultTravelMode")
+            saveSetting(defaultTravelMode.rawValue, forKey: "defaultTravelMode")
+        }
+    }
+
+    @Published var preferredMapProvider: MapProvider {
+        didSet {
+            saveSetting(preferredMapProvider.rawValue, forKey: "preferredMapProvider")
+        }
+    }
+
+    // Custom calendar colors: [accountEmail: [calendarId: hexColor]]
+    @Published var customCalendarColors: [String: [String: String]] {
+        didSet {
+            saveCustomCalendarColors()
         }
     }
 
@@ -145,8 +160,15 @@ class AppSettings: ObservableObject {
         let travelModeRaw = UserDefaults.standard.string(forKey: "defaultTravelMode") ?? TravelMode.driving.rawValue
         self.defaultTravelMode = TravelMode(rawValue: travelModeRaw) ?? .driving
 
+        let mapProviderRaw = UserDefaults.standard.string(forKey: "preferredMapProvider") ?? MapProvider.apple.rawValue
+        self.preferredMapProvider = MapProvider(rawValue: mapProviderRaw) ?? .apple
+
+        self.customCalendarColors = [:]
+
         loadAccounts()
         loadNotificationTracking()
+        loadCustomCalendarColors()
+        setupiCloudSync()
     }
 
     private func loadAccounts() {
@@ -181,6 +203,150 @@ class AppSettings: ObservableObject {
         if let encoded = try? JSONEncoder().encode(notificationTracking) {
             UserDefaults.standard.set(encoded, forKey: "notificationTracking")
         }
+    }
+
+    private func loadCustomCalendarColors() {
+        if let data = UserDefaults.standard.data(forKey: "customCalendarColors"),
+           let decoded = try? JSONDecoder().decode([String: [String: String]].self, from: data) {
+            self.customCalendarColors = decoded
+        }
+    }
+
+    private func saveCustomCalendarColors() {
+        if let encoded = try? JSONEncoder().encode(customCalendarColors) {
+            UserDefaults.standard.set(encoded, forKey: "customCalendarColors")
+            iCloudStore.set(encoded, forKey: "customCalendarColors")
+            iCloudStore.synchronize()
+        }
+    }
+
+    func setCustomColor(forCalendar calendarId: String, account accountEmail: String, color: String) {
+        if customCalendarColors[accountEmail] == nil {
+            customCalendarColors[accountEmail] = [:]
+        }
+        customCalendarColors[accountEmail]?[calendarId] = color
+
+        // Trigger event refresh to apply new color
+        Task { @MainActor in
+            await CalendarDataManager.shared.refreshEvents()
+        }
+    }
+
+    func getCustomColor(forCalendar calendarId: String, account accountEmail: String) -> String? {
+        return customCalendarColors[accountEmail]?[calendarId]
+    }
+
+    func removeCustomColor(forCalendar calendarId: String, account accountEmail: String) {
+        customCalendarColors[accountEmail]?[calendarId] = nil
+        if customCalendarColors[accountEmail]?.isEmpty == true {
+            customCalendarColors[accountEmail] = nil
+        }
+
+        // Trigger event refresh to revert to original color
+        Task { @MainActor in
+            await CalendarDataManager.shared.refreshEvents()
+        }
+    }
+
+    // MARK: - iCloud Sync
+
+    private func setupiCloudSync() {
+        // Observe iCloud changes from other devices
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(iCloudStoreDidChange),
+            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: iCloudStore
+        )
+
+        // Synchronize with iCloud
+        iCloudStore.synchronize()
+    }
+
+    @objc private func iCloudStoreDidChange(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let keys = userInfo[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] else {
+            return
+        }
+
+        // Update local settings from iCloud
+        for key in keys {
+            if let value = iCloudStore.object(forKey: key) {
+                UserDefaults.standard.set(value, forKey: key)
+            }
+        }
+
+        // Reload affected settings
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            if keys.contains("notificationsEnabled") {
+                self.notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
+            }
+            if keys.contains("oneMinuteWarningEnabled") {
+                self.oneMinuteWarningEnabled = UserDefaults.standard.bool(forKey: "oneMinuteWarningEnabled")
+            }
+            if keys.contains("showInMenuBar") {
+                self.showInMenuBar = UserDefaults.standard.bool(forKey: "showInMenuBar")
+            }
+            if keys.contains("onlyShowMeetingsWithAttendees") {
+                self.onlyShowMeetingsWithAttendees = UserDefaults.standard.bool(forKey: "onlyShowMeetingsWithAttendees")
+            }
+            if keys.contains("muteSounds") {
+                self.muteSounds = UserDefaults.standard.bool(forKey: "muteSounds")
+            }
+            if keys.contains("launchAtLogin") {
+                self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
+            }
+            if keys.contains("menuBarShowIcon") {
+                self.menuBarShowIcon = UserDefaults.standard.bool(forKey: "menuBarShowIcon")
+            }
+            if keys.contains("menuBarShowTitle") {
+                self.menuBarShowTitle = UserDefaults.standard.bool(forKey: "menuBarShowTitle")
+            }
+            if keys.contains("menuBarShowTime") {
+                self.menuBarShowTime = UserDefaults.standard.bool(forKey: "menuBarShowTime")
+            }
+            if keys.contains("menuBarShowCountdown") {
+                self.menuBarShowCountdown = UserDefaults.standard.bool(forKey: "menuBarShowCountdown")
+            }
+            if keys.contains("menuBarThresholdMinutes") {
+                self.menuBarThresholdMinutes = UserDefaults.standard.integer(forKey: "menuBarThresholdMinutes")
+            }
+            if keys.contains("showAllDayInMenuBar") {
+                self.showAllDayInMenuBar = UserDefaults.standard.bool(forKey: "showAllDayInMenuBar")
+            }
+            if keys.contains("showMeetingCountBadge") {
+                self.showMeetingCountBadge = UserDefaults.standard.bool(forKey: "showMeetingCountBadge")
+            }
+            if keys.contains("showTravelTimeAlerts") {
+                self.showTravelTimeAlerts = UserDefaults.standard.bool(forKey: "showTravelTimeAlerts")
+            }
+            if keys.contains("defaultMeetApp") {
+                let meetAppRawValue = UserDefaults.standard.string(forKey: "defaultMeetApp") ?? MeetAppType.defaultBrowser.rawValue
+                self.defaultMeetApp = MeetAppType(rawValue: meetAppRawValue) ?? .defaultBrowser
+            }
+            if keys.contains("defaultTravelMode") {
+                let travelModeRaw = UserDefaults.standard.string(forKey: "defaultTravelMode") ?? TravelMode.driving.rawValue
+                self.defaultTravelMode = TravelMode(rawValue: travelModeRaw) ?? .driving
+            }
+            if keys.contains("preferredMapProvider") {
+                let mapProviderRaw = UserDefaults.standard.string(forKey: "preferredMapProvider") ?? MapProvider.apple.rawValue
+                self.preferredMapProvider = MapProvider(rawValue: mapProviderRaw) ?? .apple
+            }
+            if keys.contains("customCalendarColors") {
+                self.loadCustomCalendarColors()
+            }
+        }
+    }
+
+    private func saveSetting<T>(_ value: T, forKey key: String) {
+        // Save to local UserDefaults
+        UserDefaults.standard.set(value, forKey: key)
+
+        // Save to iCloud
+        iCloudStore.set(value, forKey: key)
+        iCloudStore.synchronize()
     }
 
     func addAccount(_ account: CalendarAccount) {
@@ -309,6 +475,22 @@ enum TravelMode: String, CaseIterable, Identifiable {
         case .driving: return "car.fill"
         case .walking: return "figure.walk"
         case .transit: return "bus.fill"
+        }
+    }
+}
+
+// MARK: - Map Provider
+
+enum MapProvider: String, CaseIterable, Identifiable {
+    case apple = "Apple Maps"
+    case google = "Google Maps"
+
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .apple: return "map.fill"
+        case .google: return "globe"
         }
     }
 }

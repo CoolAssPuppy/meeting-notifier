@@ -86,7 +86,11 @@ class GoogleCalendarManager {
         let timeMin = dateFormatter.string(from: startDate)
         let timeMax = dateFormatter.string(from: endDate)
 
-        var components = URLComponents(string: "https://www.googleapis.com/calendar/v3/calendars/\(calendarId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? calendarId)/events")!
+        let encodedCalendarId = calendarId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? calendarId
+        guard var components = URLComponents(string: "https://www.googleapis.com/calendar/v3/calendars/\(encodedCalendarId)/events") else {
+            throw CalendarError.apiError("Invalid calendar ID")
+        }
+
         components.queryItems = [
             URLQueryItem(name: "timeMin", value: timeMin),
             URLQueryItem(name: "timeMax", value: timeMax),
@@ -94,7 +98,11 @@ class GoogleCalendarManager {
             URLQueryItem(name: "orderBy", value: "startTime")
         ]
 
-        var request = URLRequest(url: components.url!)
+        guard let url = components.url else {
+            throw CalendarError.apiError("Failed to construct URL")
+        }
+
+        var request = URLRequest(url: url)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
 
         let (data, response) = try await URLSession.shared.data(for: request)
