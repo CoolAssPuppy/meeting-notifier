@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var selectedTab = 0
-    @State private var showingConfig = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,19 +22,15 @@ struct SettingsView: View {
                     }
                     .tag(1)
 
-                NotificationsTab()
+                ConfigTab()
                     .tabItem {
-                        Label("Notifications", systemImage: "bell")
+                        Label("Setup", systemImage: "gearshape")
                     }
                     .tag(2)
             }
         }
         .background(.ultraThinMaterial)
         .frame(width: 500, height: 600)
-        .sheet(isPresented: $showingConfig) {
-            ConfigTab()
-                .frame(width: 500, height: 400)
-        }
     }
 
     private var headerBar: some View {
@@ -45,16 +40,6 @@ struct SettingsView: View {
                 .fontWeight(.semibold)
 
             Spacer()
-
-            Button(action: {
-                showingConfig = true
-            }) {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 16))
-                    .foregroundColor(.secondary)
-            }
-            .buttonStyle(.borderless)
-            .help("Configuration")
         }
         .padding()
         .background(.regularMaterial)

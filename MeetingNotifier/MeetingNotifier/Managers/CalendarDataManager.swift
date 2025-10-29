@@ -142,6 +142,7 @@ class CalendarDataManager: ObservableObject {
         case .google:
             return try await GoogleCalendarManager.shared.fetchEvents(
                 forCalendar: calendarInfo.id,
+                calendarInfo: calendarInfo,
                 account: account,
                 startDate: now,
                 endDate: endDate
@@ -149,6 +150,7 @@ class CalendarDataManager: ObservableObject {
         case .microsoft:
             return try await MicrosoftCalendarManager.shared.fetchEvents(
                 forCalendar: calendarInfo.id,
+                calendarInfo: calendarInfo,
                 account: account,
                 startDate: now,
                 endDate: endDate

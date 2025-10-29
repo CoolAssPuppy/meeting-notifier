@@ -225,11 +225,6 @@ class AppSettings: ObservableObject {
             customCalendarColors[accountEmail] = [:]
         }
         customCalendarColors[accountEmail]?[calendarId] = color
-
-        // Trigger event refresh to apply new color
-        Task { @MainActor in
-            await CalendarDataManager.shared.refreshEvents()
-        }
     }
 
     func getCustomColor(forCalendar calendarId: String, account accountEmail: String) -> String? {
@@ -240,11 +235,6 @@ class AppSettings: ObservableObject {
         customCalendarColors[accountEmail]?[calendarId] = nil
         if customCalendarColors[accountEmail]?.isEmpty == true {
             customCalendarColors[accountEmail] = nil
-        }
-
-        // Trigger event refresh to revert to original color
-        Task { @MainActor in
-            await CalendarDataManager.shared.refreshEvents()
         }
     }
 

@@ -68,6 +68,7 @@ class MicrosoftCalendarManager {
 
     func fetchEvents(
         forCalendar calendarId: String,
+        calendarInfo: CalendarInfo,
         account: CalendarAccount,
         startDate: Date,
         endDate: Date,
@@ -111,6 +112,7 @@ class MicrosoftCalendarManager {
             // Retry once with refreshed token
             return try await fetchEvents(
                 forCalendar: calendarId,
+                calendarInfo: calendarInfo,
                 account: account,
                 startDate: startDate,
                 endDate: endDate,
@@ -134,8 +136,7 @@ class MicrosoftCalendarManager {
             return []
         }
 
-        let calendarInfo = try await getCalendarInfo(calendarId: calendarId, account: account)
-
+        // Use the calendarInfo passed in (which includes custom colors)
         return value.compactMap { item in
             parseMicrosoftEvent(item, calendarId: calendarId, calendarInfo: calendarInfo)
         }

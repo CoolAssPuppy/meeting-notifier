@@ -246,8 +246,11 @@ struct CalendarColorPickerView: View {
             // Footer buttons
             HStack(spacing: 12) {
                 Button("Reset to Default") {
-                    settings.removeCustomColor(forCalendar: calendarId, account: accountEmail)
-                    dismiss()
+                    Task {
+                        settings.removeCustomColor(forCalendar: calendarId, account: accountEmail)
+                        await CalendarDataManager.shared.refreshEvents()
+                        dismiss()
+                    }
                 }
                 .help("Reset to the original Google Calendar color")
 
@@ -259,7 +262,9 @@ struct CalendarColorPickerView: View {
                 .keyboardShortcut(.cancelAction)
 
                 Button("Save") {
-                    saveColor()
+                    Task {
+                        await saveColor()
+                    }
                 }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
@@ -447,7 +452,7 @@ struct CalendarColorPickerView: View {
         }
     }
 
-    private func saveColor() {
+    private func saveColor() async {
         guard isValidHex else { return }
 
         var sanitized = hexInput.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -456,6 +461,10 @@ struct CalendarColorPickerView: View {
         }
 
         settings.setCustomColor(forCalendar: calendarId, account: accountEmail, color: sanitized.uppercased())
+
+        // Wait for events to refresh before dismissing
+        await CalendarDataManager.shared.refreshEvents()
+
         dismiss()
     }
 }

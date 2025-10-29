@@ -3,129 +3,100 @@ import AppKit
 
 struct ConfigTab: View {
     @ObservedObject var settings = AppSettings.shared
-    @Environment(\.dismiss) var dismiss
 
-    @State private var tempDefaultMeetApp: MeetAppType
-    @State private var tempShowInMenuBar: Bool
-    @State private var tempOnlyShowMeetingsWithAttendees: Bool
-    @State private var tempMuteSounds: Bool
-    @State private var tempLaunchAtLogin: Bool
-    @State private var tempMenuBarShowIcon: Bool
-    @State private var tempMenuBarShowTitle: Bool
-    @State private var tempMenuBarShowTime: Bool
-    @State private var tempMenuBarShowCountdown: Bool
-    @State private var tempMenuBarThresholdMinutes: Int
-    @State private var tempShowAllDayInMenuBar: Bool
-    @State private var tempShowMeetingCountBadge: Bool
-    @State private var tempShowTravelTimeAlerts: Bool
-    @State private var tempDefaultTravelMode: TravelMode
-    @State private var tempPreferredMapProvider: MapProvider
     @State private var showingAppPicker = false
     @State private var customAppURL: URL?
     @State private var showingCoffee = false
 
-    init() {
-        let settings = AppSettings.shared
-        _tempDefaultMeetApp = State(initialValue: settings.defaultMeetApp)
-        _tempShowInMenuBar = State(initialValue: settings.showInMenuBar)
-        _tempOnlyShowMeetingsWithAttendees = State(initialValue: settings.onlyShowMeetingsWithAttendees)
-        _tempMuteSounds = State(initialValue: settings.muteSounds)
-        _tempLaunchAtLogin = State(initialValue: settings.launchAtLogin)
-        _tempMenuBarShowIcon = State(initialValue: settings.menuBarShowIcon)
-        _tempMenuBarShowTitle = State(initialValue: settings.menuBarShowTitle)
-        _tempMenuBarShowTime = State(initialValue: settings.menuBarShowTime)
-        _tempMenuBarShowCountdown = State(initialValue: settings.menuBarShowCountdown)
-        _tempMenuBarThresholdMinutes = State(initialValue: settings.menuBarThresholdMinutes)
-        _tempShowAllDayInMenuBar = State(initialValue: settings.showAllDayInMenuBar)
-        _tempShowMeetingCountBadge = State(initialValue: settings.showMeetingCountBadge)
-        _tempShowTravelTimeAlerts = State(initialValue: settings.showTravelTimeAlerts)
-        _tempDefaultTravelMode = State(initialValue: settings.defaultTravelMode)
-        _tempPreferredMapProvider = State(initialValue: settings.preferredMapProvider)
-    }
-
     var body: some View {
-        VStack(spacing: 0) {
-            headerBar
-
-            Divider()
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    Form {
-                        Section {
-                            meetAppPicker
-                        } header: {
-                            sectionHeader(icon: "link.circle.fill", title: "Meeting Links", gradient: [.blue, .cyan])
-                        }
-
-                        Section {
-                            menuBarToggle
-                            if tempShowInMenuBar {
-                                displayModePicker
-                                thresholdSlider
-                                showAllDayToggle
-                            }
-                            attendeesToggle
-                            meetingCountBadgeToggle
-                        } header: {
-                            sectionHeader(icon: "menubar.rectangle", title: "Menu Bar Display", gradient: [.purple, .pink])
-                        }
-
-                        Section {
-                            travelTimeAlertsToggle
-                            if tempShowTravelTimeAlerts {
-                                travelModePicker
-                            }
-                            mapProviderPicker
-                        } header: {
-                            sectionHeader(icon: "location.circle.fill", title: "Travel & Location", gradient: [.green, .mint])
-                        }
-
-                        Section {
-                            soundsToggle
-                        } header: {
-                            sectionHeader(icon: "speaker.wave.2.fill", title: "Sounds", gradient: [.orange, .yellow])
-                        }
-
-                        Section {
-                            launchAtLoginToggle
-                        } header: {
-                            sectionHeader(icon: "power.circle.fill", title: "Startup", gradient: [.indigo, .blue])
-                        }
-
-                        Section {
-                            keyboardShortcutsInfo
-                        } header: {
-                            sectionHeader(icon: "command.circle.fill", title: "Keyboard Shortcuts", gradient: [.red, .orange])
-                        }
-
-                        Section {
-                            buyMeCoffeeButton
-                        } header: {
-                            sectionHeader(icon: "cup.and.saucer.fill", title: "Support", gradient: [.brown, .orange])
-                        }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Form {
+                    // NOTIFICATIONS - Most important section first
+                    Section {
+                        notificationsToggle
+                        oneMinuteWarningToggle
+                        customRemindersInfo
+                        notificationPermissionsInfo
+                    } header: {
+                        sectionHeader(icon: "bell.fill", title: "Notifications", gradient: [.blue, .cyan])
                     }
-                    .formStyle(.grouped)
+
+                    // MEETING LINKS
+                    Section {
+                        meetAppPicker
+                    } header: {
+                        sectionHeader(icon: "link.circle.fill", title: "Meeting Links", gradient: [.purple, .pink])
+                    }
+
+                    // MENU BAR DISPLAY
+                    Section {
+                        menuBarToggle
+                        if settings.showInMenuBar {
+                            displayModePicker
+                            thresholdSlider
+                            showAllDayToggle
+                        }
+                        attendeesToggle
+                        meetingCountBadgeToggle
+                    } header: {
+                        sectionHeader(icon: "menubar.rectangle", title: "Menu Bar Display", gradient: [.green, .mint])
+                    }
+
+                    // SOUNDS
+                    Section {
+                        soundsToggle
+                    } header: {
+                        sectionHeader(icon: "speaker.wave.2.fill", title: "Sounds", gradient: [.orange, .yellow])
+                    }
+
+                    // TRAVEL & LOCATION
+                    Section {
+                        travelTimeAlertsToggle
+                        if settings.showTravelTimeAlerts {
+                            travelModePicker
+                        }
+                        mapProviderPicker
+                    } header: {
+                        sectionHeader(icon: "location.circle.fill", title: "Travel & Location", gradient: [.teal, .cyan])
+                    }
+
+                    // STARTUP
+                    Section {
+                        launchAtLoginToggle
+                    } header: {
+                        sectionHeader(icon: "power.circle.fill", title: "Startup", gradient: [.indigo, .blue])
+                    }
+
+                    // KEYBOARD SHORTCUTS
+                    Section {
+                        keyboardShortcutsInfo
+                    } header: {
+                        sectionHeader(icon: "command.circle.fill", title: "Keyboard Shortcuts", gradient: [.red, .orange])
+                    }
+
+                    // SUPPORT
+                    Section {
+                        buyMeCoffeeButton
+                    } header: {
+                        sectionHeader(icon: "cup.and.saucer.fill", title: "Support", gradient: [.brown, .orange])
+                    }
                 }
-                .padding(20)
+                .formStyle(.grouped)
             }
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color.accentColor.opacity(0.02),
-                        Color.clear,
-                        Color.purple.opacity(0.01)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-
-            Divider()
-
-            footerBar
+            .padding(20)
         }
-        .background(.ultraThinMaterial)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color.accentColor.opacity(0.02),
+                    Color.clear,
+                    Color.purple.opacity(0.01)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
         .fileImporter(
             isPresented: $showingAppPicker,
             allowedContentTypes: [.application],
@@ -135,56 +106,7 @@ struct ConfigTab: View {
         }
     }
 
-    private var headerBar: some View {
-        HStack {
-            Text("Configuration")
-                .font(.headline)
-
-            Spacer()
-        }
-        .padding()
-        .background(.regularMaterial)
-    }
-
-    private var footerBar: some View {
-        HStack(spacing: 12) {
-            Button("Cancel") {
-                dismiss()
-            }
-            .keyboardShortcut(.cancelAction)
-            .controlSize(.large)
-
-            Spacer()
-
-            Button("Save") {
-                saveSettings()
-                dismiss()
-            }
-            .keyboardShortcut(.defaultAction)
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-        }
-        .padding()
-        .background(.clear)
-    }
-
-    private func saveSettings() {
-        settings.defaultMeetApp = tempDefaultMeetApp
-        settings.showInMenuBar = tempShowInMenuBar
-        settings.onlyShowMeetingsWithAttendees = tempOnlyShowMeetingsWithAttendees
-        settings.muteSounds = tempMuteSounds
-        settings.launchAtLogin = tempLaunchAtLogin
-        settings.menuBarShowIcon = tempMenuBarShowIcon
-        settings.menuBarShowTitle = tempMenuBarShowTitle
-        settings.menuBarShowTime = tempMenuBarShowTime
-        settings.menuBarShowCountdown = tempMenuBarShowCountdown
-        settings.menuBarThresholdMinutes = tempMenuBarThresholdMinutes
-        settings.showAllDayInMenuBar = tempShowAllDayInMenuBar
-        settings.showMeetingCountBadge = tempShowMeetingCountBadge
-        settings.showTravelTimeAlerts = tempShowTravelTimeAlerts
-        settings.defaultTravelMode = tempDefaultTravelMode
-        settings.preferredMapProvider = tempPreferredMapProvider
-    }
+    // MARK: - Section Header
 
     private func sectionHeader(icon: String, title: String, gradient: [Color]) -> some View {
         HStack(spacing: 8) {
@@ -203,18 +125,74 @@ struct ConfigTab: View {
         }
     }
 
+    // MARK: - Notifications Section
+
+    private var notificationsToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Enable notifications", isOn: $settings.notificationsEnabled)
+
+            Text("Allow MeetingNotifier to send notifications about upcoming meetings")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var oneMinuteWarningToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("One minute warning", isOn: $settings.oneMinuteWarningEnabled)
+                .disabled(!settings.notificationsEnabled)
+
+            Text("Receive a notification with a chime sound exactly 1 minute before any meeting starts")
+                .font(.caption)
+                .foregroundColor(settings.notificationsEnabled ? .secondary : Color.secondary.opacity(0.5))
+        }
+    }
+
+    private var customRemindersInfo: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Custom Reminders")
+                .font(.body)
+                .foregroundColor(settings.notificationsEnabled ? .primary : .secondary)
+
+            Text("Notifications will be sent based on reminder settings in your calendar events. These are configured in Google Calendar or Microsoft Outlook")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var notificationPermissionsInfo: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "info.circle.fill")
+                    .foregroundColor(.blue)
+                Text("Notification Permissions")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+            }
+
+            Text("If notifications are not working, check that MeetingNotifier has permission to send notifications in System Settings > Notifications")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding(12)
+        .background(Color.blue.opacity(0.1))
+        .cornerRadius(8)
+    }
+
+    // MARK: - Meeting Links Section
+
     private var meetAppPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Open Google Meet with:")
                 .font(.body)
 
-            Picker("", selection: $tempDefaultMeetApp) {
+            Picker("", selection: $settings.defaultMeetApp) {
                 ForEach(MeetAppType.availableApps) { app in
                     Text(app.rawValue).tag(app)
                 }
             }
             .pickerStyle(.menu)
-            .onChange(of: tempDefaultMeetApp) { _, newValue in
+            .onChange(of: settings.defaultMeetApp) { _, newValue in
                 if newValue == .custom {
                     showingAppPicker = true
                 }
@@ -242,42 +220,13 @@ struct ConfigTab: View {
         }
     }
 
+    // MARK: - Menu Bar Display Section
+
     private var menuBarToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("Display next meeting in Menu Bar", isOn: $tempShowInMenuBar)
+            Toggle("Display next meeting in Menu Bar", isOn: $settings.showInMenuBar)
 
             Text("Shows meeting title (truncated to 30 characters) with platform icon 15 minutes before it starts")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-
-    private var attendeesToggle: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Toggle("Only show meetings with attendees", isOn: $tempOnlyShowMeetingsWithAttendees)
-                .disabled(!tempShowInMenuBar)
-
-            Text("When enabled, only meetings with other attendees will be shown in the menu bar")
-                .font(.caption)
-                .foregroundColor(tempShowInMenuBar ? .secondary : Color.secondary.opacity(0.5))
-        }
-    }
-
-    private var soundsToggle: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Toggle("Mute sounds", isOn: $tempMuteSounds)
-
-            Text("When enabled, notification sounds will not play")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-
-    private var launchAtLoginToggle: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Toggle("Launch at login", isOn: $tempLaunchAtLogin)
-
-            Text("Automatically start MeetingNotifier when you log in")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -289,40 +238,13 @@ struct ConfigTab: View {
                 .font(.body)
 
             VStack(alignment: .leading, spacing: 8) {
-                Toggle("Icon", isOn: Binding(
-                    get: { tempMenuBarShowIcon },
-                    set: { newValue in
-                        tempMenuBarShowIcon = newValue
-                        settings.menuBarShowIcon = newValue
-                    }
-                ))
-
-                Toggle("Title", isOn: Binding(
-                    get: { tempMenuBarShowTitle },
-                    set: { newValue in
-                        tempMenuBarShowTitle = newValue
-                        settings.menuBarShowTitle = newValue
-                    }
-                ))
-
-                Toggle("Time", isOn: Binding(
-                    get: { tempMenuBarShowTime },
-                    set: { newValue in
-                        tempMenuBarShowTime = newValue
-                        settings.menuBarShowTime = newValue
-                    }
-                ))
-
-                Toggle("Countdown", isOn: Binding(
-                    get: { tempMenuBarShowCountdown },
-                    set: { newValue in
-                        tempMenuBarShowCountdown = newValue
-                        settings.menuBarShowCountdown = newValue
-                    }
-                ))
+                Toggle("Icon", isOn: $settings.menuBarShowIcon)
+                Toggle("Title", isOn: $settings.menuBarShowTitle)
+                Toggle("Time", isOn: $settings.menuBarShowTime)
+                Toggle("Countdown", isOn: $settings.menuBarShowCountdown)
             }
 
-            Text("Select which elements to show in the menu bar. If no Icon is selected, the default calendar icon will be shown.")
+            Text("Select which elements to show in the menu bar. If no Icon is selected, the default calendar icon will be shown")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -334,16 +256,16 @@ struct ConfigTab: View {
                 Text("Show meetings within:")
                     .font(.body)
                 Spacer()
-                Text("\(tempMenuBarThresholdMinutes) min")
+                Text("\(settings.menuBarThresholdMinutes) min")
                     .font(.body)
                     .foregroundColor(.secondary)
             }
 
             Slider(value: Binding(
-                get: { Double(tempMenuBarThresholdMinutes) },
-                set: { tempMenuBarThresholdMinutes = Int($0) }
+                get: { Double(settings.menuBarThresholdMinutes) },
+                set: { settings.menuBarThresholdMinutes = Int($0) }
             ), in: 5...60, step: 5)
-            .disabled(tempShowAllDayInMenuBar)
+            .disabled(settings.showAllDayInMenuBar)
 
             Text("Controls how far in advance to display upcoming meetings")
                 .font(.caption)
@@ -353,7 +275,7 @@ struct ConfigTab: View {
 
     private var showAllDayToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("Always show next meeting", isOn: $tempShowAllDayInMenuBar)
+            Toggle("Always show next meeting", isOn: $settings.showAllDayInMenuBar)
 
             Text("When enabled, always shows the next meeting regardless of time")
                 .font(.caption)
@@ -361,9 +283,20 @@ struct ConfigTab: View {
         }
     }
 
+    private var attendeesToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Only show meetings with attendees", isOn: $settings.onlyShowMeetingsWithAttendees)
+                .disabled(!settings.showInMenuBar)
+
+            Text("When enabled, only meetings with other attendees will be shown in the menu bar")
+                .font(.caption)
+                .foregroundColor(settings.showInMenuBar ? .secondary : Color.secondary.opacity(0.5))
+        }
+    }
+
     private var meetingCountBadgeToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("Show meeting count badge", isOn: $tempShowMeetingCountBadge)
+            Toggle("Show meeting count badge", isOn: $settings.showMeetingCountBadge)
 
             Text("Display number of remaining meetings today")
                 .font(.caption)
@@ -371,9 +304,23 @@ struct ConfigTab: View {
         }
     }
 
+    // MARK: - Sounds Section
+
+    private var soundsToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Mute sounds", isOn: $settings.muteSounds)
+
+            Text("When enabled, notification sounds will not play")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    // MARK: - Travel & Location Section
+
     private var travelTimeAlertsToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("Enable travel time alerts", isOn: $tempShowTravelTimeAlerts)
+            Toggle("Enable travel time alerts", isOn: $settings.showTravelTimeAlerts)
 
             Text("Get notifications when it's time to leave for meetings with physical locations")
                 .font(.caption)
@@ -386,7 +333,7 @@ struct ConfigTab: View {
             Text("Default travel mode:")
                 .font(.body)
 
-            Picker("", selection: $tempDefaultTravelMode) {
+            Picker("", selection: $settings.defaultTravelMode) {
                 ForEach(TravelMode.allCases) { mode in
                     Label(mode.rawValue, systemImage: mode.icon).tag(mode)
                 }
@@ -404,7 +351,7 @@ struct ConfigTab: View {
             Text("Preferred map:")
                 .font(.body)
 
-            Picker("", selection: $tempPreferredMapProvider) {
+            Picker("", selection: $settings.preferredMapProvider) {
                 ForEach(MapProvider.allCases) { provider in
                     Label(provider.rawValue, systemImage: provider.icon).tag(provider)
                 }
@@ -416,6 +363,20 @@ struct ConfigTab: View {
                 .foregroundColor(.secondary)
         }
     }
+
+    // MARK: - Startup Section
+
+    private var launchAtLoginToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Launch at login", isOn: $settings.launchAtLogin)
+
+            Text("Automatically start MeetingNotifier when you log in")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    // MARK: - Keyboard Shortcuts Section
 
     private var keyboardShortcutsInfo: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -456,6 +417,8 @@ struct ConfigTab: View {
         }
     }
 
+    // MARK: - Support Section
+
     private var buyMeCoffeeButton: some View {
         VStack(alignment: .leading, spacing: 8) {
             Button(action: {
@@ -478,17 +441,17 @@ struct ConfigTab: View {
         }
     }
 
+    // MARK: - Helper Methods
+
     private func handleAppSelection(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
             if let url = urls.first {
                 customAppURL = url
-                // Store the custom app URL path in UserDefaults
                 UserDefaults.standard.set(url.path, forKey: "customMeetAppPath")
             }
         case .failure(let error):
             print("Error selecting app: \(error.localizedDescription)")
-            // Revert to default browser if selection failed
             settings.defaultMeetApp = .defaultBrowser
         }
     }

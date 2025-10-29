@@ -75,6 +75,7 @@ class GoogleCalendarManager {
 
     func fetchEvents(
         forCalendar calendarId: String,
+        calendarInfo: CalendarInfo,
         account: CalendarAccount,
         startDate: Date,
         endDate: Date,
@@ -120,6 +121,7 @@ class GoogleCalendarManager {
             // Retry once with refreshed token
             return try await fetchEvents(
                 forCalendar: calendarId,
+                calendarInfo: calendarInfo,
                 account: account,
                 startDate: startDate,
                 endDate: endDate,
@@ -143,8 +145,7 @@ class GoogleCalendarManager {
             return []
         }
 
-        let calendarInfo = try await getCalendarInfo(calendarId: calendarId, account: account)
-
+        // Use the calendarInfo passed in (which includes custom colors)
         return items.compactMap { item in
             parseGoogleEvent(item, calendarId: calendarId, calendarInfo: calendarInfo)
         }
