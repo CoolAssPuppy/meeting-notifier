@@ -188,7 +188,8 @@ class MicrosoftCalendarManager {
             calendarColorHex: calendarInfo.colorHex,
             provider: .microsoft,
             reminders: reminders,
-            attendeeCount: attendeeCount
+            attendeeCount: attendeeCount,
+            accountEmail: calendarInfo.accountEmail
         )
     }
 

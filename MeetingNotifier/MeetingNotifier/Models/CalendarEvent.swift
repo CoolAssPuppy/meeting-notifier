@@ -14,6 +14,7 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
     var provider: CalendarProvider
     var reminders: [EventReminder] = []
     var attendeeCount: Int = 0
+    var accountEmail: String?
 
     // Travel time properties
     var travelTimeMinutes: Int?
@@ -24,6 +25,11 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
         return loc.contains(",") || loc.lowercased().contains("street") ||
                loc.lowercased().contains("avenue") || loc.lowercased().contains("road") ||
                loc.lowercased().contains("drive") || loc.lowercased().contains("boulevard")
+    }
+
+    var isHappening: Bool {
+        let now = Date()
+        return startDate <= now && endDate > now
     }
 
     var timeUntilStart: String {
@@ -126,7 +132,9 @@ extension CalendarEvent {
         calendarName: "Work Calendar",
         calendarColorHex: "#4285F4",
         provider: .google,
-        reminders: [EventReminder(minutesBefore: 1)]
+        reminders: [EventReminder(minutesBefore: 1)],
+        attendeeCount: 0,
+        accountEmail: "user@example.com"
     )
 
     static let previewNoVideo = CalendarEvent(
@@ -141,6 +149,8 @@ extension CalendarEvent {
         calendarName: "Personal",
         calendarColorHex: "#E67C73",
         provider: .google,
-        reminders: []
+        reminders: [],
+        attendeeCount: 0,
+        accountEmail: "user@example.com"
     )
 }

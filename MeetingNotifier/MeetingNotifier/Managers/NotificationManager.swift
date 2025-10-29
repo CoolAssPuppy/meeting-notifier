@@ -19,6 +19,22 @@ class NotificationManager: NSObject, ObservableObject {
         let center = UNUserNotificationCenter.current()
         center.delegate = self
 
+        // Register notification categories with actions
+        let joinAction = UNNotificationAction(
+            identifier: "JOIN_MEETING",
+            title: "Join Meeting",
+            options: [.foreground]
+        )
+
+        let meetingCategory = UNNotificationCategory(
+            identifier: "MEETING_REMINDER",
+            actions: [joinAction],
+            intentIdentifiers: [],
+            options: [.customDismissAction]
+        )
+
+        center.setNotificationCategories([meetingCategory])
+
         center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, error in
             Task { @MainActor in
                 self?.permissionGranted = granted
@@ -92,9 +108,13 @@ class NotificationManager: NSObject, ObservableObject {
         if !AppSettings.shared.muteSounds {
             content.sound = UNNotificationSound(named: UNNotificationSoundName("short-chimes.aiff"))
         }
+        content.categoryIdentifier = "MEETING_REMINDER"
+        content.interruptionLevel = .timeSensitive
+        content.relevanceScore = 1.0
         content.userInfo = [
             "eventId": event.id,
-            "conferenceLink": event.conferenceLink ?? ""
+            "conferenceLink": event.conferenceLink ?? "",
+            "accountEmail": event.accountEmail ?? ""
         ]
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
@@ -130,9 +150,13 @@ class NotificationManager: NSObject, ObservableObject {
             if !AppSettings.shared.muteSounds {
                 content.sound = UNNotificationSound(named: UNNotificationSoundName("long-chimes.aiff"))
             }
+            content.categoryIdentifier = "MEETING_REMINDER"
+            content.interruptionLevel = .timeSensitive
+            content.relevanceScore = 1.0
             content.userInfo = [
                 "eventId": event.id,
-                "conferenceLink": event.conferenceLink ?? ""
+                "conferenceLink": event.conferenceLink ?? "",
+                "accountEmail": event.accountEmail ?? ""
             ]
 
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
@@ -165,6 +189,7 @@ class NotificationManager: NSObject, ObservableObject {
         content.title = "Authentication Expired"
         content.body = "Calendar access for \(account.email) has expired. Click to reconnect."
         content.sound = UNNotificationSound.default
+        content.interruptionLevel = .timeSensitive
         content.userInfo = [
             "type": "authFailure",
             "accountEmail": account.email
@@ -202,11 +227,15 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
     ) {
         let userInfo = response.notification.request.content.userInfo
 
-        if let linkString = userInfo["conferenceLink"] as? String,
-           !linkString.isEmpty,
-           let url = URL(string: linkString) {
-            Task { @MainActor in
-                AppSettings.shared.openURL(url)
+        // Handle both the "Join Meeting" action and default notification tap
+        if response.actionIdentifier == "JOIN_MEETING" || response.actionIdentifier == UNNotificationDefaultActionIdentifier {
+            if let linkString = userInfo["conferenceLink"] as? String,
+               !linkString.isEmpty,
+               let url = URL(string: linkString) {
+                let accountEmail = userInfo["accountEmail"] as? String
+                Task { @MainActor in
+                    AppSettings.shared.openURL(url, accountEmail: accountEmail)
+                }
             }
         }
 

@@ -373,41 +373,53 @@ class AppSettings: ObservableObject {
         }
     }
 
-    func openURL(_ url: URL) {
+    func openURL(_ url: URL, accountEmail: String? = nil) {
         let urlString = url.absoluteString.lowercased()
         let isGoogleMeet = urlString.contains("meet.google.com") || urlString.contains("hangouts.google.com")
 
+        // For Google Meet, append authuser parameter to open with correct account
+        var finalURL = url
+        if isGoogleMeet, let email = accountEmail {
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            var queryItems = components?.queryItems ?? []
+            queryItems.append(URLQueryItem(name: "authuser", value: email))
+            components?.queryItems = queryItems
+            if let modifiedURL = components?.url {
+                finalURL = modifiedURL
+            }
+        }
+
         guard isGoogleMeet else {
-            NSWorkspace.shared.open(url)
+            NSWorkspace.shared.open(finalURL)
             return
         }
 
         switch defaultMeetApp {
         case .defaultBrowser:
-            NSWorkspace.shared.open(url)
+            NSWorkspace.shared.open(finalURL)
 
         case .custom:
             if let customPath = UserDefaults.standard.string(forKey: "customMeetAppPath"),
                let appURL = URL(fileURLWithPath: customPath) as URL? {
                 NSWorkspace.shared.open(
-                    [url],
+                    [finalURL],
                     withApplicationAt: appURL,
                     configuration: NSWorkspace.OpenConfiguration()
                 )
             } else {
-                NSWorkspace.shared.open(url)
+                NSWorkspace.shared.open(finalURL)
             }
 
         default:
             if let bundleId = defaultMeetApp.bundleIdentifier,
                let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
                 NSWorkspace.shared.open(
-                    [url],
+                    [finalURL],
                     withApplicationAt: appURL,
                     configuration: NSWorkspace.OpenConfiguration()
                 )
             } else {
-                NSWorkspace.shared.open(url)
+                NSWorkspace.shared.open(finalURL)
             }
         }
     }

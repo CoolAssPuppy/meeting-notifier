@@ -202,13 +202,31 @@ struct MeetingRowView: View {
 
     private var countdownBadge: some View {
         HStack(spacing: 4) {
-            Circle()
-                .fill(timeUntilStartColor)
-                .frame(width: 6, height: 6)
+            if event.isHappening {
+                // Animated glowing dot for live meetings
+                Circle()
+                    .fill(.red)
+                    .frame(width: 6, height: 6)
+                    .shadow(color: .red.opacity(0.8), radius: 3, x: 0, y: 0)
+                    .overlay(
+                        Circle()
+                            .fill(.red.opacity(0.5))
+                            .frame(width: 10, height: 10)
+                            .blur(radius: 2)
+                    )
 
-            Text(event.timeUntilStart)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.secondary)
+                Text("LIVE")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.red)
+            } else {
+                Circle()
+                    .fill(timeUntilStartColor)
+                    .frame(width: 6, height: 6)
+
+                Text(event.timeUntilStart)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)

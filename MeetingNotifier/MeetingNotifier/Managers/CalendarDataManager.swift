@@ -174,7 +174,8 @@ class CalendarDataManager: ObservableObject {
         let endOfToday = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: now) ?? now
 
         return events.filter { event in
-            event.startDate >= startOfToday && event.startDate <= endOfToday
+            // Include events that started today and haven't ended yet
+            event.startDate >= startOfToday && event.startDate <= endOfToday && event.endDate > now
         }
     }
 
@@ -185,7 +186,8 @@ class CalendarDataManager: ObservableObject {
         let endOfTomorrow = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: startOfTomorrow) ?? now
 
         return events.filter { event in
-            event.startDate >= startOfTomorrow && event.startDate <= endOfTomorrow
+            // Include events that start tomorrow (they won't have ended yet, but keeping consistent logic)
+            event.startDate >= startOfTomorrow && event.startDate <= endOfTomorrow && event.endDate > now
         }
     }
 }

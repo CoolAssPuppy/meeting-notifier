@@ -183,20 +183,56 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let now = Date()
         let settings = AppSettings.shared
 
-        // Use configurable threshold or show all day
+        // Find current meetings (meetings that are happening right now)
+        let currentMeetings = CalendarDataManager.shared.events.filter { event in
+            event.isHappening
+        }
+
+        // Apply attendee filter if enabled
+        let currentMeeting = if settings.onlyShowMeetingsWithAttendees {
+            currentMeetings.first { $0.hasAttendees }
+        } else {
+            currentMeetings.first
+        }
+
+        // Find upcoming meetings within threshold
         let threshold = settings.showAllDayInMenuBar ?
             Calendar.current.date(byAdding: .day, value: 1, to: now)! :
             now.addingTimeInterval(Double(settings.menuBarThresholdMinutes * 60))
 
         let upcomingMeetings = CalendarDataManager.shared.events.filter { event in
-            event.startDate >= now && event.startDate <= threshold && event.endDate >= now
+            event.startDate >= now && event.startDate <= threshold
         }
 
-        if AppSettings.shared.onlyShowMeetingsWithAttendees {
-            return upcomingMeetings.first { $0.hasAttendees }
+        let upcomingMeeting = if settings.onlyShowMeetingsWithAttendees {
+            upcomingMeetings.first { $0.hasAttendees }
         } else {
-            return upcomingMeetings.first
+            upcomingMeetings.first
         }
+
+        // Smart menu bar logic:
+        // 1. If there's a current meeting and an upcoming meeting
+        if let current = currentMeeting, let upcoming = upcomingMeeting {
+            // Check if upcoming meeting is within 15 minutes
+            let timeUntilUpcoming = upcoming.startDate.timeIntervalSince(now)
+            let fifteenMinutes: TimeInterval = 15 * 60
+
+            // Show upcoming meeting if it starts within 15 minutes OR before current meeting ends
+            if timeUntilUpcoming <= fifteenMinutes || upcoming.startDate < current.endDate {
+                return upcoming
+            } else {
+                // Show current meeting if next meeting is more than 15m away and after current ends
+                return current
+            }
+        }
+
+        // 2. If there's only a current meeting, show it
+        if let current = currentMeeting {
+            return current
+        }
+
+        // 3. If there's only an upcoming meeting, show it
+        return upcomingMeeting
     }
 
     private func getIconForEvent(_ event: CalendarEvent) -> String {

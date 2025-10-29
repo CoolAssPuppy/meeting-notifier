@@ -195,7 +195,8 @@ class GoogleCalendarManager {
             calendarColorHex: calendarInfo.colorHex,
             provider: .google,
             reminders: reminders,
-            attendeeCount: attendeeCount
+            attendeeCount: attendeeCount,
+            accountEmail: calendarInfo.accountEmail
         )
     }
 

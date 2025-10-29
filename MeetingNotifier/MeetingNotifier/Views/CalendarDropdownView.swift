@@ -433,7 +433,7 @@ struct CalendarDropdownView: View {
             return
         }
 
-        AppSettings.shared.openURL(url)
+        AppSettings.shared.openURL(url, accountEmail: event.accountEmail)
     }
 }
 
