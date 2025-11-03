@@ -98,7 +98,7 @@ struct MeetingRowView: View {
                                 .frame(width: 6, height: 6)
                             Text(event.calendarName)
                                 .font(.system(size: 11))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.primary)
                         }
 
                         // Attendee count if available

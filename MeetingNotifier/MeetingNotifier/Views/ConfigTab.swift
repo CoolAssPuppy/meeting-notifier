@@ -38,6 +38,7 @@ struct ConfigTab: View {
                             showAllDayToggle
                         }
                         attendeesToggle
+                        doubleBookingPicker
                         meetingCountBadgeToggle
                     } header: {
                         sectionHeader(icon: "menubar.rectangle", title: "Menu Bar Display", gradient: [.green, .mint])
@@ -289,6 +290,25 @@ struct ConfigTab: View {
                 .disabled(!settings.showInMenuBar)
 
             Text("When enabled, only meetings with other attendees will be shown in the menu bar")
+                .font(.caption)
+                .foregroundColor(settings.showInMenuBar ? .secondary : Color.secondary.opacity(0.5))
+        }
+    }
+
+    private var doubleBookingPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("When double-booked, show:")
+                .font(.body)
+
+            Picker("", selection: $settings.doubleBookingPreference) {
+                ForEach(DoubleBookingPreference.allCases) { preference in
+                    Text(preference.rawValue).tag(preference)
+                }
+            }
+            .pickerStyle(.menu)
+            .disabled(!settings.showInMenuBar)
+
+            Text("Choose which meeting to display in the menu bar when you have overlapping meetings")
                 .font(.caption)
                 .foregroundColor(settings.showInMenuBar ? .secondary : Color.secondary.opacity(0.5))
         }

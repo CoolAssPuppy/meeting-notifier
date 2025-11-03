@@ -188,11 +188,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             event.isHappening
         }
 
-        // Apply attendee filter if enabled
-        let currentMeeting = if settings.onlyShowMeetingsWithAttendees {
-            currentMeetings.first { $0.hasAttendees }
+        // Apply attendee filter if enabled, then sort by attendee count based on user preference
+        let currentMeeting: CalendarEvent?
+        let sortedMeetings: [CalendarEvent]
+
+        if settings.onlyShowMeetingsWithAttendees {
+            sortedMeetings = currentMeetings.filter { $0.hasAttendees }
         } else {
-            currentMeetings.first
+            sortedMeetings = currentMeetings
+        }
+
+        // Sort based on double-booking preference
+        switch settings.doubleBookingPreference {
+        case .fewerAttendees:
+            currentMeeting = sortedMeetings.sorted { $0.attendeeCount < $1.attendeeCount }.first
+        case .moreAttendees:
+            currentMeeting = sortedMeetings.sorted { $0.attendeeCount > $1.attendeeCount }.first
         }
 
         // Find upcoming meetings within threshold

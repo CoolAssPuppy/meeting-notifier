@@ -125,6 +125,12 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var doubleBookingPreference: DoubleBookingPreference {
+        didSet {
+            saveSetting(doubleBookingPreference.rawValue, forKey: "doubleBookingPreference")
+        }
+    }
+
     // Custom calendar colors: [accountEmail: [calendarId: hexColor]]
     @Published var customCalendarColors: [String: [String: String]] {
         didSet {
@@ -162,6 +168,9 @@ class AppSettings: ObservableObject {
 
         let mapProviderRaw = UserDefaults.standard.string(forKey: "preferredMapProvider") ?? MapProvider.apple.rawValue
         self.preferredMapProvider = MapProvider(rawValue: mapProviderRaw) ?? .apple
+
+        let doubleBookingRaw = UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
+        self.doubleBookingPreference = DoubleBookingPreference(rawValue: doubleBookingRaw) ?? .fewerAttendees
 
         self.customCalendarColors = [:]
 
@@ -323,6 +332,10 @@ class AppSettings: ObservableObject {
             if keys.contains("preferredMapProvider") {
                 let mapProviderRaw = UserDefaults.standard.string(forKey: "preferredMapProvider") ?? MapProvider.apple.rawValue
                 self.preferredMapProvider = MapProvider(rawValue: mapProviderRaw) ?? .apple
+            }
+            if keys.contains("doubleBookingPreference") {
+                let doubleBookingRaw = UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
+                self.doubleBookingPreference = DoubleBookingPreference(rawValue: doubleBookingRaw) ?? .fewerAttendees
             }
             if keys.contains("customCalendarColors") {
                 self.loadCustomCalendarColors()
@@ -493,6 +506,24 @@ enum MapProvider: String, CaseIterable, Identifiable {
         switch self {
         case .apple: return "map.fill"
         case .google: return "globe"
+        }
+    }
+}
+
+// MARK: - Double Booking Preference
+
+enum DoubleBookingPreference: String, CaseIterable, Identifiable {
+    case fewerAttendees = "Meetings with fewer attendees"
+    case moreAttendees = "Meetings with more attendees"
+
+    var id: String { rawValue }
+
+    var description: String {
+        switch self {
+        case .fewerAttendees:
+            return "Show smaller meetings first"
+        case .moreAttendees:
+            return "Show larger meetings first"
         }
     }
 }

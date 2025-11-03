@@ -72,6 +72,12 @@ class CalendarDataManager: ObservableObject {
             let shouldIncludeTomorrow = hour >= 17
 
             let filteredEvents = allEvents.filter { event in
+                // Include events that are currently happening (started but not ended)
+                if event.isHappening {
+                    return true
+                }
+
+                // Include events starting later today
                 if event.startDate >= now && event.startDate <= endOfToday {
                     return true
                 }
