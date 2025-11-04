@@ -140,36 +140,60 @@ class AppSettings: ObservableObject {
 
     private init() {
         self.accounts = []
-        self.notificationsEnabled = UserDefaults.standard.object(forKey: "notificationsEnabled") as? Bool ?? true
-        self.oneMinuteWarningEnabled = UserDefaults.standard.object(forKey: "oneMinuteWarningEnabled") as? Bool ?? true
+
+        // First, sync with iCloud to get latest values
+        iCloudStore.synchronize()
+
+        // Load from iCloud first, fallback to UserDefaults, then use defaults
+        // This ensures fresh values from iCloud take priority
+        self.notificationsEnabled = iCloudStore.object(forKey: "notificationsEnabled") as? Bool
+            ?? UserDefaults.standard.object(forKey: "notificationsEnabled") as? Bool ?? true
+        self.oneMinuteWarningEnabled = iCloudStore.object(forKey: "oneMinuteWarningEnabled") as? Bool
+            ?? UserDefaults.standard.object(forKey: "oneMinuteWarningEnabled") as? Bool ?? true
         self.notificationTracking = NotificationTracking()
 
-        let meetAppRawValue = UserDefaults.standard.string(forKey: "defaultMeetApp") ?? MeetAppType.defaultBrowser.rawValue
+        let meetAppRawValue = iCloudStore.string(forKey: "defaultMeetApp")
+            ?? UserDefaults.standard.string(forKey: "defaultMeetApp") ?? MeetAppType.defaultBrowser.rawValue
         self.defaultMeetApp = MeetAppType(rawValue: meetAppRawValue) ?? .defaultBrowser
 
-        self.showInMenuBar = UserDefaults.standard.object(forKey: "showInMenuBar") as? Bool ?? false
-        self.onlyShowMeetingsWithAttendees = UserDefaults.standard.object(forKey: "onlyShowMeetingsWithAttendees") as? Bool ?? false
-        self.muteSounds = UserDefaults.standard.object(forKey: "muteSounds") as? Bool ?? false
-        self.launchAtLogin = UserDefaults.standard.object(forKey: "launchAtLogin") as? Bool ?? false
+        self.showInMenuBar = iCloudStore.object(forKey: "showInMenuBar") as? Bool
+            ?? UserDefaults.standard.object(forKey: "showInMenuBar") as? Bool ?? false
+        self.onlyShowMeetingsWithAttendees = iCloudStore.object(forKey: "onlyShowMeetingsWithAttendees") as? Bool
+            ?? UserDefaults.standard.object(forKey: "onlyShowMeetingsWithAttendees") as? Bool ?? false
+        self.muteSounds = iCloudStore.object(forKey: "muteSounds") as? Bool
+            ?? UserDefaults.standard.object(forKey: "muteSounds") as? Bool ?? false
+        self.launchAtLogin = iCloudStore.object(forKey: "launchAtLogin") as? Bool
+            ?? UserDefaults.standard.object(forKey: "launchAtLogin") as? Bool ?? false
 
         // Initialize new settings
-        self.menuBarShowIcon = UserDefaults.standard.object(forKey: "menuBarShowIcon") as? Bool ?? true
-        self.menuBarShowTitle = UserDefaults.standard.object(forKey: "menuBarShowTitle") as? Bool ?? true
-        self.menuBarShowTime = UserDefaults.standard.object(forKey: "menuBarShowTime") as? Bool ?? false
-        self.menuBarShowCountdown = UserDefaults.standard.object(forKey: "menuBarShowCountdown") as? Bool ?? false
+        self.menuBarShowIcon = iCloudStore.object(forKey: "menuBarShowIcon") as? Bool
+            ?? UserDefaults.standard.object(forKey: "menuBarShowIcon") as? Bool ?? true
+        self.menuBarShowTitle = iCloudStore.object(forKey: "menuBarShowTitle") as? Bool
+            ?? UserDefaults.standard.object(forKey: "menuBarShowTitle") as? Bool ?? true
+        self.menuBarShowTime = iCloudStore.object(forKey: "menuBarShowTime") as? Bool
+            ?? UserDefaults.standard.object(forKey: "menuBarShowTime") as? Bool ?? false
+        self.menuBarShowCountdown = iCloudStore.object(forKey: "menuBarShowCountdown") as? Bool
+            ?? UserDefaults.standard.object(forKey: "menuBarShowCountdown") as? Bool ?? false
 
-        self.menuBarThresholdMinutes = UserDefaults.standard.object(forKey: "menuBarThresholdMinutes") as? Int ?? 15
-        self.showAllDayInMenuBar = UserDefaults.standard.object(forKey: "showAllDayInMenuBar") as? Bool ?? false
-        self.showMeetingCountBadge = UserDefaults.standard.object(forKey: "showMeetingCountBadge") as? Bool ?? true
-        self.showTravelTimeAlerts = UserDefaults.standard.object(forKey: "showTravelTimeAlerts") as? Bool ?? true
+        self.menuBarThresholdMinutes = iCloudStore.object(forKey: "menuBarThresholdMinutes") as? Int
+            ?? UserDefaults.standard.object(forKey: "menuBarThresholdMinutes") as? Int ?? 15
+        self.showAllDayInMenuBar = iCloudStore.object(forKey: "showAllDayInMenuBar") as? Bool
+            ?? UserDefaults.standard.object(forKey: "showAllDayInMenuBar") as? Bool ?? false
+        self.showMeetingCountBadge = iCloudStore.object(forKey: "showMeetingCountBadge") as? Bool
+            ?? UserDefaults.standard.object(forKey: "showMeetingCountBadge") as? Bool ?? true
+        self.showTravelTimeAlerts = iCloudStore.object(forKey: "showTravelTimeAlerts") as? Bool
+            ?? UserDefaults.standard.object(forKey: "showTravelTimeAlerts") as? Bool ?? true
 
-        let travelModeRaw = UserDefaults.standard.string(forKey: "defaultTravelMode") ?? TravelMode.driving.rawValue
+        let travelModeRaw = iCloudStore.string(forKey: "defaultTravelMode")
+            ?? UserDefaults.standard.string(forKey: "defaultTravelMode") ?? TravelMode.driving.rawValue
         self.defaultTravelMode = TravelMode(rawValue: travelModeRaw) ?? .driving
 
-        let mapProviderRaw = UserDefaults.standard.string(forKey: "preferredMapProvider") ?? MapProvider.apple.rawValue
+        let mapProviderRaw = iCloudStore.string(forKey: "preferredMapProvider")
+            ?? UserDefaults.standard.string(forKey: "preferredMapProvider") ?? MapProvider.apple.rawValue
         self.preferredMapProvider = MapProvider(rawValue: mapProviderRaw) ?? .apple
 
-        let doubleBookingRaw = UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
+        let doubleBookingRaw = iCloudStore.string(forKey: "doubleBookingPreference")
+            ?? UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
         self.doubleBookingPreference = DoubleBookingPreference(rawValue: doubleBookingRaw) ?? .fewerAttendees
 
         self.customCalendarColors = [:]
@@ -177,7 +201,14 @@ class AppSettings: ObservableObject {
         loadAccounts()
         loadNotificationTracking()
         loadCustomCalendarColors()
+
+        // Copy iCloud values to UserDefaults to keep them in sync
+        syncAllSettingsFromiCloudToUserDefaults()
+
         setupiCloudSync()
+
+        // Verify and sync login item status
+        verifyLoginItemStatus()
     }
 
     private func loadAccounts() {
@@ -260,6 +291,62 @@ class AppSettings: ObservableObject {
 
         // Synchronize with iCloud
         iCloudStore.synchronize()
+    }
+
+    private func syncAllSettingsFromiCloudToUserDefaults() {
+        // Sync all settings from iCloud to UserDefaults to ensure consistency
+        let settingsKeys = [
+            "notificationsEnabled", "oneMinuteWarningEnabled", "defaultMeetApp",
+            "showInMenuBar", "onlyShowMeetingsWithAttendees", "muteSounds", "launchAtLogin",
+            "menuBarShowIcon", "menuBarShowTitle", "menuBarShowTime", "menuBarShowCountdown",
+            "menuBarThresholdMinutes", "showAllDayInMenuBar", "showMeetingCountBadge",
+            "showTravelTimeAlerts", "defaultTravelMode", "preferredMapProvider", "doubleBookingPreference"
+        ]
+
+        for key in settingsKeys {
+            if let value = iCloudStore.object(forKey: key) {
+                UserDefaults.standard.set(value, forKey: key)
+            }
+        }
+    }
+
+    private func verifyLoginItemStatus() {
+        // Check actual system registration status and sync with our setting
+        let systemStatus = SMAppService.mainApp.status
+
+        switch systemStatus {
+        case .enabled:
+            // System says enabled - ensure our setting matches
+            if !launchAtLogin {
+                print("Login item is enabled in system but setting is false - syncing")
+                // Update our setting without triggering didSet (to avoid re-registering)
+                UserDefaults.standard.set(true, forKey: "launchAtLogin")
+                iCloudStore.set(true, forKey: "launchAtLogin")
+                iCloudStore.synchronize()
+                // Manually update the property
+                DispatchQueue.main.async { [weak self] in
+                    self?.launchAtLogin = true
+                }
+            }
+        case .notRegistered:
+            // System says not registered - register if setting says we should
+            if launchAtLogin {
+                print("Login item setting is true but not registered - registering")
+                do {
+                    try SMAppService.mainApp.register()
+                } catch {
+                    print("Failed to register login item: \(error)")
+                }
+            }
+        case .requiresApproval:
+            // User needs to approve in System Settings
+            print("Login item requires approval in System Settings")
+        case .notFound:
+            // App service not found
+            print("Login item service not found")
+        @unknown default:
+            print("Unknown login item status: \(systemStatus.rawValue)")
+        }
     }
 
     @objc private func iCloudStoreDidChange(_ notification: Notification) {
