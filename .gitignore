@@ -44,11 +44,12 @@ Carthage/Build/
 # fastlane
 fastlane/report.xml
 fastlane/Preview.html
-fastlane/screenshots/**/*.png
+fastlane/screenshots/
 fastlane/test_output
 fastlane/builds
 MeetingNotifier/fastlane/report.xml
 MeetingNotifier/fastlane/Preview.html
+MeetingNotifier/fastlane/screenshots/
 MeetingNotifier/fastlane/test_output
 MeetingNotifier/fastlane/builds
 MeetingNotifier/fastlane/app_store_connect_api_key.p8

@@ -1,0 +1,9 @@
+Initial release of MeetingNotifier.
+
+Features:
+• Google Calendar and Microsoft Calendar support
+• Customizable menu bar display
+• Meeting notifications with adjustable timing
+• One-click join for Zoom, Google Meet, and Teams
+• Travel time calculations for meeting locations
+• Multi-account and multi-calendar support

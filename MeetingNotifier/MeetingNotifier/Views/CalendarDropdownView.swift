@@ -365,6 +365,7 @@ struct CalendarDropdownView: View {
             ) {
                 NotificationCenter.default.post(name: .settingsRequested, object: nil)
             }
+            .accessibilityIdentifier("settingsButton")
 
             // Quit button
             footerButton(

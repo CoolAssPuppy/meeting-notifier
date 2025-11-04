@@ -14,11 +14,17 @@ class CalendarDataManager: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     private init() {
-        startAutoRefresh()
-        observeAccountChanges()
+        // Don't auto-refresh if running UI tests
+        if !CommandLine.arguments.contains("--uitesting") {
+            startAutoRefresh()
+            observeAccountChanges()
+        }
     }
 
     func startAutoRefresh() {
+        // Don't start if in UI testing mode
+        guard !CommandLine.arguments.contains("--uitesting") else { return }
+
         refreshTimer?.invalidate()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -47,6 +53,12 @@ class CalendarDataManager: ObservableObject {
     }
 
     func refreshEvents() async {
+        // Don't fetch real data during UI testing
+        guard !CommandLine.arguments.contains("--uitesting") else {
+            isLoading = false
+            return
+        }
+
         isLoading = true
         errorMessage = nil
 
@@ -195,5 +207,12 @@ class CalendarDataManager: ObservableObject {
             // Include events that start tomorrow (they won't have ended yet, but keeping consistent logic)
             event.startDate >= startOfTomorrow && event.startDate <= endOfTomorrow && event.endDate > now
         }
+    }
+
+    // For UI testing only
+    func setTestEvents(_ testEvents: [CalendarEvent]) {
+        guard CommandLine.arguments.contains("--uitesting") else { return }
+        events = testEvents.sorted { $0.startDate < $1.startDate }
+        isLoading = false
     }
 }

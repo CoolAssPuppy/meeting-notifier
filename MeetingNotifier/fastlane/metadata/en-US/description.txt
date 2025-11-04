@@ -1,0 +1,49 @@
+MeetingNotifier keeps your upcoming meetings visible in the menu bar, so you always know what's next without switching apps.
+
+FEATURES
+
+Menu Bar Display
+• See your next meeting time and countdown in the menu bar
+• Customize what information appears: time, title, countdown, or icon
+• Works across multiple monitors
+
+Meeting List
+• View all upcoming meetings in a dropdown
+• Shows today and tomorrow's schedule after 5 PM
+• Displays meeting platform icons (Zoom, Google Meet, Microsoft Teams)
+• Quick access to join meeting links
+
+Notifications
+• Get alerts before meetings start (customizable timing)
+• Choose from multiple notification sounds
+• Configure different alert times for different situations
+
+Calendar Integration
+• Supports Google Calendar and Microsoft Calendar
+• Select which calendars to monitor
+• Secure OAuth authentication
+• Works with multiple accounts simultaneously
+• iCloud sync keeps settings consistent across devices
+
+Travel Time
+• Calculates drive time to meeting locations
+• Shows when you need to leave
+• Uses real-time traffic data
+
+Meeting Management
+• Join video calls with one click
+• Open meeting locations in Maps
+• Quick access to meeting details
+
+Customization
+• Choose which meeting information displays in the menu bar
+• Select notification timing (1-60 minutes before)
+• Pick custom notification sounds
+• Configure for work and personal calendars
+
+Privacy
+• All calendar data stays on your device
+• Secure OAuth login (no password storage)
+• No data collection or tracking
+
+MeetingNotifier is designed for professionals who manage multiple meetings and need reliable reminders without cluttering their workflow. The app runs quietly in the background, surfacing information only when you need it.

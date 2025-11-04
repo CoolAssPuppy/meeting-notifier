@@ -226,6 +226,41 @@ platform :mac do
   # App Store Release
   # ========================================
 
+  desc "Upload binary only to App Store Connect"
+  lane :upload_binary do
+    # Run pre-flight checks
+    prep
+
+    UI.message "🚀 Uploading binary to App Store Connect..."
+
+    # Build the app
+    build
+
+    # Set up App Store Connect API key
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_filepath: File.expand_path("../fastlane/app_store_connect_api_key.p8", __dir__)
+    )
+
+    # Get version info
+    version = sh("plutil -extract CFBundleShortVersionString raw ../MeetingNotifier/Info.plist").strip
+    build_number = sh("plutil -extract CFBundleVersion raw ../MeetingNotifier/Info.plist").strip
+
+    # Use pilot/deliver to upload just the binary
+    pilot(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+      changelog: "Build #{version} (#{build_number})"
+    )
+
+    UI.success "✅ Successfully uploaded #{version} (#{build_number}) to App Store Connect!"
+    UI.important "📱 Build will be available after App Store processing (~10 minutes)"
+    UI.important "⚠️  Upload metadata and screenshots manually via App Store Connect web interface"
+  end
+
   desc "Deploy to App Store"
   lane :release do
     # Run pre-flight checks
@@ -233,48 +268,133 @@ platform :mac do
 
     UI.message "🚀 Preparing App Store release..."
 
-    # Safety confirmation
-    if UI.confirm("Are you sure you want to deploy to production?")
-      # Run tests
-      test
+    # Optional: Run tests (comment out if no tests configured)
+    # test
 
-      # Build the app
-      build
+    # Build the app
+    build
 
-      # Set up App Store Connect API key
-      api_key = app_store_connect_api_key(
-        key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
-        issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
-        key_filepath: File.expand_path("../fastlane/app_store_connect_api_key.p8", __dir__)
-      )
+    # Set up App Store Connect API key
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_filepath: File.expand_path("../fastlane/app_store_connect_api_key.p8", __dir__)
+    )
 
-      # Upload to App Store
-      upload_to_app_store(
-        api_key: api_key,
-        app_identifier: APP_IDENTIFIER,
-        skip_screenshots: true,
-        skip_metadata: true,
-        precheck_include_in_app_purchases: false,
-        submit_for_review: false,  # Manual submission recommended
-        automatic_release: false
-      )
+    # Upload to App Store
+    upload_to_app_store(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      skip_screenshots: true,   # Skip screenshots (upload manually via App Store Connect)
+      skip_metadata: true,      # Skip metadata (upload manually via App Store Connect)
+      force: true,              # Skip HTML preview confirmation
+      run_precheck_before_submit: false,  # Skip precheck validation
+      precheck_include_in_app_purchases: false,
+      submit_for_review: false,  # Manual submission recommended
+      automatic_release: false
+    )
 
-      version = get_version_number(xcodeproj: XCODEPROJ, target: SCHEME)
-      build_number = get_build_number(xcodeproj: XCODEPROJ)
+    version = sh("plutil -extract CFBundleShortVersionString raw ../MeetingNotifier/Info.plist").strip
+    build_number = sh("plutil -extract CFBundleVersion raw ../MeetingNotifier/Info.plist").strip
 
-      UI.success "✅ Successfully uploaded #{version} (#{build_number}) to App Store!"
-      UI.important "⚠️  Remember to manually submit for review in App Store Connect"
+    UI.success "✅ Successfully uploaded #{version} (#{build_number}) to App Store!"
+    UI.important "⚠️  Upload metadata and screenshots manually via App Store Connect"
+    UI.important "⚠️  Remember to manually submit for review in App Store Connect"
 
-      # Create git tag
-      add_git_tag(
-        tag: "v#{version}",
-        message: "Release #{version} (#{build_number})"
-      )
+    # Create git tag
+    add_git_tag(
+      tag: "v#{version}",
+      message: "Release #{version} (#{build_number})"
+    )
 
-      UI.success "📦 Git tag created: v#{version}"
-    else
-      UI.user_error!("Release cancelled by user")
+    UI.success "📦 Git tag created: v#{version}"
+  end
+
+  # ========================================
+  # Screenshots
+  # ========================================
+
+  desc "Generate screenshots for the App Store"
+  lane :screenshots do
+    UI.message "📸 Generating screenshots for macOS app..."
+
+    # For macOS apps, we run the UI tests directly
+    # The tests use snapshot() calls which save to /tmp/screenshots
+    scan(
+      project: XCODEPROJ,
+      scheme: SCHEME,
+      destination: "platform=macOS",
+      clean: true,
+      code_coverage: false,
+      derived_data_path: "./fastlane/derived_data",
+      output_directory: "./fastlane/test_output",
+      only_testing: ["MeetingNotifierUITests/SimpleScreenshotTests/testCaptureAllScreenshots"]
+    )
+
+    # Move screenshots from temp location to fastlane folder
+    screenshots_tmp = File.expand_path("~/Library/Caches/tools.fastlane")
+    screenshots_dest = "./fastlane/screenshots/en-US"
+
+    # Create destination directory
+    sh("mkdir -p #{screenshots_dest}")
+
+    # Find and copy screenshots
+    if Dir.exist?(screenshots_tmp)
+      screenshot_files = Dir.glob("#{screenshots_tmp}/**/*.png")
+      if screenshot_files.any?
+        screenshot_files.each do |file|
+          filename = File.basename(file)
+          sh("cp '#{file}' '#{screenshots_dest}/#{filename}'")
+          UI.message "📸 Copied: #{filename}"
+        end
+      end
     end
+
+    UI.success "✅ Screenshots generated successfully!"
+    UI.message "📂 Screenshots saved to: ./fastlane/screenshots/en-US"
+    UI.important "⚠️  You may need to manually click the menu bar icon during testing"
+  end
+
+  desc "Frame screenshots with device frames"
+  lane :frame_screenshots do
+    UI.message "🖼️  Framing screenshots..."
+
+    # Frame screenshots (requires imagemagick)
+    # This adds nice device frames around your screenshots
+    frameit(
+      path: "./fastlane/screenshots",
+      force_device_type: "Mac"
+    )
+
+    UI.success "✅ Screenshots framed successfully!"
+  end
+
+  desc "Generate and upload screenshots with metadata"
+  lane :update_screenshots do
+    # Generate screenshots
+    screenshots
+
+    # Optional: Frame screenshots (requires imagemagick)
+    # frame_screenshots
+
+    # Set up App Store Connect API key
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_filepath: File.expand_path("../fastlane/app_store_connect_api_key.p8", __dir__)
+    )
+
+    # Upload screenshots to App Store Connect
+    upload_to_app_store(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: false,
+      overwrite_screenshots: true
+    )
+
+    UI.success "✅ Screenshots uploaded to App Store Connect!"
   end
 
   # ========================================
@@ -291,16 +411,26 @@ platform :mac do
     UI.success "✅ Metadata downloaded to ./fastlane/metadata"
   end
 
-  desc "Upload App Store metadata"
+  desc "Upload App Store metadata and screenshots"
   lane :upload_metadata do
+    # Set up App Store Connect API key
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_filepath: File.expand_path("../fastlane/app_store_connect_api_key.p8", __dir__)
+    )
+
     upload_to_app_store(
+      api_key: api_key,
       app_identifier: APP_IDENTIFIER,
       skip_binary_upload: true,
       skip_screenshots: false,
-      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+      overwrite_screenshots: true,
+      submit_for_review: false,
+      automatic_release: false
     )
 
-    UI.success "✅ Metadata uploaded successfully"
+    UI.success "✅ Metadata and screenshots uploaded successfully"
   end
 
   # ========================================

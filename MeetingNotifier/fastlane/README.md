@@ -71,6 +71,14 @@ Build the app
 
 Deploy to TestFlight
 
+### mac upload_binary
+
+```sh
+[bundle exec] fastlane mac upload_binary
+```
+
+Upload binary only to App Store Connect
+
 ### mac release
 
 ```sh
@@ -78,6 +86,30 @@ Deploy to TestFlight
 ```
 
 Deploy to App Store
+
+### mac screenshots
+
+```sh
+[bundle exec] fastlane mac screenshots
+```
+
+Generate screenshots for the App Store
+
+### mac frame_screenshots
+
+```sh
+[bundle exec] fastlane mac frame_screenshots
+```
+
+Frame screenshots with device frames
+
+### mac update_screenshots
+
+```sh
+[bundle exec] fastlane mac update_screenshots
+```
+
+Generate and upload screenshots with metadata
 
 ### mac download_metadata
 
@@ -93,7 +125,7 @@ Download App Store metadata
 [bundle exec] fastlane mac upload_metadata
 ```
 
-Upload App Store metadata
+Upload App Store metadata and screenshots
 
 ----
 
