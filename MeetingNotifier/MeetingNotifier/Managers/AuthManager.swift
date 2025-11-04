@@ -31,8 +31,24 @@ class AuthManager {
                         return
                     }
 
-                    _ = KeychainManager.shared.saveAccessToken(accessToken, forAccount: email)
-                    _ = KeychainManager.shared.saveRefreshToken(refreshToken, forAccount: email)
+                    // Ensure app is active/foreground so keychain permission dialog can appear
+                    NSApp.activate(ignoringOtherApps: true)
+
+                    let accessTokenSaved = KeychainManager.shared.saveAccessToken(accessToken, forAccount: email)
+                    let refreshTokenSaved = KeychainManager.shared.saveRefreshToken(refreshToken, forAccount: email)
+
+                    print("[Auth] Keychain save results for \(email) - Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)")
+
+                    guard accessTokenSaved && refreshTokenSaved else {
+                        let errorMsg = "Failed to save credentials to keychain. Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)"
+                        print("[Auth] ERROR: \(errorMsg)")
+                        completion(.failure(NSError(
+                            domain: "AuthManager",
+                            code: -1,
+                            userInfo: [NSLocalizedDescriptionKey: errorMsg]
+                        )))
+                        return
+                    }
 
                     var account = CalendarAccount(
                         email: email,
@@ -47,6 +63,7 @@ class AuthManager {
                         AppSettings.shared.addAccount(account)
                     }
 
+                    print("[Auth] Successfully authenticated and saved credentials for \(email)")
                     completion(.success(account))
 
                 case .failure(let error):
@@ -80,8 +97,24 @@ class AuthManager {
                         return
                     }
 
-                    _ = KeychainManager.shared.saveAccessToken(accessToken, forAccount: email)
-                    _ = KeychainManager.shared.saveRefreshToken(refreshToken, forAccount: email)
+                    // Ensure app is active/foreground so keychain permission dialog can appear
+                    NSApp.activate(ignoringOtherApps: true)
+
+                    let accessTokenSaved = KeychainManager.shared.saveAccessToken(accessToken, forAccount: email)
+                    let refreshTokenSaved = KeychainManager.shared.saveRefreshToken(refreshToken, forAccount: email)
+
+                    print("[Auth] Keychain save results for \(email) - Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)")
+
+                    guard accessTokenSaved && refreshTokenSaved else {
+                        let errorMsg = "Failed to save credentials to keychain. Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)"
+                        print("[Auth] ERROR: \(errorMsg)")
+                        completion(.failure(NSError(
+                            domain: "AuthManager",
+                            code: -1,
+                            userInfo: [NSLocalizedDescriptionKey: errorMsg]
+                        )))
+                        return
+                    }
 
                     var account = CalendarAccount(
                         email: email,
@@ -96,6 +129,7 @@ class AuthManager {
                         AppSettings.shared.addAccount(account)
                     }
 
+                    print("[Auth] Successfully authenticated and saved credentials for \(email)")
                     completion(.success(account))
 
                 case .failure(let error):

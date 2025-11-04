@@ -53,6 +53,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             name: .toggleDropdown,
             object: nil
         )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAccountsDidUpdate),
+            name: .accountsDidUpdate,
+            object: nil
+        )
     }
 
     @objc private func toggleDropdown() {
@@ -62,6 +69,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             closePopover()
         } else {
             showPopover()
+        }
+    }
+
+    @objc private func handleAccountsDidUpdate() {
+        Task { @MainActor in
+            updateMenuBarText()
         }
     }
 

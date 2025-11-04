@@ -12,6 +12,7 @@ class AppSettings: ObservableObject {
     @Published var accounts: [CalendarAccount] {
         didSet {
             saveAccounts()
+            NotificationCenter.default.post(name: .accountsDidUpdate, object: nil)
         }
     }
 

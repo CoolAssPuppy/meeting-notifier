@@ -541,6 +541,7 @@ struct CalendarDropdownView: View {
 extension Notification.Name {
     static let addAccountRequested = Notification.Name("addAccountRequested")
     static let settingsRequested = Notification.Name("settingsRequested")
+    static let accountsDidUpdate = Notification.Name("accountsDidUpdate")
 }
 
 struct CalendarDropdownView_Previews: PreviewProvider {
