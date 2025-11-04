@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CalendarDropdownView: View {
     @ObservedObject var dataManager = CalendarDataManager.shared
+    @ObservedObject var appSettings = AppSettings.shared
     @State private var isRefreshing = false
 
     var body: some View {
@@ -22,6 +23,11 @@ struct CalendarDropdownView: View {
                     endPoint: .trailing
                 )
                 .frame(height: 1)
+
+                // Auth error banner
+                if hasAuthErrors {
+                    authErrorBanner
+                }
 
                 if dataManager.isLoading && dataManager.events.isEmpty {
                     loadingView
@@ -62,6 +68,100 @@ struct CalendarDropdownView: View {
                     lineWidth: 1.5
                 )
         )
+    }
+
+    private var hasAuthErrors: Bool {
+        appSettings.accounts.contains { $0.authStatus != .valid }
+    }
+
+    private var authErrorAccountEmails: [String] {
+        appSettings.accounts.filter { $0.authStatus != .valid }.map { $0.email }
+    }
+
+    private var authErrorBanner: some View {
+        let needsAuthAccounts = appSettings.accounts.filter { $0.authStatus == .needsAuth }
+        let expiredAccounts = appSettings.accounts.filter { $0.authStatus == .expired || $0.authStatus == .revoked }
+
+        return VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.orange, .red],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Authentication Required")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.primary)
+
+                    if !needsAuthAccounts.isEmpty {
+                        Text("Sign in on this device:")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+
+                        ForEach(needsAuthAccounts, id: \.email) { account in
+                            Text("• \(account.email)")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    if !expiredAccounts.isEmpty {
+                        Text(needsAuthAccounts.isEmpty ? "Calendar access has expired:" : "Access also expired:")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .padding(.top, needsAuthAccounts.isEmpty ? 0 : 4)
+
+                        ForEach(expiredAccounts, id: \.email) { account in
+                            Text("• \(account.email)")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
+                Spacer()
+            }
+
+            Button(action: {
+                NotificationCenter.default.post(name: .settingsRequested, object: nil)
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text("Open Settings to Reconnect")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    LinearGradient(
+                        colors: [.orange, .red],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.orange.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     private var backgroundGradient: some View {

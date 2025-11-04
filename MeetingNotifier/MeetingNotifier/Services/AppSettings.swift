@@ -214,7 +214,25 @@ class AppSettings: ObservableObject {
     private func loadAccounts() {
         if let data = UserDefaults.standard.data(forKey: "accounts") {
             do {
-                let decoded = try JSONDecoder().decode([CalendarAccount].self, from: data)
+                var decoded = try JSONDecoder().decode([CalendarAccount].self, from: data)
+
+                // Check if each account has local OAuth tokens
+                for i in 0..<decoded.count {
+                    let account = decoded[i]
+                    let hasAccessToken = KeychainManager.shared.retrieveAccessToken(forAccount: account.email) != nil
+                    let hasRefreshToken = KeychainManager.shared.retrieveRefreshToken(forAccount: account.email) != nil
+
+                    // If account has no local tokens, mark as needing auth
+                    if !hasAccessToken && !hasRefreshToken {
+                        decoded[i].authStatus = .needsAuth
+                        print("Account \(account.email) has no local tokens - marked as needsAuth")
+                    } else if decoded[i].authStatus == .needsAuth {
+                        // If account was marked as needsAuth but now has tokens, mark as valid
+                        decoded[i].authStatus = .valid
+                        print("Account \(account.email) now has tokens - marked as valid")
+                    }
+                }
+
                 self.accounts = decoded
                 print("Successfully loaded \(decoded.count) accounts")
             } catch {

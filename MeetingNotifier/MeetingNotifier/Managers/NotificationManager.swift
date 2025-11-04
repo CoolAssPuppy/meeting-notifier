@@ -8,6 +8,8 @@ class NotificationManager: NSObject, ObservableObject {
 
     private var notificationCheckTimer: Timer?
     @Published var permissionGranted = false
+    private var authFailureNotificationTimestamps: [String: Date] = [:]
+    private let authFailureThrottleInterval: TimeInterval = 3600 // 1 hour
 
     override init() {
         super.init()
@@ -185,6 +187,20 @@ class NotificationManager: NSObject, ObservableObject {
     }
 
     func showAuthFailureNotification(forAccount account: CalendarAccount) {
+        let now = Date()
+
+        // Check if we've shown a notification for this account recently
+        if let lastNotificationTime = authFailureNotificationTimestamps[account.email] {
+            let timeSinceLastNotification = now.timeIntervalSince(lastNotificationTime)
+            if timeSinceLastNotification < authFailureThrottleInterval {
+                print("Throttling auth failure notification for \(account.email) - last shown \(Int(timeSinceLastNotification))s ago")
+                return
+            }
+        }
+
+        // Update timestamp to throttle future notifications
+        authFailureNotificationTimestamps[account.email] = now
+
         let content = UNMutableNotificationContent()
         content.title = "Authentication Expired"
         content.body = "Calendar access for \(account.email) has expired. Click to reconnect."

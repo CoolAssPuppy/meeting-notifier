@@ -63,7 +63,7 @@ class CalendarDataManager: ObservableObject {
         errorMessage = nil
 
         do {
-            let accounts = AppSettings.shared.accounts.filter { $0.isEnabled }
+            let accounts = AppSettings.shared.accounts.filter { $0.isEnabled && $0.authStatus == .valid }
             var allEvents: [CalendarEvent] = []
 
             for account in accounts {

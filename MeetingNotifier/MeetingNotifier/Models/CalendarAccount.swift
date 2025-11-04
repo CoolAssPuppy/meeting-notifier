@@ -26,6 +26,7 @@ enum AuthStatus: String, Codable {
     case valid
     case expired
     case revoked
+    case needsAuth // Account synced from iCloud but no local OAuth tokens
 }
 
 struct CalendarAccount: Codable, Identifiable, Hashable {

@@ -103,18 +103,21 @@ struct AccountsTab: View {
                         .font(.system(size: 14))
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Authentication expired")
+                        Text(account.authStatus == .needsAuth ? "Sign in required" : "Authentication expired")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.orange)
 
-                        Text("Click Reconnect to restore calendar access")
+                        Text(account.authStatus == .needsAuth ?
+                            "This account synced from another device. Sign in to access calendars on this device." :
+                            "Click Reconnect to restore calendar access")
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
 
                     Spacer()
 
-                    Button("Reconnect") {
+                    Button(account.authStatus == .needsAuth ? "Sign In" : "Reconnect") {
                         reconnectAccount(account)
                     }
                     .buttonStyle(.borderedProminent)
