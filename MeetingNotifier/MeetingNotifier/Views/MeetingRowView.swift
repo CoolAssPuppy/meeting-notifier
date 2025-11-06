@@ -174,30 +174,21 @@ struct MeetingRowView: View {
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
         }
-        .buttonStyle(.plain)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    withAnimation(.easeOut(duration: 0.1)) {
-                        isPressed = true
-                    }
-                }
-                .onEnded { _ in
-                    withAnimation(.easeOut(duration: 0.1)) {
-                        isPressed = false
-                    }
-                }
-        )
+        .buttonStyle(MeetingButtonStyle(hasVideoLink: event.hasVideoLink, isPressed: $isPressed))
+        .disabled(!event.hasVideoLink)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isHovered = hovering
-            }
-            if hovering && event.hasVideoLink {
-                NSCursor.pointingHand.push()
-            } else if !hovering {
-                NSCursor.pop()
+            if event.hasVideoLink {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isHovered = hovering
+                }
+                if hovering {
+                    NSCursor.pointingHand.push()
+                } else {
+                    NSCursor.pop()
+                }
             }
         }
+        .allowsHitTesting(event.hasVideoLink)
     }
 
     private var countdownBadge: some View {
@@ -311,6 +302,22 @@ struct MeetingRowView: View {
                 .font(.system(size: 14))
                 .foregroundColor(.secondary)
         }
+    }
+}
+
+struct MeetingButtonStyle: ButtonStyle {
+    let hasVideoLink: Bool
+    @Binding var isPressed: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .onChange(of: configuration.isPressed) { _, newValue in
+                if hasVideoLink {
+                    withAnimation(.easeOut(duration: 0.1)) {
+                        isPressed = newValue
+                    }
+                }
+            }
     }
 }
 

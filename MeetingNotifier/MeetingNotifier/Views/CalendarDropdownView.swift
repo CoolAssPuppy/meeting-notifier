@@ -260,7 +260,7 @@ struct CalendarDropdownView: View {
                 if dataManager.isLoading {
                     ProgressView()
                         .controlSize(.small)
-                        .scaleEffect(0.8)
+                        .frame(width: 16, height: 16)
                 } else {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 13, weight: .semibold))
@@ -479,7 +479,7 @@ struct CalendarDropdownView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(
-            .regularMaterial,
+            .thinMaterial,
             in: RoundedRectangle(cornerRadius: 0)
         )
     }

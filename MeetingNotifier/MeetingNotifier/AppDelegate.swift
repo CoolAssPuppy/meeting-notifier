@@ -1,6 +1,8 @@
 import AppKit
 import SwiftUI
 
+// Empty - removed complex hosting controller
+
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
@@ -101,8 +103,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupPopover() {
         popover = NSPopover()
-        popover?.contentViewController = NSHostingController(rootView: CalendarDropdownView())
-        popover?.behavior = .transient
+        let hostingController = NSHostingController(rootView: CalendarDropdownView())
+        popover?.contentViewController = hostingController
+        // Use semitransient - designed for interactive popovers per Apple HIG
+        // Allows clicking inside without dismissing, while maintaining key window status for materials
+        popover?.behavior = .semitransient
+        // Ensure vibrant appearance for proper material rendering
+        popover?.appearance = NSAppearance(named: .aqua)
     }
 
     private func startMenuBarUpdates() {

@@ -231,10 +231,12 @@ class GoogleCalendarManager {
     private func findMeetingLink(in text: String) -> String? {
         let patterns = [
             "https://meet\\.google\\.com/[a-z-]+",
-            "https://[a-z0-9-]+\\.zoom\\.us/j/[0-9]+",
-            "https://zoom\\.us/j/[0-9]+",
-            "https://teams\\.microsoft\\.com/l/meetup-join/[^\\s]+",
-            "https://[a-z0-9-]+\\.webex\\.com/[^\\s]+"
+            // Zoom patterns - more flexible to catch all formats (with/without subdomain, various paths, query params)
+            "https://[a-z0-9]+\\.zoom\\.us/[^\\s<>\"]+",  // e.g., us02web.zoom.us/j/...
+            "https://zoom\\.us/[^\\s<>\"]+",               // e.g., zoom.us/j/... or zoom.us/meeting/...
+            "https://teams\\.microsoft\\.com/l/meetup-join/[^\\s<>\"]+",
+            "https://[a-z0-9-]+\\.webex\\.com/[^\\s<>\"]+",
+            "https://webex\\.com/[^\\s<>\"]+"
         ]
 
         for pattern in patterns {
@@ -252,14 +254,15 @@ class GoogleCalendarManager {
     }
 
     private func isValidMeetingLink(_ url: String) -> Bool {
-        let validPrefixes = [
-            "https://meet.google.com",
-            "https://zoom.us",
-            "https://teams.microsoft.com",
-            "https://webex.com"
-        ]
+        let lowercased = url.lowercased()
 
-        return validPrefixes.contains { url.lowercased().hasPrefix($0) }
+        // Check for various meeting platforms
+        return lowercased.contains("meet.google.com") ||
+               lowercased.contains("zoom.us") ||         // Catches all zoom.us subdomains
+               lowercased.contains("zoom.com") ||         // Some regions use .com
+               lowercased.contains("teams.microsoft.com") ||
+               lowercased.contains("teams.live.com") ||
+               lowercased.contains("webex.com")
     }
 
     private func parseReminders(from item: [String: Any]) -> [EventReminder] {

@@ -8,6 +8,7 @@ class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
     private let iCloudStore = NSUbiquitousKeyValueStore.default
+    private var isUpdatingFromiCloud = false
 
     @Published var accounts: [CalendarAccount] {
         didSet {
@@ -274,8 +275,12 @@ class AppSettings: ObservableObject {
     private func saveCustomCalendarColors() {
         if let encoded = try? JSONEncoder().encode(customCalendarColors) {
             UserDefaults.standard.set(encoded, forKey: "customCalendarColors")
-            iCloudStore.set(encoded, forKey: "customCalendarColors")
-            iCloudStore.synchronize()
+
+            // Only save to iCloud if we're not currently syncing FROM iCloud
+            if !isUpdatingFromiCloud {
+                iCloudStore.set(encoded, forKey: "customCalendarColors")
+                iCloudStore.synchronize()
+            }
         }
     }
 
@@ -385,6 +390,10 @@ class AppSettings: ObservableObject {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
 
+            // Set flag to prevent writing back to iCloud while syncing FROM iCloud
+            self.isUpdatingFromiCloud = true
+            defer { self.isUpdatingFromiCloud = false }
+
             if keys.contains("notificationsEnabled") {
                 self.notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
             }
@@ -453,9 +462,12 @@ class AppSettings: ObservableObject {
         // Save to local UserDefaults
         UserDefaults.standard.set(value, forKey: key)
 
-        // Save to iCloud
-        iCloudStore.set(value, forKey: key)
-        iCloudStore.synchronize()
+        // Only save to iCloud if we're not currently syncing FROM iCloud
+        // This prevents an infinite loop where iCloud changes trigger writes back to iCloud
+        if !isUpdatingFromiCloud {
+            iCloudStore.set(value, forKey: key)
+            iCloudStore.synchronize()
+        }
     }
 
     func addAccount(_ account: CalendarAccount) {

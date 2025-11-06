@@ -82,6 +82,13 @@ struct ConfigTab: View {
                     } header: {
                         sectionHeader(icon: "cup.and.saucer.fill", title: "Support", gradient: [.brown, .orange])
                     }
+
+                    // ABOUT
+                    Section {
+                        aboutSection
+                    } header: {
+                        sectionHeader(icon: "info.circle.fill", title: "About", gradient: [.gray, .secondary])
+                    }
                 }
                 .formStyle(.grouped)
             }
@@ -459,6 +466,34 @@ struct ConfigTab: View {
             CoffeeView()
                 .frame(width: 500, height: 500)
         }
+    }
+
+    // MARK: - About Section
+
+    private var aboutSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Made with love by Strategic Nerds, Inc.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Text("© 2025 Strategic Nerds, Inc.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Text("Build \(appBuildNumber)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Link("Contribute on GitHub", destination: URL(string: "https://github.com/coolasspuppy/meeting-notifier")!)
+                .font(.caption)
+        }
+    }
+
+    private var appBuildNumber: String {
+        if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+            return build
+        }
+        return "Unknown"
     }
 
     // MARK: - Helper Methods
