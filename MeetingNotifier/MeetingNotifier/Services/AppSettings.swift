@@ -12,8 +12,11 @@ class AppSettings: ObservableObject {
 
     @Published var accounts: [CalendarAccount] {
         didSet {
-            saveAccounts()
-            NotificationCenter.default.post(name: .accountsDidUpdate, object: nil)
+            // Only save if we're not initializing from iCloud
+            if !isUpdatingFromiCloud {
+                saveAccounts()
+                NotificationCenter.default.post(name: .accountsDidUpdate, object: nil)
+            }
         }
     }
 
@@ -143,6 +146,11 @@ class AppSettings: ObservableObject {
     private init() {
         self.accounts = []
 
+        // CRITICAL: Set this flag BEFORE initializing properties to prevent crash
+        // during initialization due to infinite iCloud sync loop
+        self.isUpdatingFromiCloud = true
+        defer { self.isUpdatingFromiCloud = false }
+
         // First, sync with iCloud to get latest values
         iCloudStore.synchronize()
 
@@ -207,10 +215,13 @@ class AppSettings: ObservableObject {
         // Copy iCloud values to UserDefaults to keep them in sync
         syncAllSettingsFromiCloudToUserDefaults()
 
+        // Setup iCloud sync AFTER initialization is complete
         setupiCloudSync()
 
         // Verify and sync login item status
         verifyLoginItemStatus()
+
+        // Flag will be reset to false by defer when init completes
     }
 
     private func loadAccounts() {
