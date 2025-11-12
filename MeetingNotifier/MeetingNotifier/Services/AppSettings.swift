@@ -3,6 +3,13 @@ import Combine
 import AppKit
 import ServiceManagement
 
+// Simplified account data for iCloud sync (excludes sensitive info)
+struct SyncedAccountInfo: Codable {
+    let email: String
+    let provider: CalendarProvider
+    var isEnabled: Bool
+}
+
 @MainActor
 class AppSettings: ObservableObject {
     static let shared = AppSettings()
@@ -15,6 +22,7 @@ class AppSettings: ObservableObject {
             // Only save if we're not initializing from iCloud
             if !isUpdatingFromiCloud {
                 saveAccounts()
+                syncAccountListToiCloud()
                 NotificationCenter.default.post(name: .accountsDidUpdate, object: nil)
             }
         }
@@ -221,45 +229,102 @@ class AppSettings: ObservableObject {
         // Verify and sync login item status
         verifyLoginItemStatus()
 
+        // Sync initial account list to iCloud
+        syncAccountListToiCloud()
+
         // Flag will be reset to false by defer when init completes
     }
 
     private func loadAccounts() {
+        // First, load synced account list from iCloud
+        var syncedAccounts: [SyncedAccountInfo] = []
+        if let data = iCloudStore.data(forKey: "syncedAccounts"),
+           let decoded = try? JSONDecoder().decode([SyncedAccountInfo].self, from: data) {
+            syncedAccounts = decoded
+            print("Loaded \(syncedAccounts.count) accounts from iCloud")
+        }
+
+        // Then load local account details from UserDefaults
+        var localAccounts: [CalendarAccount] = []
         if let data = UserDefaults.standard.data(forKey: "accounts") {
             do {
-                var decoded = try JSONDecoder().decode([CalendarAccount].self, from: data)
-
-                // Check if each account has local OAuth tokens
-                for i in 0..<decoded.count {
-                    let account = decoded[i]
-                    let hasAccessToken = KeychainManager.shared.retrieveAccessToken(forAccount: account.email) != nil
-                    let hasRefreshToken = KeychainManager.shared.retrieveRefreshToken(forAccount: account.email) != nil
-
-                    // If account has no local tokens, mark as needing auth
-                    if !hasAccessToken && !hasRefreshToken {
-                        decoded[i].authStatus = .needsAuth
-                        print("Account \(account.email) has no local tokens - marked as needsAuth")
-                    } else if decoded[i].authStatus == .needsAuth {
-                        // If account was marked as needsAuth but now has tokens, mark as valid
-                        decoded[i].authStatus = .valid
-                        print("Account \(account.email) now has tokens - marked as valid")
-                    }
-                }
-
-                self.accounts = decoded
-                print("Successfully loaded \(decoded.count) accounts")
+                localAccounts = try JSONDecoder().decode([CalendarAccount].self, from: data)
+                print("Loaded \(localAccounts.count) accounts from local storage")
             } catch {
-                print("Error loading accounts: \(error)")
-                print("Error details: \(error.localizedDescription)")
+                print("Error loading local accounts: \(error)")
             }
-        } else {
-            print("No account data found in UserDefaults")
         }
+
+        // Merge: Start with local accounts, then add any new accounts from iCloud
+        var mergedAccounts = localAccounts
+
+        for syncedAccount in syncedAccounts {
+            if !mergedAccounts.contains(where: { $0.email == syncedAccount.email }) {
+                // New account from iCloud - create local entry
+                let newAccount = CalendarAccount(
+                    email: syncedAccount.email,
+                    provider: syncedAccount.provider,
+                    isEnabled: syncedAccount.isEnabled,
+                    selectedCalendarIds: [],
+                    authStatus: .needsAuth,  // No local tokens yet
+                    lastAuthError: nil
+                )
+                mergedAccounts.append(newAccount)
+                print("Added new account from iCloud: \(syncedAccount.email) - needs authentication")
+            } else {
+                // Account exists locally, update isEnabled from iCloud if different
+                if let index = mergedAccounts.firstIndex(where: { $0.email == syncedAccount.email }) {
+                    mergedAccounts[index].isEnabled = syncedAccount.isEnabled
+                }
+            }
+        }
+
+        // Check token status for all accounts
+        for i in 0..<mergedAccounts.count {
+            let account = mergedAccounts[i]
+            let hasAccessToken = KeychainManager.shared.retrieveAccessToken(forAccount: account.email) != nil
+            let hasRefreshToken = KeychainManager.shared.retrieveRefreshToken(forAccount: account.email) != nil
+
+            // If account has no local tokens, mark as needing auth
+            if !hasAccessToken && !hasRefreshToken {
+                mergedAccounts[i].authStatus = .needsAuth
+                print("Account \(account.email) has no local tokens - marked as needsAuth")
+            } else if mergedAccounts[i].authStatus == .needsAuth {
+                // If account was marked as needsAuth but now has tokens, mark as valid
+                mergedAccounts[i].authStatus = .valid
+                print("Account \(account.email) now has tokens - marked as valid")
+            }
+        }
+
+        self.accounts = mergedAccounts
+        print("Successfully loaded \(mergedAccounts.count) total accounts")
     }
 
     private func saveAccounts() {
         if let encoded = try? JSONEncoder().encode(accounts) {
             UserDefaults.standard.set(encoded, forKey: "accounts")
+        }
+    }
+
+    private func syncAccountListToiCloud() {
+        // Only sync if we're not currently loading from iCloud
+        if isUpdatingFromiCloud {
+            return
+        }
+
+        // Create simplified account info for iCloud sync (no sensitive data)
+        let syncedAccounts = accounts.map { account in
+            SyncedAccountInfo(
+                email: account.email,
+                provider: account.provider,
+                isEnabled: account.isEnabled
+            )
+        }
+
+        if let encoded = try? JSONEncoder().encode(syncedAccounts) {
+            iCloudStore.set(encoded, forKey: "syncedAccounts")
+            iCloudStore.synchronize()
+            print("Synced \(syncedAccounts.count) accounts to iCloud")
         }
     }
 
@@ -465,6 +530,11 @@ class AppSettings: ObservableObject {
             }
             if keys.contains("customCalendarColors") {
                 self.loadCustomCalendarColors()
+            }
+            if keys.contains("syncedAccounts") {
+                // Reload accounts when synced from another device
+                print("Account list changed in iCloud - reloading accounts")
+                self.loadAccounts()
             }
         }
     }
