@@ -10,6 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var popover: NSPopover?
     private var menuBarUpdateTimer: Timer?
     private var eventMonitor: Any?
+    private var peekWindowPanel: PeekWindowPanel?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
@@ -130,71 +131,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if hasAuthIssues {
             button.title = "⚠️"
             button.image = NSImage(systemSymbolName: "calendar.badge.exclamationmark", accessibilityDescription: "Calendar - Authentication Issue")
+            hidePeekWindow()
             return
         }
 
-        let nextMeeting = getNextMeetingForMenuBar()
         let settings = AppSettings.shared
 
-        // Apply display mode based on checkbox selections
-        if let meeting = nextMeeting, settings.showInMenuBar {
-            var displayComponents: [String] = []
-
-            // Build display string based on selected options
-            if settings.menuBarShowTime {
-                displayComponents.append(meeting.formattedTime)
-            }
-
-            if settings.menuBarShowCountdown {
-                displayComponents.append(meeting.timeUntilStart)
-            }
-
-            if settings.menuBarShowTitle {
-                let truncatedTitle = truncateTitle(meeting.title, maxLength: 25)
-                displayComponents.append(truncatedTitle)
-            }
-
-            // Handle icon
-            if settings.menuBarShowIcon {
-                if let iconImage = getIconImageForEvent(meeting) {
-                    button.image = iconImage
-                } else {
-                    // If no PNG icon available, add emoji to title
-                    let icon = getIconForEvent(meeting)
-                    displayComponents.insert(icon, at: 0)
-                    button.image = nil
-                }
-            } else {
-                button.image = nil
-            }
-
-            // Set the title with all selected components
-            button.title = displayComponents.joined(separator: " ")
-
-            // If no options are selected, show default calendar icon
-            if !settings.menuBarShowIcon && !settings.menuBarShowTitle && !settings.menuBarShowTime && !settings.menuBarShowCountdown {
-                button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
-                button.title = ""
-            }
-
-            // Add meeting count badge if enabled
-            if settings.showMeetingCountBadge {
-                let todayMeetingsCount = CalendarDataManager.shared.todayEvents().count
-                if todayMeetingsCount > 1 {
-                    button.title = button.title + " (\(todayMeetingsCount))"
-                }
-            }
-
-        } else {
-            // No meeting or showInMenuBar is false
+        // Handle display mode
+        switch settings.menuBarDisplayMode {
+        case .none:
+            // No meeting display - just show calendar icon
+            hidePeekWindow()
             button.title = ""
             let calendarImage = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
 
-            // Add badge indicator for today's meeting count
             if settings.showMeetingCountBadge {
                 let todayMeetingsCount = CalendarDataManager.shared.todayEvents().count
                 if todayMeetingsCount > 0 {
-                    // Create an attributed string with badge
                     button.title = String(todayMeetingsCount)
                     button.image = calendarImage
                 } else {
@@ -203,6 +156,92 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 button.image = calendarImage
             }
+
+        case .inMenuBar:
+            // Original behavior - show next meeting in menu bar
+            hidePeekWindow()
+            let nextMeeting = getNextMeetingForMenuBar()
+
+            if let meeting = nextMeeting {
+                var displayComponents: [String] = []
+
+                // Build display string based on selected options
+                if settings.menuBarShowTime {
+                    displayComponents.append(meeting.formattedTime)
+                }
+
+                if settings.menuBarShowCountdown {
+                    displayComponents.append(meeting.timeUntilStart)
+                }
+
+                if settings.menuBarShowTitle {
+                    let truncatedTitle = truncateTitle(meeting.title, maxLength: 25)
+                    displayComponents.append(truncatedTitle)
+                }
+
+                // Handle icon
+                if settings.menuBarShowIcon {
+                    if let iconImage = getIconImageForEvent(meeting) {
+                        button.image = iconImage
+                    } else {
+                        // If no PNG icon available, add emoji to title
+                        let icon = getIconForEvent(meeting)
+                        displayComponents.insert(icon, at: 0)
+                        button.image = nil
+                    }
+                } else {
+                    button.image = nil
+                }
+
+                // Set the title with all selected components
+                button.title = displayComponents.joined(separator: " ")
+
+                // If no options are selected, show default calendar icon
+                if !settings.menuBarShowIcon && !settings.menuBarShowTitle && !settings.menuBarShowTime && !settings.menuBarShowCountdown {
+                    button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
+                    button.title = ""
+                }
+
+                // Add meeting count badge if enabled
+                if settings.showMeetingCountBadge {
+                    let todayMeetingsCount = CalendarDataManager.shared.todayEvents().count
+                    if todayMeetingsCount > 1 {
+                        button.title = button.title + " (\(todayMeetingsCount))"
+                    }
+                }
+
+            } else {
+                // No meeting
+                button.title = ""
+                let calendarImage = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
+
+                if settings.showMeetingCountBadge {
+                    let todayMeetingsCount = CalendarDataManager.shared.todayEvents().count
+                    if todayMeetingsCount > 0 {
+                        button.title = String(todayMeetingsCount)
+                        button.image = calendarImage
+                    } else {
+                        button.image = calendarImage
+                    }
+                } else {
+                    button.image = calendarImage
+                }
+            }
+
+        case .peekWindow:
+            // Show all imminent meetings in peek window
+            button.title = ""
+            button.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
+
+            if settings.showMeetingCountBadge {
+                let todayMeetingsCount = CalendarDataManager.shared.todayEvents().count
+                if todayMeetingsCount > 0 {
+                    button.title = String(todayMeetingsCount)
+                }
+            }
+
+            // Update or show peek window
+            updatePeekWindow()
         }
     }
 
@@ -337,6 +376,75 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return String(title[..<index]) + "..."
     }
 
+    // MARK: - Peek Window Management
+
+    private func updatePeekWindow() {
+        // Defer to next run loop to avoid layout recursion
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            let meeting = self.getNextMeetingForMenuBar()
+            let settings = AppSettings.shared
+
+            if meeting == nil {
+                self.hidePeekWindow()
+                return
+            }
+
+            if let existingPanel = self.peekWindowPanel {
+                // Update existing panel
+                existingPanel.updateMeeting(
+                    meeting,
+                    settings: settings,
+                    onTap: { [weak self] in
+                        self?.handlePeekMeetingTap()
+                    },
+                    onClose: { [weak self] in
+                        self?.hidePeekWindow()
+                    }
+                )
+                if let statusItem = self.statusItem {
+                    existingPanel.positionBelowStatusItem(statusItem, animated: false)
+                }
+            } else {
+                // Create new panel with animation
+                let panel = PeekWindowPanel(
+                    meeting: meeting,
+                    settings: settings,
+                    onTap: { [weak self] in
+                        self?.handlePeekMeetingTap()
+                    },
+                    onClose: { [weak self] in
+                        self?.hidePeekWindow()
+                    }
+                )
+
+                panel.orderFrontRegardless()
+                self.peekWindowPanel = panel
+
+                if let statusItem = self.statusItem {
+                    panel.positionBelowStatusItem(statusItem, animated: true)
+                }
+            }
+        }
+    }
+
+    private func hidePeekWindow() {
+        DispatchQueue.main.async { [weak self] in
+            self?.peekWindowPanel?.close()
+            self?.peekWindowPanel = nil
+        }
+    }
+
+    private func handlePeekMeetingTap() {
+        guard let meeting = getNextMeetingForMenuBar(),
+              let conferenceLink = meeting.conferenceLink,
+              let url = URL(string: conferenceLink) else {
+            return
+        }
+        AppSettings.shared.openURL(url, accountEmail: meeting.accountEmail)
+    }
+
     @objc private func menuBarButtonClicked() {
         guard statusItem?.button != nil else { return }
 
@@ -350,6 +458,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func showPopover() {
         guard let button = statusItem?.button else { return }
         popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+
+        // Ensure popover appears above peek window
+        if let popoverWindow = popover?.contentViewController?.view.window {
+            popoverWindow.level = .popUpMenu
+        }
+
         startMonitoringForClicksOutsidePopover()
     }
 

@@ -10,6 +10,15 @@ struct SyncedAccountInfo: Codable {
     var isEnabled: Bool
 }
 
+// Menu bar display mode options
+enum MenuBarDisplayMode: String, CaseIterable, Codable, Identifiable {
+    case none = "None"
+    case inMenuBar = "In Menu Bar"
+    case peekWindow = "Peek Below Menu Bar"
+
+    var id: String { rawValue }
+}
+
 @MainActor
 class AppSettings: ObservableObject {
     static let shared = AppSettings()
@@ -52,10 +61,16 @@ class AppSettings: ObservableObject {
         }
     }
 
-    @Published var showInMenuBar: Bool {
+    @Published var menuBarDisplayMode: MenuBarDisplayMode {
         didSet {
-            saveSetting(showInMenuBar, forKey: "showInMenuBar")
+            saveSetting(menuBarDisplayMode.rawValue, forKey: "menuBarDisplayMode")
         }
+    }
+
+    // Legacy property for backward compatibility
+    var showInMenuBar: Bool {
+        get { menuBarDisplayMode != .none }
+        set { menuBarDisplayMode = newValue ? .inMenuBar : .none }
     }
 
     @Published var onlyShowMeetingsWithAttendees: Bool {
@@ -174,8 +189,16 @@ class AppSettings: ObservableObject {
             ?? UserDefaults.standard.string(forKey: "defaultMeetApp") ?? MeetAppType.defaultBrowser.rawValue
         self.defaultMeetApp = MeetAppType(rawValue: meetAppRawValue) ?? .defaultBrowser
 
-        self.showInMenuBar = iCloudStore.object(forKey: "showInMenuBar") as? Bool
-            ?? UserDefaults.standard.object(forKey: "showInMenuBar") as? Bool ?? false
+        // Load menuBarDisplayMode with migration from old boolean setting
+        if let displayModeRaw = iCloudStore.string(forKey: "menuBarDisplayMode") ?? UserDefaults.standard.string(forKey: "menuBarDisplayMode") {
+            self.menuBarDisplayMode = MenuBarDisplayMode(rawValue: displayModeRaw) ?? .none
+        } else if let legacyShowInMenuBar = iCloudStore.object(forKey: "showInMenuBar") as? Bool ?? UserDefaults.standard.object(forKey: "showInMenuBar") as? Bool {
+            // Migrate from old boolean setting
+            self.menuBarDisplayMode = legacyShowInMenuBar ? .inMenuBar : .none
+        } else {
+            self.menuBarDisplayMode = .none
+        }
+
         self.onlyShowMeetingsWithAttendees = iCloudStore.object(forKey: "onlyShowMeetingsWithAttendees") as? Bool
             ?? UserDefaults.standard.object(forKey: "onlyShowMeetingsWithAttendees") as? Bool ?? false
         self.muteSounds = iCloudStore.object(forKey: "muteSounds") as? Bool
@@ -397,7 +420,7 @@ class AppSettings: ObservableObject {
         // Sync all settings from iCloud to UserDefaults to ensure consistency
         let settingsKeys = [
             "notificationsEnabled", "oneMinuteWarningEnabled", "defaultMeetApp",
-            "showInMenuBar", "onlyShowMeetingsWithAttendees", "muteSounds", "launchAtLogin",
+            "menuBarDisplayMode", "onlyShowMeetingsWithAttendees", "muteSounds", "launchAtLogin",
             "menuBarShowIcon", "menuBarShowTitle", "menuBarShowTime", "menuBarShowCountdown",
             "menuBarThresholdMinutes", "showAllDayInMenuBar", "showMeetingCountBadge",
             "showTravelTimeAlerts", "defaultTravelMode", "preferredMapProvider", "doubleBookingPreference"
@@ -477,8 +500,9 @@ class AppSettings: ObservableObject {
             if keys.contains("oneMinuteWarningEnabled") {
                 self.oneMinuteWarningEnabled = UserDefaults.standard.bool(forKey: "oneMinuteWarningEnabled")
             }
-            if keys.contains("showInMenuBar") {
-                self.showInMenuBar = UserDefaults.standard.bool(forKey: "showInMenuBar")
+            if keys.contains("menuBarDisplayMode") {
+                let displayModeRaw = UserDefaults.standard.string(forKey: "menuBarDisplayMode") ?? MenuBarDisplayMode.none.rawValue
+                self.menuBarDisplayMode = MenuBarDisplayMode(rawValue: displayModeRaw) ?? .none
             }
             if keys.contains("onlyShowMeetingsWithAttendees") {
                 self.onlyShowMeetingsWithAttendees = UserDefaults.standard.bool(forKey: "onlyShowMeetingsWithAttendees")

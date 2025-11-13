@@ -32,10 +32,13 @@ struct ConfigTab: View {
                     // MENU BAR DISPLAY
                     Section {
                         menuBarToggle
-                        if settings.showInMenuBar {
+                        if settings.menuBarDisplayMode == .inMenuBar {
                             displayModePicker
                             thresholdSlider
                             showAllDayToggle
+                        }
+                        if settings.menuBarDisplayMode == .peekWindow {
+                            peekWindowThresholdSlider
                         }
                         attendeesToggle
                         doubleBookingPicker
@@ -232,11 +235,30 @@ struct ConfigTab: View {
 
     private var menuBarToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("Display next meeting in Menu Bar", isOn: $settings.showInMenuBar)
+            Text("Display next meeting:")
+                .font(.body)
 
-            Text("Shows meeting title (truncated to 30 characters) with platform icon 15 minutes before it starts")
+            Picker("", selection: $settings.menuBarDisplayMode) {
+                ForEach(MenuBarDisplayMode.allCases) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.menu)
+
+            Text(menuBarDisplayModeDescription)
                 .font(.caption)
                 .foregroundColor(.secondary)
+        }
+    }
+
+    private var menuBarDisplayModeDescription: String {
+        switch settings.menuBarDisplayMode {
+        case .none:
+            return "Meeting information will not be displayed in the menu bar"
+        case .inMenuBar:
+            return "Shows meeting title (truncated to 30 characters) with platform icon before it starts"
+        case .peekWindow:
+            return "Shows the next meeting in a floating window below the menu bar, matching your display preferences"
         }
     }
 
@@ -281,6 +303,28 @@ struct ConfigTab: View {
         }
     }
 
+    private var peekWindowThresholdSlider: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Show meetings within:")
+                    .font(.body)
+                Spacer()
+                Text("\(settings.menuBarThresholdMinutes) min")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+            }
+
+            Slider(value: Binding(
+                get: { Double(settings.menuBarThresholdMinutes) },
+                set: { settings.menuBarThresholdMinutes = Int($0) }
+            ), in: 5...60, step: 5)
+
+            Text("Controls how far in advance to show meetings in the peek window")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
     private var showAllDayToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
             Toggle("Always show next meeting", isOn: $settings.showAllDayInMenuBar)
@@ -294,11 +338,11 @@ struct ConfigTab: View {
     private var attendeesToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
             Toggle("Only show meetings with attendees", isOn: $settings.onlyShowMeetingsWithAttendees)
-                .disabled(!settings.showInMenuBar)
+                .disabled(settings.menuBarDisplayMode == .none)
 
-            Text("When enabled, only meetings with other attendees will be shown in the menu bar")
+            Text("When enabled, only meetings with other attendees will be shown")
                 .font(.caption)
-                .foregroundColor(settings.showInMenuBar ? .secondary : Color.secondary.opacity(0.5))
+                .foregroundColor(settings.menuBarDisplayMode != .none ? .secondary : Color.secondary.opacity(0.5))
         }
     }
 
@@ -313,11 +357,11 @@ struct ConfigTab: View {
                 }
             }
             .pickerStyle(.menu)
-            .disabled(!settings.showInMenuBar)
+            .disabled(settings.menuBarDisplayMode == .none)
 
-            Text("Choose which meeting to display in the menu bar when you have overlapping meetings")
+            Text("Choose which meeting to display when you have overlapping meetings")
                 .font(.caption)
-                .foregroundColor(settings.showInMenuBar ? .secondary : Color.secondary.opacity(0.5))
+                .foregroundColor(settings.menuBarDisplayMode != .none ? .secondary : Color.secondary.opacity(0.5))
         }
     }
 
