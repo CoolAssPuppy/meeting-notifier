@@ -449,15 +449,16 @@ class AppSettings: ObservableObject {
         }
     }
 
-    @objc private func iCloudStoreDidChange(_ notification: Notification) {
+    @objc nonisolated private func iCloudStoreDidChange(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
               let keys = userInfo[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] else {
             return
         }
 
         // Update local settings from iCloud
+        let store = NSUbiquitousKeyValueStore.default
         for key in keys {
-            if let value = iCloudStore.object(forKey: key) {
+            if let value = store.object(forKey: key) {
                 UserDefaults.standard.set(value, forKey: key)
             }
         }
