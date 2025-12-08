@@ -61,6 +61,13 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
         return formatter.string(from: startDate)
     }
 
+    var systemFormattedTime: String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        formatter.locale = Locale.current
+        return formatter.string(from: startDate)
+    }
+
     var formattedDateSection: String {
         let calendar = Calendar.current
         if calendar.isDateInToday(startDate) {

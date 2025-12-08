@@ -159,6 +159,12 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var dropDownStyle: DropDownStyle {
+        didSet {
+            saveSetting(dropDownStyle.rawValue, forKey: "dropDownStyle")
+        }
+    }
+
     // Custom calendar colors: [accountEmail: [calendarId: hexColor]]
     @Published var customCalendarColors: [String: [String: String]] {
         didSet {
@@ -236,6 +242,10 @@ class AppSettings: ObservableObject {
         let doubleBookingRaw = iCloudStore.string(forKey: "doubleBookingPreference")
             ?? UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
         self.doubleBookingPreference = DoubleBookingPreference(rawValue: doubleBookingRaw) ?? .fewerAttendees
+
+        let dropDownStyleRaw = iCloudStore.string(forKey: "dropDownStyle")
+            ?? UserDefaults.standard.string(forKey: "dropDownStyle") ?? DropDownStyle.simple.rawValue
+        self.dropDownStyle = DropDownStyle(rawValue: dropDownStyleRaw) ?? .simple
 
         self.customCalendarColors = [:]
 
@@ -423,7 +433,8 @@ class AppSettings: ObservableObject {
             "menuBarDisplayMode", "onlyShowMeetingsWithAttendees", "muteSounds", "launchAtLogin",
             "menuBarShowIcon", "menuBarShowTitle", "menuBarShowTime", "menuBarShowCountdown",
             "menuBarThresholdMinutes", "showAllDayInMenuBar", "showMeetingCountBadge",
-            "showTravelTimeAlerts", "defaultTravelMode", "preferredMapProvider", "doubleBookingPreference"
+            "showTravelTimeAlerts", "defaultTravelMode", "preferredMapProvider", "doubleBookingPreference",
+            "dropDownStyle"
         ]
 
         for key in settingsKeys {
@@ -552,6 +563,10 @@ class AppSettings: ObservableObject {
             if keys.contains("doubleBookingPreference") {
                 let doubleBookingRaw = UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
                 self.doubleBookingPreference = DoubleBookingPreference(rawValue: doubleBookingRaw) ?? .fewerAttendees
+            }
+            if keys.contains("dropDownStyle") {
+                let dropDownStyleRaw = UserDefaults.standard.string(forKey: "dropDownStyle") ?? DropDownStyle.simple.rawValue
+                self.dropDownStyle = DropDownStyle(rawValue: dropDownStyleRaw) ?? .simple
             }
             if keys.contains("customCalendarColors") {
                 self.loadCustomCalendarColors()
@@ -748,6 +763,24 @@ enum DoubleBookingPreference: String, CaseIterable, Identifiable {
             return "Show smaller meetings first"
         case .moreAttendees:
             return "Show larger meetings first"
+        }
+    }
+}
+
+// MARK: - Drop Down Style
+
+enum DropDownStyle: String, CaseIterable, Identifiable {
+    case simple = "Simple"
+    case glass = "Glass"
+
+    var id: String { rawValue }
+
+    var description: String {
+        switch self {
+        case .simple:
+            return "Clean, minimal Apple-style design"
+        case .glass:
+            return "Modern glassmorphic design with effects"
         }
     }
 }

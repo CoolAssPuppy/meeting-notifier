@@ -47,6 +47,13 @@ struct ConfigTab: View {
                         sectionHeader(icon: "menubar.rectangle", title: "Menu Bar Display", gradient: [.green, .mint])
                     }
 
+                    // DROP DOWN STYLE
+                    Section {
+                        dropDownStylePicker
+                    } header: {
+                        sectionHeader(icon: "list.bullet.rectangle", title: "Drop Down Style", gradient: [.purple, .indigo])
+                    }
+
                     // SOUNDS
                     Section {
                         soundsToggle
@@ -370,6 +377,52 @@ struct ConfigTab: View {
             Toggle("Show meeting count badge", isOn: $settings.showMeetingCountBadge)
 
             Text("Display number of remaining meetings today")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    // MARK: - Drop Down Style Section
+
+    private var dropDownStylePicker: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                ForEach(DropDownStyle.allCases) { style in
+                    Button(action: {
+                        settings.dropDownStyle = style
+                    }) {
+                        VStack(spacing: 8) {
+                            Image(systemName: style == .simple ? "list.bullet" : "sparkles.rectangle.stack")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundStyle(
+                                    settings.dropDownStyle == style
+                                        ? LinearGradient(colors: [.purple, .indigo], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        : LinearGradient(colors: [.secondary, .secondary], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                )
+
+                            Text(style.rawValue)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(settings.dropDownStyle == style ? .primary : .secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(settings.dropDownStyle == style ? Color.accentColor.opacity(0.1) : Color.clear)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(
+                                    settings.dropDownStyle == style ? Color.accentColor : Color.secondary.opacity(0.3),
+                                    lineWidth: settings.dropDownStyle == style ? 2 : 1
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            Text(settings.dropDownStyle.description)
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

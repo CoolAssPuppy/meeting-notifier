@@ -44,6 +44,7 @@
 		C66151F3605148105C010D47 /* GoogleOAuthSecret.swift.template in Resources */ = {isa = PBXBuildFile; fileRef = 4205A3237438BB1159863C7A /* GoogleOAuthSecret.swift.template */; };
 		CA2876E62A69C701B6B4874F /* CalendarInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5610777B46B0DE424AA7D5C6 /* CalendarInfo.swift */; };
 		CC33DD44EE55FF66AA77BB88 /* LocationCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC44DD55EE66FF77AA88BB /* LocationCardView.swift */; };
+		D974074AF7933D4E00A47A02 /* SimpleMeetingRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEBA4A2C93539B14027C9136 /* SimpleMeetingRowView.swift */; };
 		DF244A80DBAAF0C4F17C2948 /* short-chimes.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */; };
 		E5DF351A4562D05A2D080B1D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528350AB38541C048479C7F8 /* SettingsView.swift */; };
 		EACF75B30F09777B54E6F7C0 /* GoogleOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */; };
@@ -108,6 +109,7 @@
 		AD899C544CCC4FBF71F6F194 /* microsoft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = microsoft.png; sourceTree = "<group>"; };
 		C7A9725B3752DD3D40D9550B /* NotificationTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTracking.swift; sourceTree = "<group>"; };
 		CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */ = {isa = PBXFileReference; lastKnownFileType = text; path = MicrosoftOAuthSecret.swift.template; sourceTree = "<group>"; };
+		CEBA4A2C93539B14027C9136 /* SimpleMeetingRowView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SimpleMeetingRowView.swift; sourceTree = "<group>"; };
 		D0F918F2DB127BF903FF7CC1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D4799E009A8C6897F7BDD4CC /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthSecret.swift; sourceTree = "<group>"; };
@@ -118,7 +120,17 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		8F3E08452EB9E76E00A2E8EF /* MeetingNotifierUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MeetingNotifierUITests; sourceTree = "<group>"; };
+		8F3E08452EB9E76E00A2E8EF /* MeetingNotifierUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = MeetingNotifierUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -233,6 +245,7 @@
 				DAF827963E378A79042A96F8 /* NotificationsTab.swift */,
 				528350AB38541C048479C7F8 /* SettingsView.swift */,
 				82514AD2E14FAD31E0743670 /* CoffeeView.swift */,
+				CEBA4A2C93539B14027C9136 /* SimpleMeetingRowView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -281,8 +294,6 @@
 				8F3E08452EB9E76E00A2E8EF /* MeetingNotifierUITests */,
 			);
 			name = MeetingNotifierUITests;
-			packageProductDependencies = (
-			);
 			productName = MeetingNotifierUITests;
 			productReference = 8F3E08442EB9E76E00A2E8EF /* MeetingNotifierUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -422,6 +433,7 @@
 				AA11BB22CC33DD44EE55FF66 /* KeyboardShortcutManager.swift in Sources */,
 				BB22CC33DD44EE55FF66AA77 /* LocationManager.swift in Sources */,
 				CC33DD44EE55FF66AA77BB88 /* LocationCardView.swift in Sources */,
+				D974074AF7933D4E00A47A02 /* SimpleMeetingRowView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

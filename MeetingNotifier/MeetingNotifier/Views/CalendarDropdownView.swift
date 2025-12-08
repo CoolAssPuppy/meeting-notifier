@@ -166,20 +166,25 @@ struct CalendarDropdownView: View {
 
     private var backgroundGradient: some View {
         ZStack {
-            // Base material
-            Rectangle()
-                .fill(.ultraThinMaterial)
+            if appSettings.dropDownStyle == .simple {
+                // Simple style: clean solid background
+                Rectangle()
+                    .fill(Color(NSColor.windowBackgroundColor))
+            } else {
+                // Glass style: glassmorphic effect
+                Rectangle()
+                    .fill(.ultraThinMaterial)
 
-            // Subtle gradient overlay
-            LinearGradient(
-                colors: [
-                    Color.accentColor.opacity(0.03),
-                    Color.clear,
-                    Color.purple.opacity(0.02)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+                LinearGradient(
+                    colors: [
+                        Color.accentColor.opacity(0.03),
+                        Color.clear,
+                        Color.purple.opacity(0.02)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
         }
     }
 
@@ -296,38 +301,68 @@ struct CalendarDropdownView: View {
                 let tomorrowEvents = dataManager.tomorrowEvents()
 
                 if !todayEvents.isEmpty {
-                    sectionHeader(title: "Today", count: todayEvents.count)
+                    if appSettings.dropDownStyle == .simple {
+                        simpleSectionHeader(title: "Today")
+                    } else {
+                        sectionHeader(title: "Today", count: todayEvents.count)
+                    }
                     ForEach(todayEvents) { event in
-                        MeetingRowView(event: event) {
-                            handleEventTap(event)
-                        }
-                        .transition(.asymmetric(
-                            insertion: .scale(scale: 0.95).combined(with: .opacity),
-                            removal: .scale(scale: 0.95).combined(with: .opacity)
-                        ))
+                        meetingRow(for: event)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.95).combined(with: .opacity),
+                                removal: .scale(scale: 0.95).combined(with: .opacity)
+                            ))
                     }
                 }
 
                 if !tomorrowEvents.isEmpty {
                     if !todayEvents.isEmpty {
                         Spacer()
-                            .frame(height: 16)
+                            .frame(height: appSettings.dropDownStyle == .simple ? 8 : 16)
                     }
-                    sectionHeader(title: "Tomorrow", count: tomorrowEvents.count)
+                    if appSettings.dropDownStyle == .simple {
+                        simpleSectionHeader(title: "Tomorrow")
+                    } else {
+                        sectionHeader(title: "Tomorrow", count: tomorrowEvents.count)
+                    }
                     ForEach(tomorrowEvents) { event in
-                        MeetingRowView(event: event) {
-                            handleEventTap(event)
-                        }
-                        .transition(.asymmetric(
-                            insertion: .scale(scale: 0.95).combined(with: .opacity),
-                            removal: .scale(scale: 0.95).combined(with: .opacity)
-                        ))
+                        meetingRow(for: event)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.95).combined(with: .opacity),
+                                removal: .scale(scale: 0.95).combined(with: .opacity)
+                            ))
                     }
                 }
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, appSettings.dropDownStyle == .simple ? 8 : 12)
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: dataManager.events.count)
         }
+    }
+
+    @ViewBuilder
+    private func meetingRow(for event: CalendarEvent) -> some View {
+        if appSettings.dropDownStyle == .simple {
+            SimpleMeetingRowView(event: event) {
+                handleEventTap(event)
+            }
+        } else {
+            MeetingRowView(event: event) {
+                handleEventTap(event)
+            }
+        }
+    }
+
+    private func simpleSectionHeader(title: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
     }
 
     private func sectionHeader(title: String, count: Int) -> some View {
