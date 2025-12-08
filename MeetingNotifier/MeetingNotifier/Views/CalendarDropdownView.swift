@@ -11,62 +11,86 @@ struct CalendarDropdownView: View {
             backgroundGradient
 
             VStack(spacing: 0) {
-                headerView
+                if appSettings.dropDownStyle == .simple {
+                    simpleHeaderView
+                } else {
+                    headerView
 
-                // Subtle separator
-                LinearGradient(
-                    colors: [
-                        Color.primary.opacity(0.1),
-                        Color.primary.opacity(0.05)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(height: 1)
+                    // Subtle separator
+                    LinearGradient(
+                        colors: [
+                            Color.primary.opacity(0.1),
+                            Color.primary.opacity(0.05)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(height: 1)
+                }
 
                 // Auth error banner
                 if hasAuthErrors {
-                    authErrorBanner
+                    if appSettings.dropDownStyle == .simple {
+                        simpleAuthErrorBanner
+                    } else {
+                        authErrorBanner
+                    }
                 }
 
                 if dataManager.isLoading && dataManager.events.isEmpty {
-                    loadingView
+                    if appSettings.dropDownStyle == .simple {
+                        simpleLoadingView
+                    } else {
+                        loadingView
+                    }
                 } else if dataManager.events.isEmpty {
                     EmptyStateView()
                 } else {
                     meetingListView
                 }
 
-                // Bottom separator
-                LinearGradient(
-                    colors: [
-                        Color.primary.opacity(0.05),
-                        Color.primary.opacity(0.1)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(height: 1)
-
-                footerView
-            }
-        }
-        .frame(width: 380, height: 500)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(
+                if appSettings.dropDownStyle == .simple {
+                    Divider()
+                    simpleFooterView
+                } else {
+                    // Bottom separator
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.2),
-                            Color.white.opacity(0.05)
+                            Color.primary.opacity(0.05),
+                            Color.primary.opacity(0.1)
                         ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1.5
-                )
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(height: 1)
+
+                    footerView
+                }
+            }
+        }
+        .frame(width: appSettings.dropDownStyle == .simple ? 320 : 380, height: appSettings.dropDownStyle == .simple ? 400 : 500)
+        .clipShape(RoundedRectangle(cornerRadius: appSettings.dropDownStyle == .simple ? 10 : 16))
+        .shadow(color: Color.black.opacity(appSettings.dropDownStyle == .simple ? 0.15 : 0.2), radius: appSettings.dropDownStyle == .simple ? 10 : 20, x: 0, y: appSettings.dropDownStyle == .simple ? 4 : 10)
+        .overlay(
+            Group {
+                if appSettings.dropDownStyle == .simple {
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+                } else {
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.2),
+                                    Color.white.opacity(0.05)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                }
+            }
         )
     }
 
@@ -167,9 +191,9 @@ struct CalendarDropdownView: View {
     private var backgroundGradient: some View {
         ZStack {
             if appSettings.dropDownStyle == .simple {
-                // Simple style: clean solid background
+                // Simple style: native macOS menu background
                 Rectangle()
-                    .fill(Color(NSColor.windowBackgroundColor))
+                    .fill(.regularMaterial)
             } else {
                 // Glass style: glassmorphic effect
                 Rectangle()
@@ -357,12 +381,75 @@ struct CalendarDropdownView: View {
             Text(title)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.secondary)
-                .textCase(.uppercase)
 
             Spacer()
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
         .padding(.vertical, 6)
+    }
+
+    // MARK: - Simple Style Views
+
+    private var simpleHeaderView: some View {
+        EmptyView()
+    }
+
+    private var simpleAuthErrorBanner: some View {
+        Button(action: {
+            NotificationCenter.default.post(name: .settingsRequested, object: nil)
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.orange)
+
+                Text("Authentication required")
+                    .font(.system(size: 13))
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.orange.opacity(0.1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var simpleLoadingView: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+                .controlSize(.small)
+
+            Text("Loading...")
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var simpleFooterView: some View {
+        VStack(spacing: 0) {
+            // Settings
+            simpleMenuButton(title: "Settings", icon: "gearshape") {
+                NotificationCenter.default.post(name: .settingsRequested, object: nil)
+            }
+
+            Divider()
+
+            // Quit
+            simpleMenuButton(title: "Quit", icon: "power") {
+                NSApplication.shared.terminate(nil)
+            }
+        }
+    }
+
+    private func simpleMenuButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
+        SimpleMenuButton(title: title, icon: icon, action: action)
     }
 
     private func sectionHeader(title: String, count: Int) -> some View {
@@ -577,6 +664,42 @@ extension Notification.Name {
     static let addAccountRequested = Notification.Name("addAccountRequested")
     static let settingsRequested = Notification.Name("settingsRequested")
     static let accountsDidUpdate = Notification.Name("accountsDidUpdate")
+}
+
+struct SimpleMenuButton: View {
+    let title: String
+    let icon: String
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+                    .foregroundColor(isHovered ? .white.opacity(0.7) : .secondary)
+                    .frame(width: 16)
+
+                Text(title)
+                    .font(.system(size: 13))
+                    .foregroundColor(isHovered ? .white : .primary)
+
+                Spacer()
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(isHovered ? Color.accentColor : Color.clear)
+            )
+            .padding(.horizontal, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+    }
 }
 
 struct CalendarDropdownView_Previews: PreviewProvider {

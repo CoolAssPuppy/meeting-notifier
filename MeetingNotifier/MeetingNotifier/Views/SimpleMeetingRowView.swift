@@ -12,53 +12,50 @@ struct SimpleMeetingRowView: View {
                 onTap()
             }
         }) {
-            HStack(spacing: 10) {
+            HStack(spacing: 0) {
                 // Calendar color dot
                 Circle()
                     .fill(Color(hex: event.calendarColorHex))
                     .frame(width: 8, height: 8)
+                    .padding(.leading, 12)
+                    .padding(.trailing, 10)
 
-                // Time (using system time format)
+                // Time (using system time format) - wide enough for "10:00 AM"
                 Text(event.systemFormattedTime)
-                    .font(.system(size: 13, weight: .medium, design: .default))
-                    .foregroundColor(.secondary)
-                    .frame(width: 70, alignment: .leading)
+                    .font(.system(size: 13))
+                    .foregroundColor(isHovered ? .white.opacity(0.7) : .secondary)
+                    .frame(width: 72, alignment: .leading)
+                    .lineLimit(1)
 
                 // Meeting title
                 Text(event.title)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 13))
+                    .foregroundColor(isHovered ? .white : .primary)
                     .lineLimit(1)
                     .truncationMode(.tail)
 
-                Spacer()
-
-                // Travel time indicator (if physical location with travel time)
-                if let travelInfo = travelTimeInfo {
-                    HStack(spacing: 4) {
-                        Image(systemName: travelInfo.icon)
-                            .font(.system(size: 10, weight: .medium))
-                        Text("(\(travelInfo.time))")
-                            .font(.system(size: 11, weight: .regular))
-                    }
-                    .foregroundColor(.secondary.opacity(0.8))
-                }
+                Spacer(minLength: 8)
 
                 // Video platform icon
                 if let platform = event.videoPlatform {
                     videoPlatformIcon(platform)
-                        .frame(width: 18, height: 18)
+                        .frame(width: 16, height: 16)
+                        .padding(.trailing, 12)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(isHovered && event.hasVideoLink ? Color.accentColor.opacity(0.1) : Color.clear)
+            .padding(.vertical, 4)
+            .padding(.trailing, event.videoPlatform == nil ? 12 : 0)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(isHovered ? Color.accentColor : Color.clear)
+                    .padding(.horizontal, 6)
+            )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { hovering in
+            isHovered = hovering
             if event.hasVideoLink {
-                isHovered = hovering
                 if hovering {
                     NSCursor.pointingHand.push()
                 } else {
@@ -68,75 +65,20 @@ struct SimpleMeetingRowView: View {
         }
     }
 
-    private var travelTimeInfo: (icon: String, time: String)? {
-        guard event.hasPhysicalLocation, let minutes = event.travelTimeMinutes else {
-            return nil
-        }
-
-        let travelMode = AppSettings.shared.defaultTravelMode
-        let icon: String
-        switch travelMode {
-        case .walking:
-            icon = "figure.walk"
-        case .driving:
-            icon = "car.fill"
-        case .transit:
-            icon = "bus.fill"
-        }
-
-        let timeString: String
-        if minutes >= 60 {
-            let hours = minutes / 60
-            let remainingMinutes = minutes % 60
-            if remainingMinutes > 0 {
-                timeString = "\(hours)h \(remainingMinutes)m"
-            } else {
-                timeString = "\(hours)h"
-            }
-        } else {
-            timeString = "\(minutes)m"
-        }
-
-        return (icon, timeString)
-    }
-
     @ViewBuilder
     private func videoPlatformIcon(_ platform: VideoPlatform) -> some View {
-        switch platform {
-        case .meet:
-            if let image = NSImage(contentsOfFile: Bundle.main.path(forResource: "meet", ofType: "png") ?? "") {
-                Image(nsImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                Image(systemName: "video.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.green)
-            }
-        case .zoom:
-            if let image = NSImage(contentsOfFile: Bundle.main.path(forResource: "zoom", ofType: "png") ?? "") {
-                Image(nsImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                Image(systemName: "video.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.blue)
-            }
-        case .teams:
-            if let image = NSImage(contentsOfFile: Bundle.main.path(forResource: "teams", ofType: "png") ?? "") {
-                Image(nsImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                Image(systemName: "video.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.purple)
-            }
-        case .webex:
+        let imageName = platform.iconName
+
+        if let path = Bundle.main.path(forResource: imageName, ofType: "png"),
+           let image = NSImage(contentsOfFile: path) {
+            Image(nsImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .opacity(isHovered ? 0.9 : 0.7)
+        } else {
             Image(systemName: "video.fill")
-                .font(.system(size: 12))
-                .foregroundColor(.orange)
+                .font(.system(size: 11))
+                .foregroundColor(isHovered ? .white.opacity(0.7) : .secondary)
         }
     }
 }
@@ -145,10 +87,9 @@ struct SimpleMeetingRowView_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 0) {
             SimpleMeetingRowView(event: .preview, onTap: {})
-            Divider()
             SimpleMeetingRowView(event: .previewNoVideo, onTap: {})
         }
-        .frame(width: 350)
-        .padding()
+        .frame(width: 320)
+        .background(Color(NSColor.controlBackgroundColor))
     }
 }
