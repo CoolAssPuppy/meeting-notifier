@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var popover: NSPopover?
+    private var nativeMenu: NSMenu?
     private var menuBarUpdateTimer: Timer?
     private var eventMonitor: Any?
     private var peekWindowPanel: PeekWindowPanel?
@@ -15,6 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
         setupPopover()
+        setupNativeMenu()
         startMenuBarUpdates()
         NSApp.setActivationPolicy(.accessory)
 
@@ -66,12 +68,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func toggleDropdown() {
-        guard statusItem?.button != nil else { return }
+        guard let button = statusItem?.button else { return }
 
-        if popover?.isShown == true {
-            closePopover()
+        // Use native menu for simple mode, popover for glass mode
+        if AppSettings.shared.dropDownStyle == .simple {
+            if let menu = nativeMenu {
+                updateNativeMenu(menu)
+                menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 5), in: button)
+            }
         } else {
-            showPopover()
+            if popover?.isShown == true {
+                closePopover()
+            } else {
+                showPopover()
+            }
         }
     }
 
@@ -111,6 +121,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover?.behavior = .semitransient
         // Ensure vibrant appearance for proper material rendering
         popover?.appearance = NSAppearance(named: .aqua)
+    }
+
+    private func setupNativeMenu() {
+        nativeMenu = createNativeMenu()
+        nativeMenu?.delegate = self
     }
 
     private func startMenuBarUpdates() {
@@ -446,12 +461,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func menuBarButtonClicked() {
-        guard statusItem?.button != nil else { return }
+        guard let button = statusItem?.button else { return }
 
-        if popover?.isShown == true {
-            closePopover()
+        // Use native menu for simple mode, popover for glass mode
+        if AppSettings.shared.dropDownStyle == .simple {
+            if let menu = nativeMenu {
+                updateNativeMenu(menu)
+                // Show menu at the button's location
+                menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 5), in: button)
+            }
         } else {
-            showPopover()
+            if popover?.isShown == true {
+                closePopover()
+            } else {
+                showPopover()
+            }
         }
     }
 
@@ -557,7 +581,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    @objc private func openSettings() {
+    @objc func openSettings() {
         NSApp.setActivationPolicy(.regular)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
@@ -723,6 +747,16 @@ extension AppDelegate: NSWindowDelegate {
         if let window = notification.object as? NSWindow, window == settingsWindow {
             settingsWindow = nil
             NSApp.setActivationPolicy(.accessory)
+        }
+    }
+}
+
+// MARK: - NSMenuDelegate
+
+extension AppDelegate: NSMenuDelegate {
+    func menuWillOpen(_ menu: NSMenu) {
+        if menu == nativeMenu {
+            updateNativeMenu(menu)
         }
     }
 }

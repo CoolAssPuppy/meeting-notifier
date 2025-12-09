@@ -46,6 +46,7 @@
 		CC33DD44EE55FF66AA77BB88 /* LocationCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC44DD55EE66FF77AA88BB /* LocationCardView.swift */; };
 		D974074AF7933D4E00A47A02 /* SimpleMeetingRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEBA4A2C93539B14027C9136 /* SimpleMeetingRowView.swift */; };
 		DF244A80DBAAF0C4F17C2948 /* short-chimes.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */; };
+		E26312BD2923A48607C095DE /* AppDelegate+Menu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D3144391E0FBAB67466289F /* AppDelegate+Menu.swift */; };
 		E5DF351A4562D05A2D080B1D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528350AB38541C048479C7F8 /* SettingsView.swift */; };
 		EACF75B30F09777B54E6F7C0 /* GoogleOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CC11CFB54177DAC10196B9 /* GoogleOAuthSecret.swift */; };
 		EEE47FEC991F4EB2FCAB1316 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FB94CC8AF849EA0ABE3C67F /* AuthManager.swift */; };
@@ -78,6 +79,7 @@
 		284F5B0C847AFF0D9B6077C9 /* StoreKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		2CA9AFE2BED7188EE32F46B6 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		2D3144391E0FBAB67466289F /* AppDelegate+Menu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Menu.swift"; sourceTree = "<group>"; };
 		2D57E6F2929088ECE386AE64 /* MeetingNotifier.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeetingNotifier.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		33CC44DD55EE66FF77AA88BB /* LocationCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationCardView.swift; sourceTree = "<group>"; };
 		4205A3237438BB1159863C7A /* GoogleOAuthSecret.swift.template */ = {isa = PBXFileReference; lastKnownFileType = text; path = GoogleOAuthSecret.swift.template; sourceTree = "<group>"; };
@@ -187,6 +189,7 @@
 				E3F3209F47A9369E4CC8A726 /* Resources */,
 				53953CB90841EA78955E9697 /* Services */,
 				C1A276E96094917A85D664C6 /* Views */,
+				2D3144391E0FBAB67466289F /* AppDelegate+Menu.swift */,
 			);
 			path = MeetingNotifier;
 			sourceTree = "<group>";
@@ -434,6 +437,7 @@
 				BB22CC33DD44EE55FF66AA77 /* LocationManager.swift in Sources */,
 				CC33DD44EE55FF66AA77BB88 /* LocationCardView.swift in Sources */,
 				D974074AF7933D4E00A47A02 /* SimpleMeetingRowView.swift in Sources */,
+				E26312BD2923A48607C095DE /* AppDelegate+Menu.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
