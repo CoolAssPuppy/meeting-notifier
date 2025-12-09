@@ -162,10 +162,10 @@ private extension AppDelegate {
 
         let title = "\(timeString)  \(event.title)"
 
-        // All items are clickable - video links open meeting, others open calendar
+        // Parent menu item has no action - submenu provides all actions
         let menuItem = NSMenuItem(
             title: title,
-            action: event.hasVideoLink ? #selector(openMeeting(_:)) : #selector(openEventInCalendar(_:)),
+            action: nil,
             keyEquivalent: ""
         )
         menuItem.representedObject = event
@@ -174,13 +174,24 @@ private extension AppDelegate {
         let colorDot = createColorDotImage(hex: event.calendarColorHex)
         menuItem.image = colorDot
 
-        // Add submenu only for events with video conferencing
-        if let platform = event.videoPlatform {
-            // Create submenu with meeting details
-            let submenu = NSMenu()
+        // Create submenu for all events
+        let submenu = NSMenu()
 
+        // Open in Calendar - always available
+        let openCalendarItem = NSMenuItem(
+            title: NSLocalizedString("Open in Calendar", comment: ""),
+            action: #selector(openEventInCalendar(_:)),
+            keyEquivalent: ""
+        )
+        openCalendarItem.representedObject = event
+        openCalendarItem.image = NSImage(systemSymbolName: "calendar", accessibilityDescription: "Calendar")
+        submenu.addItem(openCalendarItem)
+
+        // Join Video Conference - only if video link exists
+        if let platform = event.videoPlatform {
+            let platformName = platform.displayName
             let joinItem = NSMenuItem(
-                title: NSLocalizedString("Join Meeting", comment: ""),
+                title: String(format: NSLocalizedString("Join %@", comment: "Join video conference"), platformName),
                 action: #selector(openMeeting(_:)),
                 keyEquivalent: ""
             )
@@ -190,30 +201,31 @@ private extension AppDelegate {
                 joinItem.image = iconImage
             }
             submenu.addItem(joinItem)
-
-            submenu.addItem(NSMenuItem.separator())
-
-            // Show meeting time
-            let endFormatter = DateFormatter()
-            endFormatter.timeStyle = .short
-            let endTimeString = endFormatter.string(from: event.endDate)
-            let timeItem = NSMenuItem(
-                title: "\(timeString) - \(endTimeString)",
-                action: nil,
-                keyEquivalent: ""
-            )
-            submenu.addItem(timeItem)
-
-            // Show calendar name
-            let calendarItem = NSMenuItem(
-                title: event.calendarName,
-                action: nil,
-                keyEquivalent: ""
-            )
-            submenu.addItem(calendarItem)
-
-            menuItem.submenu = submenu
         }
+
+        submenu.addItem(NSMenuItem.separator())
+
+        // Calendar name - informational, styled as enabled
+        let calendarItem = NSMenuItem(
+            title: event.calendarName,
+            action: #selector(noAction(_:)),
+            keyEquivalent: ""
+        )
+        calendarItem.image = NSImage(systemSymbolName: "tray.full", accessibilityDescription: "Calendar")
+        submenu.addItem(calendarItem)
+
+        // Attendee count - only if more than 1 attendee
+        if event.attendeeCount > 1 {
+            let attendeeItem = NSMenuItem(
+                title: String(format: NSLocalizedString("%d People", comment: "Number of attendees"), event.attendeeCount),
+                action: #selector(noAction(_:)),
+                keyEquivalent: ""
+            )
+            attendeeItem.image = NSImage(systemSymbolName: "person.2", accessibilityDescription: "Attendees")
+            submenu.addItem(attendeeItem)
+        }
+
+        menuItem.submenu = submenu
 
         return menuItem
     }
@@ -289,5 +301,9 @@ private extension AppDelegate {
         if let url = url {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    @objc func noAction(_ sender: NSMenuItem) {
+        // Intentionally empty - provides clickable appearance without action
     }
 }

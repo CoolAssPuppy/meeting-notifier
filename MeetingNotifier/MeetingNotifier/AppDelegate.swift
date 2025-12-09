@@ -74,6 +74,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if AppSettings.shared.dropDownStyle == .simple {
             if let menu = nativeMenu {
                 updateNativeMenu(menu)
+                applySystemAppearance(to: menu)
                 menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 5), in: button)
             }
         } else {
@@ -467,7 +468,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if AppSettings.shared.dropDownStyle == .simple {
             if let menu = nativeMenu {
                 updateNativeMenu(menu)
-                // Show menu at the button's location
+                applySystemAppearance(to: menu)
                 menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 5), in: button)
             }
         } else {
@@ -751,11 +752,22 @@ extension AppDelegate: NSWindowDelegate {
     }
 }
 
+// MARK: - Menu Appearance
+
+extension AppDelegate {
+    func applySystemAppearance(to menu: NSMenu) {
+        // Check system appearance and apply to menu
+        let isDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+        menu.appearance = NSAppearance(named: isDarkMode ? .darkAqua : .aqua)
+    }
+}
+
 // MARK: - NSMenuDelegate
 
 extension AppDelegate: NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         if menu == nativeMenu {
+            applySystemAppearance(to: menu)
             updateNativeMenu(menu)
         }
     }

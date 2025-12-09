@@ -120,6 +120,15 @@ enum VideoPlatform: String {
         case .webex: return "video.fill" // Fallback to SF Symbol
         }
     }
+
+    var displayName: String {
+        switch self {
+        case .meet: return "Google Meet"
+        case .zoom: return "Zoom"
+        case .teams: return "Microsoft Teams"
+        case .webex: return "Webex"
+        }
+    }
 }
 
 struct EventReminder: Codable, Hashable {
