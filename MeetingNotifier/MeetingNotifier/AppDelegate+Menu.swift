@@ -225,6 +225,32 @@ private extension AppDelegate {
             submenu.addItem(attendeeItem)
         }
 
+        // Travel time - only for events with physical locations and cached travel data
+        if event.hasPhysicalLocation,
+           let travelInfo = LocationManager.shared.travelTimeCache[event.id] {
+            let timeFormatter = DateFormatter()
+            timeFormatter.timeStyle = .short
+
+            let title: String
+            if travelInfo.shouldLeaveNow {
+                title = NSLocalizedString("Leave now to arrive in time", comment: "Travel time alert")
+            } else {
+                let leaveByString = timeFormatter.string(from: travelInfo.leaveByTime)
+                title = String(format: NSLocalizedString("Leave at %@ to arrive in time", comment: "Travel time with departure time"), leaveByString)
+            }
+
+            let travelItem = NSMenuItem(
+                title: title,
+                action: #selector(noAction(_:)),
+                keyEquivalent: ""
+            )
+            travelItem.image = NSImage(
+                systemSymbolName: AppSettings.shared.defaultTravelMode.icon,
+                accessibilityDescription: "Travel time"
+            )
+            submenu.addItem(travelItem)
+        }
+
         menuItem.submenu = submenu
 
         return menuItem

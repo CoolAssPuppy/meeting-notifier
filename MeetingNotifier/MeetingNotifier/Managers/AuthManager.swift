@@ -1,5 +1,6 @@
 import Foundation
 import AppAuth
+import os
 
 @MainActor
 class AuthManager {
@@ -37,11 +38,11 @@ class AuthManager {
                     let accessTokenSaved = KeychainManager.shared.saveAccessToken(accessToken, forAccount: email)
                     let refreshTokenSaved = KeychainManager.shared.saveRefreshToken(refreshToken, forAccount: email)
 
-                    print("[Auth] Keychain save results for \(email) - Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)")
+                    Logger.auth.debug("Keychain save results for \(email, privacy: .private) - Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)")
 
                     guard accessTokenSaved && refreshTokenSaved else {
                         let errorMsg = "Failed to save credentials to keychain. Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)"
-                        print("[Auth] ERROR: \(errorMsg)")
+                        Logger.auth.error("\(errorMsg)")
                         completion(.failure(NSError(
                             domain: "AuthManager",
                             code: -1,
@@ -63,7 +64,7 @@ class AuthManager {
                         AppSettings.shared.addAccount(account)
                     }
 
-                    print("[Auth] Successfully authenticated and saved credentials for \(email)")
+                    Logger.auth.info("Successfully authenticated and saved credentials for \(email, privacy: .private)")
                     completion(.success(account))
 
                 case .failure(let error):
@@ -103,11 +104,11 @@ class AuthManager {
                     let accessTokenSaved = KeychainManager.shared.saveAccessToken(accessToken, forAccount: email)
                     let refreshTokenSaved = KeychainManager.shared.saveRefreshToken(refreshToken, forAccount: email)
 
-                    print("[Auth] Keychain save results for \(email) - Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)")
+                    Logger.auth.debug("Keychain save results for \(email, privacy: .private) - Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)")
 
                     guard accessTokenSaved && refreshTokenSaved else {
                         let errorMsg = "Failed to save credentials to keychain. Access: \(accessTokenSaved), Refresh: \(refreshTokenSaved)"
-                        print("[Auth] ERROR: \(errorMsg)")
+                        Logger.auth.error("\(errorMsg)")
                         completion(.failure(NSError(
                             domain: "AuthManager",
                             code: -1,
@@ -129,7 +130,7 @@ class AuthManager {
                         AppSettings.shared.addAccount(account)
                     }
 
-                    print("[Auth] Successfully authenticated and saved credentials for \(email)")
+                    Logger.auth.info("Successfully authenticated and saved credentials for \(email, privacy: .private)")
                     completion(.success(account))
 
                 case .failure(let error):

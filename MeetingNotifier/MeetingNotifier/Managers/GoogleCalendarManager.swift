@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 @MainActor
 class GoogleCalendarManager {
@@ -7,7 +8,7 @@ class GoogleCalendarManager {
     private init() {}
 
     func fetchCalendarList(forAccount account: CalendarAccount, retryCount: Int = 0) async throws -> [CalendarInfo] {
-        let accessToken = try await getValidToken(forAccount: account)
+        let accessToken = try await CalendarManagerSupport.getValidToken(forAccount: account)
 
         let url = URL(string: "https://www.googleapis.com/calendar/v3/users/me/calendarList")!
         var request = URLRequest(url: url)
@@ -21,7 +22,7 @@ class GoogleCalendarManager {
 
         // Handle 401 Unauthorized - token expired
         if httpResponse.statusCode == 401 && retryCount == 0 {
-            print("Access token expired for \(account.email), refreshing...")
+            Logger.auth.warning("Access token expired for \(account.email, privacy: .private), refreshing...")
             // Clear cached token to force refresh
             _ = KeychainManager.shared.deleteAccessToken(forAccount: account.email)
 
@@ -32,13 +33,13 @@ class GoogleCalendarManager {
         guard httpResponse.statusCode == 200 else {
             // Mark account as having auth issues if retry also failed
             if httpResponse.statusCode == 401 {
-                await markAccountAuthFailed(account, status: .expired)
+                CalendarManagerSupport.markAccountAuthFailed(account, status: .expired)
             }
             throw CalendarError.apiError("Failed to fetch calendar list (HTTP \(httpResponse.statusCode))")
         }
 
         // Success - mark account as valid
-        await markAccountAuthValid(account)
+        CalendarManagerSupport.markAccountAuthValid(account)
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let items = json["items"] as? [[String: Any]] else {
@@ -81,7 +82,7 @@ class GoogleCalendarManager {
         endDate: Date,
         retryCount: Int = 0
     ) async throws -> [CalendarEvent] {
-        let accessToken = try await getValidToken(forAccount: account)
+        let accessToken = try await CalendarManagerSupport.getValidToken(forAccount: account)
 
         let dateFormatter = ISO8601DateFormatter()
         let timeMin = dateFormatter.string(from: startDate)
@@ -114,7 +115,7 @@ class GoogleCalendarManager {
 
         // Handle 401 Unauthorized - token expired
         if httpResponse.statusCode == 401 && retryCount == 0 {
-            print("Access token expired for \(account.email), refreshing...")
+            Logger.auth.warning("Access token expired for \(account.email, privacy: .private), refreshing...")
             // Clear cached token to force refresh
             _ = KeychainManager.shared.deleteAccessToken(forAccount: account.email)
 
@@ -132,13 +133,13 @@ class GoogleCalendarManager {
         guard httpResponse.statusCode == 200 else {
             // Mark account as having auth issues if retry also failed
             if httpResponse.statusCode == 401 {
-                await markAccountAuthFailed(account, status: .expired)
+                CalendarManagerSupport.markAccountAuthFailed(account, status: .expired)
             }
             throw CalendarError.apiError("Failed to fetch events (HTTP \(httpResponse.statusCode))")
         }
 
         // Success - mark account as valid
-        await markAccountAuthValid(account)
+        CalendarManagerSupport.markAccountAuthValid(account)
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let items = json["items"] as? [[String: Any]] else {
@@ -209,60 +210,23 @@ class GoogleCalendarManager {
            let entryPoints = conferenceData["entryPoints"] as? [[String: Any]] {
             for entryPoint in entryPoints {
                 if let uri = entryPoint["uri"] as? String,
-                   isValidMeetingLink(uri) {
+                   MeetingLinkParser.isValidMeetingLink(uri) {
                     return uri
                 }
             }
         }
 
         if let description = description,
-           let link = findMeetingLink(in: description) {
+           let link = MeetingLinkParser.findMeetingLink(in: description) {
             return link
         }
 
         if let location = location,
-           let link = findMeetingLink(in: location) {
+           let link = MeetingLinkParser.findMeetingLink(in: location) {
             return link
         }
 
         return nil
-    }
-
-    private func findMeetingLink(in text: String) -> String? {
-        let patterns = [
-            "https://meet\\.google\\.com/[a-z-]+",
-            // Zoom patterns - more flexible to catch all formats (with/without subdomain, various paths, query params)
-            "https://[a-z0-9]+\\.zoom\\.us/[^\\s<>\"]+",  // e.g., us02web.zoom.us/j/...
-            "https://zoom\\.us/[^\\s<>\"]+",               // e.g., zoom.us/j/... or zoom.us/meeting/...
-            "https://teams\\.microsoft\\.com/l/meetup-join/[^\\s<>\"]+",
-            "https://[a-z0-9-]+\\.webex\\.com/[^\\s<>\"]+",
-            "https://webex\\.com/[^\\s<>\"]+"
-        ]
-
-        for pattern in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
-                let range = NSRange(text.startIndex..., in: text)
-                if let match = regex.firstMatch(in: text, range: range) {
-                    if let swiftRange = Range(match.range, in: text) {
-                        return String(text[swiftRange])
-                    }
-                }
-            }
-        }
-
-        return nil
-    }
-
-    private func isValidMeetingLink(_ url: String) -> Bool {
-        let lowercased = url.lowercased()
-
-        // Check for various meeting platforms
-        return lowercased.contains("meet.google.com") ||
-               lowercased.contains("zoom.us") ||         // Catches all zoom.us subdomains
-               lowercased.contains("zoom.com") ||         // Some regions use .com
-               lowercased.contains("teams.microsoft.com") ||
-               lowercased.contains("teams.live.com") ||
-               lowercased.contains("webex.com")
     }
 
     private func parseReminders(from item: [String: Any]) -> [EventReminder] {
@@ -302,14 +266,6 @@ class GoogleCalendarManager {
         return calendar
     }
 
-    private func getValidToken(forAccount account: CalendarAccount) async throws -> String {
-        return try await withCheckedThrowingContinuation { continuation in
-            AuthManager.shared.getValidAccessToken(forAccount: account) { result in
-                continuation.resume(with: result)
-            }
-        }
-    }
-
     private func googleColorIdToHex(_ colorId: String) -> String {
         let colors = [
             "1": "#AC725E", "2": "#D06B64", "3": "#F83A22", "4": "#FA573C",
@@ -319,29 +275,6 @@ class GoogleCalendarManager {
         return colors[colorId] ?? "#4285F4"
     }
 
-    private func markAccountAuthFailed(_ account: CalendarAccount, status: AuthStatus) async {
-        await MainActor.run {
-            var updatedAccount = account
-            updatedAccount.authStatus = status
-            updatedAccount.lastAuthError = Date()
-            AppSettings.shared.updateAccount(updatedAccount)
-
-            // Show notification
-            NotificationManager.shared.showAuthFailureNotification(forAccount: account)
-        }
-    }
-
-    private func markAccountAuthValid(_ account: CalendarAccount) async {
-        // Only update if status changed to avoid unnecessary writes
-        guard account.authStatus != .valid else { return }
-
-        await MainActor.run {
-            var updatedAccount = account
-            updatedAccount.authStatus = .valid
-            updatedAccount.lastAuthError = nil
-            AppSettings.shared.updateAccount(updatedAccount)
-        }
-    }
 }
 
 enum CalendarError: LocalizedError {

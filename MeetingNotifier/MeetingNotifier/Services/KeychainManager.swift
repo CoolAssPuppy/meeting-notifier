@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import os
 
 @MainActor
 class KeychainManager {
@@ -10,7 +11,7 @@ class KeychainManager {
 
     func save(token: String, forAccount account: String) -> Bool {
         guard let tokenData = token.data(using: .utf8) else {
-            print("[Keychain] ERROR: Failed to encode token as UTF-8 for account: \(account)")
+            Logger.keychain.error("Failed to encode token as UTF-8 for account: \(account, privacy: .private)")
             return false
         }
 
@@ -29,11 +30,11 @@ class KeychainManager {
         let updateStatus = SecItemUpdate(searchQuery as CFDictionary, attributes as CFDictionary)
 
         if updateStatus == errSecSuccess {
-            print("[Keychain] Successfully updated token for \(account)")
+            Logger.keychain.debug("Successfully updated token for \(account, privacy: .private)")
             return true
         } else if updateStatus == errSecItemNotFound {
             // Item doesn't exist, try to add it
-            print("[Keychain] No existing item for \(account), attempting to add new item")
+            Logger.keychain.debug("No existing item for \(account, privacy: .private), attempting to add new item")
 
             var addQuery = searchQuery
             addQuery[kSecValueData as String] = tokenData
@@ -42,11 +43,11 @@ class KeychainManager {
             let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
 
             if addStatus == errSecSuccess {
-                print("[Keychain] Successfully added token for \(account)")
+                Logger.keychain.debug("Successfully added token for \(account, privacy: .private)")
                 return true
             } else if addStatus == errSecDuplicateItem || addStatus == -2147413719 {
                 // Duplicate item error - try aggressive cleanup
-                print("[Keychain] Duplicate item detected for \(account), attempting cleanup and retry")
+                Logger.keychain.warning("Duplicate item detected for \(account, privacy: .private), attempting cleanup and retry")
 
                 // Try deleting with minimal query
                 let cleanupQuery: [String: Any] = [
@@ -57,23 +58,23 @@ class KeychainManager {
                 ]
 
                 let deleteStatus = SecItemDelete(cleanupQuery as CFDictionary)
-                print("[Keychain] Cleanup delete result: \(deleteStatus) (\(self.keychainErrorMessage(deleteStatus)))")
+                Logger.keychain.debug("Cleanup delete result: \(deleteStatus) (\(self.keychainErrorMessage(deleteStatus)))")
 
                 // Retry add after cleanup
                 let retryStatus = SecItemAdd(addQuery as CFDictionary, nil)
                 if retryStatus == errSecSuccess {
-                    print("[Keychain] Successfully added token after cleanup for \(account)")
+                    Logger.keychain.debug("Successfully added token after cleanup for \(account, privacy: .private)")
                     return true
                 } else {
-                    print("[Keychain] ERROR: Failed to add token even after cleanup for \(account). Status: \(retryStatus) (\(self.keychainErrorMessage(retryStatus)))")
+                    Logger.keychain.error("Failed to add token even after cleanup for \(account, privacy: .private). Status: \(retryStatus) (\(self.keychainErrorMessage(retryStatus)))")
                     return false
                 }
             } else {
-                print("[Keychain] ERROR: Failed to add token for \(account). Status: \(addStatus) (\(self.keychainErrorMessage(addStatus)))")
+                Logger.keychain.error("Failed to add token for \(account, privacy: .private). Status: \(addStatus) (\(self.keychainErrorMessage(addStatus)))")
                 return false
             }
         } else {
-            print("[Keychain] ERROR: Failed to update token for \(account). Status: \(updateStatus) (\(self.keychainErrorMessage(updateStatus)))")
+            Logger.keychain.error("Failed to update token for \(account, privacy: .private). Status: \(updateStatus) (\(self.keychainErrorMessage(updateStatus)))")
             return false
         }
     }
