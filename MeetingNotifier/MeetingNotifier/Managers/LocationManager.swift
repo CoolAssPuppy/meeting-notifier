@@ -1,6 +1,7 @@
 import Foundation
 import MapKit
 import CoreLocation
+import os
 
 @MainActor
 class LocationManager: NSObject, ObservableObject {
@@ -87,7 +88,7 @@ class LocationManager: NSObject, ObservableObject {
             return info
 
         } catch {
-            print("Error calculating travel time: \(error.localizedDescription)")
+            Logger.location.error("Error calculating travel time: \(error.localizedDescription)")
             return nil
         }
     }
@@ -179,7 +180,7 @@ extension LocationManager: CLLocationManagerDelegate {
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
+        Logger.location.error("Location error: \(error.localizedDescription)")
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {

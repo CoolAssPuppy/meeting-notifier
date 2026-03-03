@@ -1,6 +1,7 @@
 import Foundation
 import UserNotifications
 import AppKit
+import os
 
 @MainActor
 class NotificationManager: NSObject, ObservableObject {
@@ -41,7 +42,7 @@ class NotificationManager: NSObject, ObservableObject {
             Task { @MainActor in
                 self?.permissionGranted = granted
                 if let error = error {
-                    print("Notification permission error: \(error)")
+                    Logger.notifications.error("Notification permission error: \(error)")
                 }
             }
         }
@@ -127,7 +128,7 @@ class NotificationManager: NSObject, ObservableObject {
             try await UNUserNotificationCenter.current().add(request)
             markNotificationAsSent(eventId: event.id, type: .oneMinuteWarning)
         } catch {
-            print("Error scheduling one minute warning: \(error)")
+            Logger.notifications.error("Error scheduling one minute warning: \(error)")
         }
     }
 
@@ -169,7 +170,7 @@ class NotificationManager: NSObject, ObservableObject {
                 try await UNUserNotificationCenter.current().add(request)
                 markNotificationAsSent(eventId: "\(event.id)_\(reminder.minutesBefore)", type: .customReminder)
             } catch {
-                print("Error scheduling custom reminder: \(error)")
+                Logger.notifications.error("Error scheduling custom reminder: \(error)")
             }
         }
     }
@@ -193,7 +194,7 @@ class NotificationManager: NSObject, ObservableObject {
         if let lastNotificationTime = authFailureNotificationTimestamps[account.email] {
             let timeSinceLastNotification = now.timeIntervalSince(lastNotificationTime)
             if timeSinceLastNotification < authFailureThrottleInterval {
-                print("Throttling auth failure notification for \(account.email) - last shown \(Int(timeSinceLastNotification))s ago")
+                Logger.notifications.debug("Throttling auth failure notification for \(account.email, privacy: .private) - last shown \(Int(timeSinceLastNotification))s ago")
                 return
             }
         }
@@ -217,9 +218,9 @@ class NotificationManager: NSObject, ObservableObject {
         Task {
             do {
                 try await UNUserNotificationCenter.current().add(request)
-                print("Auth failure notification shown for \(account.email)")
+                Logger.notifications.info("Auth failure notification shown for \(account.email, privacy: .private)")
             } catch {
-                print("Error showing auth failure notification: \(error)")
+                Logger.notifications.error("Error showing auth failure notification: \(error)")
             }
         }
     }

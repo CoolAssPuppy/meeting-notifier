@@ -1,5 +1,6 @@
 import SwiftUI
 import StoreKit
+import os
 
 struct CoffeeView: View {
     @StateObject private var storeManager = StoreKitManager.shared
@@ -196,7 +197,7 @@ struct CoffeeView: View {
                 }
             }
         } catch {
-            print("Purchase failed: \(error)")
+            Logger.storekit.error("Purchase failed: \(error)")
         }
 
         isPurchasing = false

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os
 
 @MainActor
 class CalendarDataManager: ObservableObject {
@@ -106,9 +107,11 @@ class CalendarDataManager: ObservableObject {
             events = filteredEvents.sorted { $0.startDate < $1.startDate }
             lastRefreshDate = Date()
 
+            precalculateTravelTimes()
+
         } catch {
             errorMessage = error.localizedDescription
-            print("Error refreshing events: \(error)")
+            Logger.calendar.error("Error refreshing events: \(error)")
         }
 
         isLoading = false
@@ -134,7 +137,7 @@ class CalendarDataManager: ObservableObject {
                 return calendar
             }
         } catch {
-            print("Error fetching calendars for \(account.email): \(error)")
+            Logger.calendar.error("Error fetching calendars for \(account.email, privacy: .private): \(error)")
             return []
         }
     }
@@ -206,6 +209,17 @@ class CalendarDataManager: ObservableObject {
         return events.filter { event in
             // Include events that start tomorrow (they won't have ended yet, but keeping consistent logic)
             event.startDate >= startOfTomorrow && event.startDate <= endOfTomorrow && event.endDate > now
+        }
+    }
+
+    private func precalculateTravelTimes() {
+        let eventsWithLocation = events.filter { $0.hasPhysicalLocation }
+        guard !eventsWithLocation.isEmpty else { return }
+
+        for event in eventsWithLocation {
+            Task {
+                _ = await LocationManager.shared.calculateTravelTime(for: event)
+            }
         }
     }
 

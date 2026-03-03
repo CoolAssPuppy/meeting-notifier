@@ -1,6 +1,7 @@
 import Cocoa
 import Carbon
 import UserNotifications
+import os
 
 @MainActor
 class KeyboardShortcutManager: ObservableObject {
@@ -152,7 +153,7 @@ class KeyboardShortcutManager: ObservableObject {
             do {
                 try await UNUserNotificationCenter.current().add(request)
             } catch {
-                print("Error showing keyboard shortcut notification: \(error)")
+                Logger.notifications.error("Error showing keyboard shortcut notification: \(error)")
             }
         }
     }
@@ -176,6 +177,3 @@ enum ShortcutModifier {
     }
 }
 
-extension Notification.Name {
-    static let toggleDropdown = Notification.Name("toggleDropdown")
-}

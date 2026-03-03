@@ -1,0 +1,155 @@
+//
+//  AppSettings+iCloudSync.swift
+//  MeetingNotifier
+//
+//  Copyright (c) 2025 Strategic Nerds. All rights reserved.
+//
+
+import Foundation
+import os
+
+// MARK: - iCloud sync
+
+extension AppSettings {
+    func setupiCloudSync() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(iCloudStoreDidChange),
+            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: iCloudStore
+        )
+
+        iCloudStore.synchronize()
+    }
+
+    func syncAllSettingsFromiCloudToUserDefaults() {
+        let settingsKeys = [
+            "notificationsEnabled", "oneMinuteWarningEnabled", "defaultMeetApp",
+            "menuBarDisplayMode", "onlyShowMeetingsWithAttendees", "muteSounds", "launchAtLogin",
+            "menuBarShowIcon", "menuBarShowTitle", "menuBarShowTime", "menuBarShowCountdown",
+            "menuBarThresholdMinutes", "showAllDayInMenuBar", "showMeetingCountBadge",
+            "showTravelTimeAlerts", "defaultTravelMode", "preferredMapProvider", "doubleBookingPreference",
+            "dropDownStyle"
+        ]
+
+        for key in settingsKeys {
+            if let value = iCloudStore.object(forKey: key) {
+                UserDefaults.standard.set(value, forKey: key)
+            }
+        }
+    }
+
+    func syncAccountListToiCloud() {
+        if isUpdatingFromiCloud { return }
+
+        let syncedAccounts = accounts.map { account in
+            SyncedAccountInfo(
+                email: account.email,
+                provider: account.provider,
+                isEnabled: account.isEnabled
+            )
+        }
+
+        if let encoded = try? JSONEncoder().encode(syncedAccounts) {
+            iCloudStore.set(encoded, forKey: "syncedAccounts")
+            iCloudStore.synchronize()
+            Logger.sync.debug("Synced \(syncedAccounts.count) accounts to iCloud")
+        }
+    }
+
+    @objc nonisolated func iCloudStoreDidChange(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let keys = userInfo[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] else {
+            return
+        }
+
+        let store = NSUbiquitousKeyValueStore.default
+        for key in keys {
+            if let value = store.object(forKey: key) {
+                UserDefaults.standard.set(value, forKey: key)
+            }
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            self.isUpdatingFromiCloud = true
+            defer { self.isUpdatingFromiCloud = false }
+
+            self.applyiCloudChanges(forKeys: keys)
+        }
+    }
+
+    private func applyiCloudChanges(forKeys keys: [String]) {
+        if keys.contains("notificationsEnabled") {
+            notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
+        }
+        if keys.contains("oneMinuteWarningEnabled") {
+            oneMinuteWarningEnabled = UserDefaults.standard.bool(forKey: "oneMinuteWarningEnabled")
+        }
+        if keys.contains("menuBarDisplayMode") {
+            let raw = UserDefaults.standard.string(forKey: "menuBarDisplayMode") ?? MenuBarDisplayMode.none.rawValue
+            menuBarDisplayMode = MenuBarDisplayMode(rawValue: raw) ?? .none
+        }
+        if keys.contains("onlyShowMeetingsWithAttendees") {
+            onlyShowMeetingsWithAttendees = UserDefaults.standard.bool(forKey: "onlyShowMeetingsWithAttendees")
+        }
+        if keys.contains("muteSounds") {
+            muteSounds = UserDefaults.standard.bool(forKey: "muteSounds")
+        }
+        if keys.contains("launchAtLogin") {
+            launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
+        }
+        if keys.contains("menuBarShowIcon") {
+            menuBarShowIcon = UserDefaults.standard.bool(forKey: "menuBarShowIcon")
+        }
+        if keys.contains("menuBarShowTitle") {
+            menuBarShowTitle = UserDefaults.standard.bool(forKey: "menuBarShowTitle")
+        }
+        if keys.contains("menuBarShowTime") {
+            menuBarShowTime = UserDefaults.standard.bool(forKey: "menuBarShowTime")
+        }
+        if keys.contains("menuBarShowCountdown") {
+            menuBarShowCountdown = UserDefaults.standard.bool(forKey: "menuBarShowCountdown")
+        }
+        if keys.contains("menuBarThresholdMinutes") {
+            menuBarThresholdMinutes = UserDefaults.standard.integer(forKey: "menuBarThresholdMinutes")
+        }
+        if keys.contains("showAllDayInMenuBar") {
+            showAllDayInMenuBar = UserDefaults.standard.bool(forKey: "showAllDayInMenuBar")
+        }
+        if keys.contains("showMeetingCountBadge") {
+            showMeetingCountBadge = UserDefaults.standard.bool(forKey: "showMeetingCountBadge")
+        }
+        if keys.contains("showTravelTimeAlerts") {
+            showTravelTimeAlerts = UserDefaults.standard.bool(forKey: "showTravelTimeAlerts")
+        }
+        if keys.contains("defaultMeetApp") {
+            let raw = UserDefaults.standard.string(forKey: "defaultMeetApp") ?? MeetAppType.defaultBrowser.rawValue
+            defaultMeetApp = MeetAppType(rawValue: raw) ?? .defaultBrowser
+        }
+        if keys.contains("defaultTravelMode") {
+            let raw = UserDefaults.standard.string(forKey: "defaultTravelMode") ?? TravelMode.driving.rawValue
+            defaultTravelMode = TravelMode(rawValue: raw) ?? .driving
+        }
+        if keys.contains("preferredMapProvider") {
+            let raw = UserDefaults.standard.string(forKey: "preferredMapProvider") ?? MapProvider.apple.rawValue
+            preferredMapProvider = MapProvider(rawValue: raw) ?? .apple
+        }
+        if keys.contains("doubleBookingPreference") {
+            let raw = UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
+            doubleBookingPreference = DoubleBookingPreference(rawValue: raw) ?? .fewerAttendees
+        }
+        if keys.contains("dropDownStyle") {
+            let raw = UserDefaults.standard.string(forKey: "dropDownStyle") ?? DropDownStyle.simple.rawValue
+            dropDownStyle = DropDownStyle(rawValue: raw) ?? .simple
+        }
+        if keys.contains("customCalendarColors") {
+            loadCustomCalendarColors()
+        }
+        if keys.contains("syncedAccounts") {
+            Logger.sync.info("Account list changed in iCloud - reloading accounts")
+            loadAccounts()
+        }
+    }
+}
