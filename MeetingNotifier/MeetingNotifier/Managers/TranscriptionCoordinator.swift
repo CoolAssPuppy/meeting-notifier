@@ -206,7 +206,12 @@ final class TranscriptionCoordinator: ObservableObject {
             frontMatterTemplate: settings.frontMatterTemplate.isEmpty ? nil : settings.frontMatterTemplate
         )
         let filename = formatter.generateFilename(document: document, schema: settings.fileNamingSchema)
-        let folderURL = URL(fileURLWithPath: settings.notesFolderPath)
+
+        // Resolve the security-scoped bookmark, falling back to the raw path
+        let folderURL = settings.resolveNotesFolderURL()
+            ?? URL(fileURLWithPath: settings.notesFolderPath)
+        let didStartAccess = folderURL.startAccessingSecurityScopedResource()
+        defer { if didStartAccess { folderURL.stopAccessingSecurityScopedResource() } }
 
         do {
             try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)

@@ -110,7 +110,7 @@ extension NotetakerTab {
         panel.message = "Choose a folder for meeting transcripts"
 
         if panel.runModal() == .OK, let url = panel.url {
-            settings.notesFolderPath = url.path
+            settings.saveNotesFolderBookmark(for: url)
         }
     }
 }

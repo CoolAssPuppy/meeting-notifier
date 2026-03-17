@@ -136,6 +136,54 @@ class AppSettings: ObservableObject {
         didSet { saveSetting(notesFolderPath, forKey: "notesFolderPath") }
     }
 
+    /// Security-scoped bookmark for the user-chosen notes folder.
+    /// Stored in UserDefaults only (not iCloud -- bookmarks are device-specific).
+    var notesFolderBookmark: Data? {
+        get { UserDefaults.standard.data(forKey: "notesFolderBookmark") }
+        set { UserDefaults.standard.set(newValue, forKey: "notesFolderBookmark") }
+    }
+
+    /// Resolve the security-scoped bookmark to a URL the sandbox allows access to.
+    /// Returns nil if no bookmark is stored or if the bookmark is stale.
+    func resolveNotesFolderURL() -> URL? {
+        guard let bookmarkData = notesFolderBookmark else {
+            return nil
+        }
+
+        var isStale = false
+        guard let url = try? URL(
+            resolvingBookmarkData: bookmarkData,
+            options: .withSecurityScope,
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale
+        ) else {
+            Logger.settings.error("Failed to resolve notes folder bookmark")
+            return nil
+        }
+
+        if isStale {
+            Logger.settings.warning("Notes folder bookmark is stale, re-saving")
+            saveNotesFolderBookmark(for: url)
+        }
+
+        return url
+    }
+
+    /// Create and persist a security-scoped bookmark for a folder URL.
+    func saveNotesFolderBookmark(for url: URL) {
+        do {
+            let bookmarkData = try url.bookmarkData(
+                options: .withSecurityScope,
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+            )
+            notesFolderBookmark = bookmarkData
+            notesFolderPath = url.path
+        } catch {
+            Logger.settings.error("Failed to create bookmark for notes folder: \(error.localizedDescription)")
+        }
+    }
+
     @Published var fileNamingSchema: String {
         didSet { saveSetting(fileNamingSchema, forKey: "fileNamingSchema") }
     }
