@@ -38,6 +38,7 @@ enum TranscriptionTestFactories {
         segments: [TranscriptSegment]? = nil,
         calendarEventId: String? = "event_123",
         attendeeCount: Int? = 5,
+        attendeeNames: [String]? = ["Prashant Sridharan", "Jane Smith", "Bob Lee"],
         conferenceLink: String? = "https://meet.google.com/abc-def-ghi"
     ) -> TranscriptDocument {
         let defaultSegments = segments ?? [
@@ -57,6 +58,7 @@ enum TranscriptionTestFactories {
             segments: defaultSegments,
             calendarEventId: calendarEventId,
             attendeeCount: attendeeCount,
+            attendeeNames: attendeeNames,
             conferenceLink: conferenceLink
         )
     }

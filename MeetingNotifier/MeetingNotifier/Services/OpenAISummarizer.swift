@@ -90,9 +90,9 @@ final class AISummarizer {
 
     private static func callAnthropic(prompt: String, apiKey: String) async throws -> MeetingSummary {
         let requestBody: [String: Any] = [
-            "model": "claude-sonnet-4-20250514",
+            "model": "claude-haiku-4-5-20251001",
             "max_tokens": 4096,
-            "system": systemPrompt,
+            "system": systemPrompt + "\n\nRespond with ONLY the JSON object. No markdown, no code fences, no explanation.",
             "messages": [
                 ["role": "user", "content": prompt]
             ]
@@ -149,25 +149,33 @@ final class AISummarizer {
 
     // MARK: - Shared
 
-    private static let systemPrompt = "You are a professional meeting assistant. You produce concise, accurate meeting summaries and extract action items with assignees. Respond only in the exact JSON format requested."
+    private static let systemPrompt = """
+        You are a professional meeting notes assistant. Your job is to analyze meeting transcripts and produce two things: a clear summary and a list of action items.
+
+        You always respond with valid JSON matching this exact schema:
+        {
+          "summary": "string",
+          "action_items": [{"description": "string", "assignee": "string"}]
+        }
+
+        Guidelines for the summary:
+        - Write 2-4 concise paragraphs covering the key topics discussed, decisions made, and outcomes reached.
+        - Use professional language. Be specific about what was decided, not just what was discussed.
+        - Mention participants by name when they made key points or commitments.
+        - Do not pad the summary or add filler. Every sentence should convey information.
+
+        Guidelines for action items:
+        - Extract every task, commitment, follow-up, or next step mentioned or clearly implied.
+        - Each action item should be specific and actionable (not vague like "think about X").
+        - Set "assignee" to the person's name if mentioned or clearly implied. Use "" if unknown.
+        - Order action items by when they appeared in the meeting.
+
+        Never invent information that is not in the transcript. If the transcript is too short or unclear to summarize, say so honestly in the summary and return an empty action_items array.
+        """
 
     private static func buildPrompt(transcript: String, meetingTitle: String) -> String {
         """
-        Summarize the following meeting transcript. The meeting is titled "\(meetingTitle)".
-
-        Produce a JSON response with exactly this structure:
-        {
-          "summary": "A concise 2-4 paragraph summary of the meeting.",
-          "action_items": [
-            {"description": "What needs to be done", "assignee": "Person responsible or empty string if unknown"}
-          ]
-        }
-
-        Rules:
-        - The summary should capture key decisions, discussion topics, and outcomes.
-        - Extract every action item mentioned or implied.
-        - If you cannot determine the assignee, use an empty string.
-        - Do not invent information not present in the transcript.
+        Meeting title: "\(meetingTitle)"
 
         Transcript:
         \(transcript)
@@ -175,7 +183,19 @@ final class AISummarizer {
     }
 
     private static func parseJSON(_ content: String) throws -> MeetingSummary {
-        guard let contentData = content.data(using: .utf8),
+        // Strip markdown code fences if the model wrapped the JSON
+        var cleaned = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasPrefix("```json") {
+            cleaned = String(cleaned.dropFirst(7))
+        } else if cleaned.hasPrefix("```") {
+            cleaned = String(cleaned.dropFirst(3))
+        }
+        if cleaned.hasSuffix("```") {
+            cleaned = String(cleaned.dropLast(3))
+        }
+        cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let contentData = cleaned.data(using: .utf8),
               let parsed = try JSONSerialization.jsonObject(with: contentData) as? [String: Any] else {
             throw SummarizerError.invalidResponse
         }

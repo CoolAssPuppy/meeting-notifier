@@ -94,7 +94,7 @@ extension NotetakerTab {
 
     var wisprApiKeyField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SecureField("Wispr Flow API key", text: wisprApiKeyBinding)
+            SecureField("Wispr Flow API key", text: $wisprKey)
                 .textFieldStyle(.roundedBorder)
 
             Text("Stored securely in Keychain and synced via iCloud")
@@ -105,7 +105,7 @@ extension NotetakerTab {
 
     var deepgramApiKeyField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SecureField("Deepgram API key", text: deepgramApiKeyBinding)
+            SecureField("Deepgram API key", text: $deepgramKey)
                 .textFieldStyle(.roundedBorder)
 
             Text("Stored securely in Keychain and synced via iCloud")
@@ -136,7 +136,7 @@ extension NotetakerTab {
         VStack(alignment: .leading, spacing: 8) {
             SecureField(
                 "\(settings.summarizationPlatform.displayName) API key (\(settings.summarizationPlatform.apiKeyPlaceholder))",
-                text: aiApiKeyBinding
+                text: $aiKey
             )
             .textFieldStyle(.roundedBorder)
 
@@ -157,36 +157,5 @@ extension NotetakerTab {
         case .deepgram:
             return "Cloud transcription via Deepgram. Requires API key (BYOK)."
         }
-    }
-
-    private var wisprApiKeyBinding: Binding<String> {
-        keychainBinding(account: "wispr_api_key")
-    }
-
-    private var deepgramApiKeyBinding: Binding<String> {
-        keychainBinding(account: "deepgram_api_key")
-    }
-
-    private var aiApiKeyBinding: Binding<String> {
-        // Read the account once; the binding's get/set use it as a captured value.
-        // Do NOT read settings inside the Binding getter -- that creates an
-        // observation loop (read triggers invalidation triggers re-read).
-        let account = settings.summarizationPlatform.keychainAccount
-        return keychainBinding(account: account)
-    }
-
-    private func keychainBinding(account: String) -> Binding<String> {
-        Binding(
-            get: {
-                KeychainManager.shared.retrieve(forAccount: account) ?? ""
-            },
-            set: { newValue in
-                if newValue.isEmpty {
-                    _ = KeychainManager.shared.delete(forAccount: account)
-                } else {
-                    _ = KeychainManager.shared.save(token: newValue, forAccount: account)
-                }
-            }
-        )
     }
 }

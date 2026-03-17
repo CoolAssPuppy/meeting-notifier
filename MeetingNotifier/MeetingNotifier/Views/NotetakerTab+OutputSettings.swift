@@ -41,10 +41,10 @@ extension NotetakerTab {
             Text("File naming:")
                 .font(.body)
 
-            TextField("{yyyy}{mm}{dd}-{title}", text: $settings.fileNamingSchema)
+            TextField("{yyyy}{MM}{dd}-{title}", text: $settings.fileNamingSchema)
                 .textFieldStyle(.roundedBorder)
 
-            Text("Available tokens: {yyyy}, {mm}, {dd}, {title}")
+            Text("Available tokens: {yyyy}, {MM}, {dd}, {title}")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -64,18 +64,23 @@ extension NotetakerTab {
                     .frame(width: 16, height: 16)
                     .background(Circle().fill(Color.secondary))
                     .help("""
-                    Available fields for front matter:
+                    Available tags:
 
-                    {yyyy}  - Year (e.g. 2026)
-                    {mm}    - Month (e.g. 03)
-                    {dd}    - Day (e.g. 17)
-                    {title} - Meeting title
-                    {attendees} - Attendee count
-                    {calendar}  - Calendar name
-
-                    Example:
-                    tags: [meeting]
-                    project: my-project
+                    {yyyy}     - Year (2026)
+                    {MM}       - Month (03)
+                    {dd}       - Day (17)
+                    {HH}       - Hour, 24h (14)
+                    {hh}       - Hour, 12h (2)
+                    {mm}       - Minutes (30)
+                    {title}    - Meeting title
+                    {speakers} - Speaker names
+                    {attendees}- Attendee count
+                    {duration} - Duration (1h 30m)
+                    {engine}   - Transcription engine
+                    {locale}   - Language
+                    {words}    - Word count
+                    {link}     - Conference link
+                    {event_id} - Calendar event ID
                     """)
             }
 

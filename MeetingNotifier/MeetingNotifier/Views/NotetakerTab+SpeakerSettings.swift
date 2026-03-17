@@ -12,10 +12,7 @@ import SwiftUI
 extension NotetakerTab {
     var speakerNameField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Your display name:")
-                .font(.body)
-
-            TextField("Me", text: $settings.speakerDisplayName)
+            TextField("Your display name", text: $settings.speakerDisplayName)
                 .textFieldStyle(.roundedBorder)
 
             Text("Your name as it appears in transcripts")
@@ -26,10 +23,7 @@ extension NotetakerTab {
 
     var othersNameField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Others display name:")
-                .font(.body)
-
-            TextField("Others", text: $settings.othersDisplayName)
+            TextField("Others display name", text: $settings.othersDisplayName)
                 .textFieldStyle(.roundedBorder)
 
             Text("Label for other speakers")

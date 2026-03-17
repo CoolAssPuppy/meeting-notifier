@@ -5,9 +5,11 @@
 //  Copyright (c) 2025 Strategic Nerds. All rights reserved.
 //
 
+import AppKit
 import AVFoundation
 import Combine
 import Foundation
+import Speech
 import os
 
 @MainActor
@@ -21,9 +23,11 @@ final class TranscriptionCoordinator: ObservableObject {
     private let audioCaptureManager = AudioCaptureManager()
     private var engine: TranscriptionEngine?
     private var cancellables = Set<AnyCancellable>()
+    private var autoOfferTimer: Timer?
 
     private init() {
         setupNotificationObservers()
+        startAutoOfferPolling()
     }
 
     // MARK: - Public API
@@ -42,12 +46,24 @@ final class TranscriptionCoordinator: ObservableObject {
 
         state = .waitingForPermission
 
-        // Request mic permission
-        let granted = await AudioCaptureManager.requestMicrophonePermission()
-        guard granted else {
+        // Request both permissions: microphone and speech recognition
+        let micGranted = await AudioCaptureManager.requestMicrophonePermission()
+        guard micGranted else {
             state = .error
-            error = "Microphone access is required for transcription"
+            error = "Microphone access is required. Open System Settings > Privacy & Security > Microphone."
             Logger.transcription.error("Microphone permission denied")
+            return
+        }
+
+        let speechStatus = await withCheckedContinuation { (continuation: CheckedContinuation<SFSpeechRecognizerAuthorizationStatus, Never>) in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status)
+            }
+        }
+        guard speechStatus == .authorized else {
+            state = .error
+            error = "Speech recognition access is required. Open System Settings > Privacy & Security > Speech Recognition."
+            Logger.transcription.error("Speech recognition permission denied: \(String(describing: speechStatus))")
             return
         }
 
@@ -67,6 +83,7 @@ final class TranscriptionCoordinator: ObservableObject {
             locale: settings.transcriptionLocale,
             calendarEventId: event?.id,
             attendeeCount: event?.attendeeCount,
+            attendeeNames: event?.attendeeNames,
             conferenceLink: event?.conferenceLink
         )
 
@@ -110,9 +127,13 @@ final class TranscriptionCoordinator: ObservableObject {
         // Finalize document
         currentDocument?.endDate = Date()
 
-        // Save to file
+        // Update banner: ended
+        updateBanner(.ended)
+
+        // Save with AI summary
         if let document = currentDocument {
-            saveTranscript(document)
+            updateBanner(.analyzing)
+            await saveTranscript(document)
         }
 
         state = .idle
@@ -145,50 +166,50 @@ final class TranscriptionCoordinator: ObservableObject {
 
     // MARK: - Saving
 
-    private func saveTranscript(_ document: TranscriptDocument) {
+    private func saveTranscript(_ document: TranscriptDocument) async {
         let settings = AppSettings.shared
         let formatter = TranscriptFormatter(
             speakerNameMe: settings.speakerDisplayName,
             speakerNameOthers: settings.othersDisplayName
         )
 
-        // Start async save: summarize via OpenAI, then write file
-        Task { @MainActor in
-            var summary: MeetingSummary?
-
-            let platform = settings.summarizationPlatform
-            if AISummarizer.hasApiKey(for: platform) && !document.segments.isEmpty {
-                let plainText = formatter.plainTranscript(segments: document.segments)
-                do {
-                    summary = try await AISummarizer.summarize(
-                        transcript: plainText,
-                        meetingTitle: document.meetingTitle,
-                        platform: platform
-                    )
-                    Logger.transcription.info("Meeting summary generated via \(platform.displayName)")
-                } catch {
-                    Logger.transcription.error("OpenAI summarization failed: \(error.localizedDescription)")
-                    // Continue saving without summary
-                }
-            }
-
-            let markdown = formatter.formatMarkdown(
-                document: document,
-                summary: summary,
-                frontMatterTemplate: settings.frontMatterTemplate.isEmpty ? nil : settings.frontMatterTemplate
-            )
-            let filename = formatter.generateFilename(document: document, schema: settings.fileNamingSchema)
-            let folderURL = URL(fileURLWithPath: settings.notesFolderPath)
-
+        // Summarize via AI if configured
+        var summary: MeetingSummary?
+        let platform = settings.summarizationPlatform
+        if AISummarizer.hasApiKey(for: platform) && !document.segments.isEmpty {
+            let plainText = formatter.plainTranscript(segments: document.segments)
             do {
-                try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
-                let fileURL = folderURL.appendingPathComponent(filename)
-                try markdown.write(to: fileURL, atomically: true, encoding: .utf8)
-                Logger.transcription.info("Transcript saved to: \(fileURL.path)")
+                summary = try await AISummarizer.summarize(
+                    transcript: plainText,
+                    meetingTitle: document.meetingTitle,
+                    platform: platform
+                )
+                Logger.transcription.info("Summary generated via \(platform.displayName)")
             } catch {
-                Logger.transcription.error("Failed to save transcript: \(error.localizedDescription)")
-                self.error = "Failed to save: \(error.localizedDescription)"
+                Logger.transcription.error("AI summarization failed: \(error.localizedDescription)")
+                updateBanner(.error("Summary failed: \(error.localizedDescription)"))
             }
+        }
+
+        // Write markdown file
+        let markdown = formatter.formatMarkdown(
+            document: document,
+            summary: summary,
+            frontMatterTemplate: settings.frontMatterTemplate.isEmpty ? nil : settings.frontMatterTemplate
+        )
+        let filename = formatter.generateFilename(document: document, schema: settings.fileNamingSchema)
+        let folderURL = URL(fileURLWithPath: settings.notesFolderPath)
+
+        do {
+            try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+            let fileURL = folderURL.appendingPathComponent(filename)
+            try markdown.write(to: fileURL, atomically: true, encoding: .utf8)
+            Logger.transcription.info("Transcript saved to: \(fileURL.path)")
+            dismissBannerAfterDelay(.saved)
+        } catch {
+            Logger.transcription.error("Failed to save transcript: \(error.localizedDescription)")
+            self.error = "Failed to save: \(error.localizedDescription)"
+            updateBanner(.error("Save failed: \(error.localizedDescription)"))
         }
     }
 
@@ -231,33 +252,119 @@ final class TranscriptionCoordinator: ObservableObject {
             }
         }
 
-        // Auto-offer transcription when mic activates during a meeting
+        // Auto-offer transcription when mic activates.
+        // Always starts, even without a calendar match. If there is a meeting,
+        // attach it for metadata. If double-booked, use the user's preference.
         NotificationCenter.default.addObserver(
             forName: .microphoneDidActivate,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                guard let self,
-                      self.state == .idle,
-                      AppSettings.shared.notetakerEnabled,
-                      AppSettings.shared.autoOfferTranscription else {
+                guard let self else { return }
+                let settings = AppSettings.shared
+
+                Logger.transcription.info("Mic activated. State: \(self.state.rawValue), enabled: \(settings.notetakerEnabled), auto-offer: \(settings.autoOfferTranscription)")
+
+                guard self.state == .idle,
+                      settings.notetakerEnabled,
+                      settings.autoOfferTranscription else {
                     return
                 }
 
-                // Check if there's a current or upcoming meeting
-                let dataManager = CalendarDataManager.shared
-                let now = Date()
-                let activeMeeting = dataManager.events.first { event in
-                    event.startDate <= now.addingTimeInterval(60) && event.endDate > now
+                // Find best matching meeting (or none)
+                let meeting = self.findBestMeeting()
+                if let meeting {
+                    Logger.transcription.info("Auto-starting transcription for: \(meeting.title)")
+                } else {
+                    Logger.transcription.info("Auto-starting transcription (no calendar match)")
                 }
-
-                if let meeting = activeMeeting {
-                    Logger.transcription.info("Auto-offering transcription for: \(meeting.title)")
-                    await self.startTranscription(for: meeting)
-                }
+                await self.startTranscription(for: meeting)
             }
         }
+
+        // Auto-stop when mic deactivates (meeting ended)
+        NotificationCenter.default.addObserver(
+            forName: .microphoneDidDeactivate,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.state.isActive else { return }
+                print("[AutoStop] Mic deactivated while recording, stopping transcription")
+                await self.stopTranscription()
+            }
+        }
+    }
+
+    // MARK: - Auto-offer polling
+
+    /// Polls every 5 seconds to catch cases where the mic was already active
+    /// before a meeting started (no transition = no notification).
+    private func startAutoOfferPolling() {
+        autoOfferTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.checkAutoOffer()
+            }
+        }
+    }
+
+    private func checkAutoOffer() {
+        let settings = AppSettings.shared
+        let micActive = MeetingDetector.shared.isMicrophoneActive
+
+        // Debug: prints to Xcode console even with OS_ACTIVITY_MODE=disable
+        print("[AutoOffer] state=\(state.rawValue) enabled=\(settings.notetakerEnabled) autoOffer=\(settings.autoOfferTranscription) micActive=\(micActive)")
+
+        guard state == .idle,
+              settings.notetakerEnabled,
+              settings.autoOfferTranscription,
+              micActive else {
+            return
+        }
+
+        let meeting = findBestMeeting()
+        print("[AutoOffer] STARTING transcription. Meeting: \(meeting?.title ?? "none")")
+
+        Task {
+            await startTranscription(for: meeting)
+        }
+    }
+
+    // MARK: - Meeting matching
+
+    /// Find the best calendar event for auto-transcription.
+    /// Matches meetings happening now or starting within 5 minutes.
+    /// If double-booked, uses the user's double-booking preference.
+    private func findBestMeeting() -> CalendarEvent? {
+        let now = Date()
+        let candidates = CalendarDataManager.shared.events.filter { event in
+            event.startDate <= now.addingTimeInterval(300) && event.endDate > now
+        }
+
+        guard !candidates.isEmpty else { return nil }
+        if candidates.count == 1 { return candidates.first }
+
+        // Double-booked: use the user's preference
+        Logger.transcription.info("Double-booked: \(candidates.count) meetings, using preference: \(AppSettings.shared.doubleBookingPreference.rawValue)")
+        switch AppSettings.shared.doubleBookingPreference {
+        case .fewerAttendees:
+            return candidates.sorted { $0.attendeeCount < $1.attendeeCount }.first
+        case .moreAttendees:
+            return candidates.sorted { $0.attendeeCount > $1.attendeeCount }.first
+        }
+    }
+
+    // MARK: - Banner helpers
+
+    private func updateBanner(_ state: BannerState) {
+        guard let appDelegate = NSApp.delegate as? AppDelegate else { return }
+        appDelegate.updateBannerState(state)
+    }
+
+    private func dismissBannerAfterDelay(_ state: BannerState) {
+        guard let appDelegate = NSApp.delegate as? AppDelegate else { return }
+        appDelegate.showBannerThenDismiss(state)
     }
 
     // MARK: - Helpers

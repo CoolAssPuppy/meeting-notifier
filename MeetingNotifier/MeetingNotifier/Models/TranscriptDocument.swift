@@ -17,6 +17,7 @@ struct TranscriptDocument: Identifiable, Codable {
     var segments: [TranscriptSegment]
     var calendarEventId: String?
     var attendeeCount: Int?
+    var attendeeNames: [String]?
     var conferenceLink: String?
 
     init(
@@ -29,6 +30,7 @@ struct TranscriptDocument: Identifiable, Codable {
         segments: [TranscriptSegment] = [],
         calendarEventId: String? = nil,
         attendeeCount: Int? = nil,
+        attendeeNames: [String]? = nil,
         conferenceLink: String? = nil
     ) {
         self.id = id
@@ -40,6 +42,7 @@ struct TranscriptDocument: Identifiable, Codable {
         self.segments = segments
         self.calendarEventId = calendarEventId
         self.attendeeCount = attendeeCount
+        self.attendeeNames = attendeeNames
         self.conferenceLink = conferenceLink
     }
 

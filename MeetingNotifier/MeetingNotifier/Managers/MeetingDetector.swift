@@ -65,40 +65,74 @@ final class MeetingDetector: ObservableObject {
     }
 
     private func isAudioInputInUse() -> Bool {
-        var deviceId = AudioObjectID(kAudioObjectSystemObject)
+        // Get all audio devices in the system
         var propertyAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDefaultInputDevice,
+            mSelector: kAudioHardwarePropertyDevices,
             mScope: kAudioObjectPropertyScopeGlobal,
             mElement: kAudioObjectPropertyElementMain
         )
 
-        var size = UInt32(MemoryLayout<AudioObjectID>.size)
-        let status = AudioObjectGetPropertyData(
+        var dataSize: UInt32 = 0
+        var status = AudioObjectGetPropertyDataSize(
             AudioObjectID(kAudioObjectSystemObject),
             &propertyAddress,
             0, nil,
-            &size, &deviceId
+            &dataSize
         )
+        guard status == noErr, dataSize > 0 else { return false }
 
+        let deviceCount = Int(dataSize) / MemoryLayout<AudioObjectID>.size
+        var devices = [AudioObjectID](repeating: 0, count: deviceCount)
+
+        status = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &propertyAddress,
+            0, nil,
+            &dataSize, &devices
+        )
         guard status == noErr else { return false }
 
-        // Check if the device is running (being used)
+        // Check each device that has input channels
+        for device in devices {
+            guard hasInputChannels(device) else { continue }
+            if isDeviceRunning(device) { return true }
+        }
+
+        return false
+    }
+
+    private func hasInputChannels(_ deviceId: AudioObjectID) -> Bool {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyStreamConfiguration,
+            mScope: kAudioObjectPropertyScopeInput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        var size: UInt32 = 0
+        let status = AudioObjectGetPropertyDataSize(deviceId, &address, 0, nil, &size)
+        guard status == noErr, size > 0 else { return false }
+
+        let bufferListPointer = UnsafeMutablePointer<AudioBufferList>.allocate(capacity: Int(size))
+        defer { bufferListPointer.deallocate() }
+
+        let dataStatus = AudioObjectGetPropertyData(deviceId, &address, 0, nil, &size, bufferListPointer)
+        guard dataStatus == noErr else { return false }
+
+        let bufferList = UnsafeMutableAudioBufferListPointer(bufferListPointer)
+        return bufferList.contains { $0.mNumberChannels > 0 }
+    }
+
+    private func isDeviceRunning(_ deviceId: AudioObjectID) -> Bool {
         var isRunning: UInt32 = 0
-        var runningAddress = AudioObjectPropertyAddress(
+        var address = AudioObjectPropertyAddress(
             mSelector: kAudioDevicePropertyDeviceIsRunningSomewhere,
             mScope: kAudioObjectPropertyScopeGlobal,
             mElement: kAudioObjectPropertyElementMain
         )
-        var runningSize = UInt32(MemoryLayout<UInt32>.size)
+        var size = UInt32(MemoryLayout<UInt32>.size)
 
-        let runningStatus = AudioObjectGetPropertyData(
-            deviceId,
-            &runningAddress,
-            0, nil,
-            &runningSize, &isRunning
-        )
-
-        return runningStatus == noErr && isRunning != 0
+        let status = AudioObjectGetPropertyData(deviceId, &address, 0, nil, &size, &isRunning)
+        return status == noErr && isRunning != 0
     }
 
     // MARK: - Camera detection

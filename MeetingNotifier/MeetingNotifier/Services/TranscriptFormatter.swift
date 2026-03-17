@@ -48,7 +48,7 @@ struct TranscriptFormatter {
 
         return schema
             .replacingOccurrences(of: "{yyyy}", with: yyyy)
-            .replacingOccurrences(of: "{mm}", with: mm)
+            .replacingOccurrences(of: "{MM}", with: mm)
             .replacingOccurrences(of: "{dd}", with: dd)
             .replacingOccurrences(of: "{title}", with: sanitizedTitle)
             + ".md"
@@ -80,6 +80,9 @@ struct TranscriptFormatter {
         if let attendeeCount = document.attendeeCount {
             lines.append("attendees: \(attendeeCount)")
         }
+        if let names = document.attendeeNames, !names.isEmpty {
+            lines.append("attendee_names: [\(names.joined(separator: ", "))]")
+        }
         if let link = document.conferenceLink {
             lines.append("conference_link: \(link)")
         }
@@ -88,7 +91,7 @@ struct TranscriptFormatter {
         }
 
         if let template, !template.isEmpty {
-            lines.append(template)
+            lines.append(expandTemplate(template, document: document))
         }
 
         lines.append("---")
@@ -102,8 +105,13 @@ struct TranscriptFormatter {
         dateFormatter.dateFormat = "MMMM d, yyyy 'at' h:mm a"
         let dateString = dateFormatter.string(from: document.startDate)
 
-        let speakers = document.speakerNames.map { speakerDisplayName($0) }
-        let attendeeList = speakers.joined(separator: ", ")
+        // Use real attendee names from calendar if available, fall back to speaker labels
+        let attendeeList: String
+        if let names = document.attendeeNames, !names.isEmpty {
+            attendeeList = names.joined(separator: ", ")
+        } else {
+            attendeeList = document.speakerNames.map { speakerDisplayName($0) }.joined(separator: ", ")
+        }
 
         var lines = ["## Summary for \(document.meetingTitle) with \(attendeeList) on \(dateString)"]
         lines.append("")
@@ -185,6 +193,44 @@ struct TranscriptFormatter {
         }
 
         return lines.joined(separator: "\n")
+    }
+
+    private func expandTemplate(_ template: String, document: TranscriptDocument) -> String {
+        let dateFormatter = DateFormatter()
+
+        dateFormatter.dateFormat = "yyyy"
+        var result = template.replacingOccurrences(of: "{yyyy}", with: dateFormatter.string(from: document.startDate))
+
+        dateFormatter.dateFormat = "MM"
+        result = result.replacingOccurrences(of: "{MM}", with: dateFormatter.string(from: document.startDate))
+
+        dateFormatter.dateFormat = "dd"
+        result = result.replacingOccurrences(of: "{dd}", with: dateFormatter.string(from: document.startDate))
+
+        dateFormatter.dateFormat = "HH"
+        result = result.replacingOccurrences(of: "{HH}", with: dateFormatter.string(from: document.startDate))
+
+        dateFormatter.dateFormat = "h"
+        result = result.replacingOccurrences(of: "{hh}", with: dateFormatter.string(from: document.startDate))
+
+        dateFormatter.dateFormat = "mm"
+        result = result.replacingOccurrences(of: "{mm}", with: dateFormatter.string(from: document.startDate))
+
+        result = result.replacingOccurrences(of: "{title}", with: document.meetingTitle)
+
+        let speakers = document.speakerNames.map { speakerDisplayName($0) }
+        result = result.replacingOccurrences(of: "{speakers}", with: speakers.joined(separator: ", "))
+
+        result = result.replacingOccurrences(of: "{attendees}", with: "\(document.attendeeCount ?? 0)")
+
+        result = result.replacingOccurrences(of: "{engine}", with: document.engine.displayName)
+        result = result.replacingOccurrences(of: "{locale}", with: document.locale)
+        result = result.replacingOccurrences(of: "{duration}", with: document.formattedDuration ?? "")
+        result = result.replacingOccurrences(of: "{words}", with: "\(document.wordCount)")
+        result = result.replacingOccurrences(of: "{link}", with: document.conferenceLink ?? "")
+        result = result.replacingOccurrences(of: "{event_id}", with: document.calendarEventId ?? "")
+
+        return result
     }
 
     private func sanitizeFilename(_ name: String) -> String {

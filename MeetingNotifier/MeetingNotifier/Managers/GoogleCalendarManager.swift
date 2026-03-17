@@ -182,6 +182,12 @@ class GoogleCalendarManager {
 
         let attendees = item["attendees"] as? [[String: Any]] ?? []
         let attendeeCount = attendees.count
+        let attendeeNames = attendees.compactMap { attendee -> String? in
+            if let name = attendee["displayName"] as? String, !name.isEmpty {
+                return name
+            }
+            return attendee["email"] as? String
+        }
 
         return CalendarEvent(
             id: eventId,
@@ -197,6 +203,7 @@ class GoogleCalendarManager {
             provider: .google,
             reminders: reminders,
             attendeeCount: attendeeCount,
+            attendeeNames: attendeeNames,
             accountEmail: calendarInfo.accountEmail
         )
     }

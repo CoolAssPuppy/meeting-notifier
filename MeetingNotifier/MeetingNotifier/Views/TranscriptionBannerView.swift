@@ -7,41 +7,26 @@
 
 import SwiftUI
 
+enum BannerState {
+    case recording
+    case ended
+    case analyzing
+    case saved
+    case error(String)
+}
+
 struct TranscriptionBannerView: View {
+    let state: BannerState
     let onStop: () -> Void
+    let onCopyError: () -> Void
 
     @State private var dotOpacity: Double = 1.0
 
     var body: some View {
         HStack(spacing: 10) {
-            Circle()
-                .fill(Color.green)
-                .frame(width: 8, height: 8)
-                .shadow(color: .green.opacity(0.8), radius: 4)
-                .opacity(dotOpacity)
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                        dotOpacity = 0.3
-                    }
-                }
-
-            Text("Transcription Active")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.primary)
-                .fixedSize()
-
-            Button(action: onStop) {
-                Text("Stop")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.red)
-                    )
-            }
-            .buttonStyle(.plain)
+            statusDot
+            statusText
+            actionButton
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
@@ -55,11 +40,113 @@ struct TranscriptionBannerView: View {
         )
         .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
+
+    @ViewBuilder
+    private var statusDot: some View {
+        switch state {
+        case .recording:
+            Circle()
+                .fill(Color.green)
+                .frame(width: 8, height: 8)
+                .shadow(color: .green.opacity(0.8), radius: 4)
+                .opacity(dotOpacity)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                        dotOpacity = 0.3
+                    }
+                }
+        case .ended:
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.blue)
+        case .analyzing:
+            ProgressView()
+                .controlSize(.small)
+        case .saved:
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.green)
+        case .error:
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.orange)
+        }
+    }
+
+    @ViewBuilder
+    private var statusText: some View {
+        switch state {
+        case .recording:
+            Text("Transcription Active")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.primary)
+                .fixedSize()
+        case .ended:
+            Text("Transcription ended.")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.primary)
+                .fixedSize()
+        case .analyzing:
+            Text("Analyzing transcript...")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.primary)
+                .fixedSize()
+        case .saved:
+            Text("Transcript saved.")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.primary)
+                .fixedSize()
+        case .error(let message):
+            Text(message)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.red)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .help(message)
+        }
+    }
+
+    @ViewBuilder
+    private var actionButton: some View {
+        switch state {
+        case .recording:
+            Button(action: onStop) {
+                Text("Stop")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white)
+                    .fixedSize()
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.red)
+                    )
+            }
+            .buttonStyle(.plain)
+            .fixedSize()
+        case .error:
+            Button(action: onCopyError) {
+                Image(systemName: "doc.on.clipboard")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Copy error to clipboard")
+        default:
+            EmptyView()
+        }
+    }
 }
 
 struct TranscriptionBannerView_Previews: PreviewProvider {
     static var previews: some View {
-        TranscriptionBannerView(onStop: {})
-            .padding()
+        VStack(spacing: 20) {
+            TranscriptionBannerView(state: .recording, onStop: {}, onCopyError: {})
+            TranscriptionBannerView(state: .ended, onStop: {}, onCopyError: {})
+            TranscriptionBannerView(state: .analyzing, onStop: {}, onCopyError: {})
+            TranscriptionBannerView(state: .saved, onStop: {}, onCopyError: {})
+            TranscriptionBannerView(state: .error("OpenAI API returned status 401"), onStop: {}, onCopyError: {})
+        }
+        .padding()
     }
 }

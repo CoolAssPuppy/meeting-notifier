@@ -14,6 +14,7 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
     var provider: CalendarProvider
     var reminders: [EventReminder] = []
     var attendeeCount: Int = 0
+    var attendeeNames: [String] = []
     var accountEmail: String?
 
     // Travel time properties

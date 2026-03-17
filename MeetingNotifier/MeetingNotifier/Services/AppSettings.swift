@@ -246,9 +246,9 @@ class AppSettings: ObservableObject {
         self.notesFolderPath = iCloudStore.string(forKey: "notesFolderPath")
             ?? UserDefaults.standard.string(forKey: "notesFolderPath") ?? defaultNotesPath + "/MeetingNotes"
         self.fileNamingSchema = iCloudStore.string(forKey: "fileNamingSchema")
-            ?? UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{mm}{dd}-{title}"
+            ?? UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{MM}{dd}-{title}"
         self.frontMatterTemplate = iCloudStore.string(forKey: "frontMatterTemplate")
-            ?? UserDefaults.standard.string(forKey: "frontMatterTemplate") ?? ""
+            ?? UserDefaults.standard.string(forKey: "frontMatterTemplate") ?? "tags: [meeting]\nspeakers: [{speakers}]\nattendees: {attendees}\nduration: {duration}\nengine: {engine}"
         self.speakerDisplayName = iCloudStore.string(forKey: "speakerDisplayName")
             ?? UserDefaults.standard.string(forKey: "speakerDisplayName") ?? "Me"
         self.othersDisplayName = iCloudStore.string(forKey: "othersDisplayName")

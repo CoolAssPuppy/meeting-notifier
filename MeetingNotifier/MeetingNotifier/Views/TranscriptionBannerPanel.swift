@@ -10,10 +10,14 @@ import SwiftUI
 
 class TranscriptionBannerPanel: NSPanel {
     private var hostingView: NSHostingView<TranscriptionBannerView>?
+    private var currentState: BannerState = .recording
+    private var onStopAction: () -> Void = {}
+    private var lastError: String = ""
 
     init(onStop: @escaping () -> Void) {
+        self.onStopAction = onStop
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 270, height: 36),
+            contentRect: NSRect(x: 0, y: 0, width: 300, height: 40),
             styleMask: [.nonactivatingPanel, .borderless],
             backing: .buffered,
             defer: false
@@ -29,13 +33,37 @@ class TranscriptionBannerPanel: NSPanel {
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         self.ignoresMouseEvents = false
 
-        let bannerView = TranscriptionBannerView(onStop: onStop)
-        let hosting = NSHostingView(rootView: bannerView)
-        hosting.frame = self.contentView?.bounds ?? .zero
-        hosting.autoresizingMask = [.width, .height]
+        updateView()
+    }
 
-        self.contentView = hosting
-        self.hostingView = hosting
+    func updateState(_ newState: BannerState) {
+        currentState = newState
+        if case .error(let msg) = newState {
+            lastError = msg
+        }
+        updateView()
+    }
+
+    private func updateView() {
+        let bannerView = TranscriptionBannerView(
+            state: currentState,
+            onStop: onStopAction,
+            onCopyError: { [weak self] in
+                guard let self else { return }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(self.lastError, forType: .string)
+            }
+        )
+
+        if let hostingView {
+            hostingView.rootView = bannerView
+        } else {
+            let hosting = NSHostingView(rootView: bannerView)
+            hosting.frame = self.contentView?.bounds ?? .zero
+            hosting.autoresizingMask = [.width, .height]
+            self.contentView = hosting
+            self.hostingView = hosting
+        }
     }
 
     func positionBelowStatusItem(_ statusItem: NSStatusItem, animated: Bool = false) {
@@ -45,8 +73,8 @@ class TranscriptionBannerPanel: NSPanel {
         let buttonFrame = button.convert(button.bounds, to: nil)
         let screenFrame = window.convertToScreen(buttonFrame)
 
-        let panelWidth: CGFloat = 270
-        let panelHeight: CGFloat = 30
+        let panelWidth: CGFloat = 300
+        let panelHeight: CGFloat = 40
 
         var panelFrame = NSRect(
             x: screenFrame.midX - panelWidth / 2,
@@ -55,7 +83,6 @@ class TranscriptionBannerPanel: NSPanel {
             height: panelHeight
         )
 
-        // Keep on screen
         if let screen = NSScreen.main {
             let screenBounds = screen.visibleFrame
             if panelFrame.maxX > screenBounds.maxX {

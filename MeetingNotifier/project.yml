@@ -29,7 +29,22 @@ targets:
         NSLocationWhenInUseUsageDescription: "MeetingNotifier needs your location to calculate travel time to meeting locations."
         NSMicrophoneUsageDescription: "MeetingNotifier needs microphone access to transcribe your meetings."
         NSSpeechRecognitionUsageDescription: "MeetingNotifier uses speech recognition to transcribe your meetings into notes."
+        NSScreenCaptureUsageDescription: "MeetingNotifier captures system audio to transcribe what other meeting participants say."
         LSApplicationCategoryType: "public.app-category.productivity"
+    entitlements:
+      path: MeetingNotifier/MeetingNotifier.entitlements
+      properties:
+        com.apple.developer.aps-environment: development
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.strategicnerds.meetingnotifier
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)com.strategicnerds.meetingnotifier
+        com.apple.security.device.audio-input: true
+        com.apple.security.device.camera: true
+        com.apple.security.network.client: true
     settings:
       base:
         PRODUCT_NAME: MeetingNotifier
@@ -39,17 +54,13 @@ targets:
         SWIFT_STRICT_CONCURRENCY: targeted
         OTHER_SWIFT_FLAGS: "-Xfrontend -disable-dynamic-actor-isolation"
         INFOPLIST_FILE: MeetingNotifier/Info.plist
+        CODE_SIGN_ENTITLEMENTS: MeetingNotifier/MeetingNotifier.entitlements
         COMBINE_HIDPI_IMAGES: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: 955GSY56UT
+        ENABLE_HARDENED_RUNTIME: YES
         ENABLE_APP_INTENTS_METADATA_GENERATION: NO
-      configs:
-        Debug:
-          ENABLE_HARDENED_RUNTIME: NO
-          CODE_SIGN_IDENTITY: "-"
-        Release:
-          ENABLE_HARDENED_RUNTIME: YES
     dependencies:
       - package: AppAuth
       - sdk: AppIntents.framework
@@ -65,8 +76,8 @@ targets:
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         GENERATE_INFOPLIST_FILE: YES
-        CODE_SIGN_IDENTITY: "-"
-        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 955GSY56UT
     dependencies:
       - target: MeetingNotifier
 
