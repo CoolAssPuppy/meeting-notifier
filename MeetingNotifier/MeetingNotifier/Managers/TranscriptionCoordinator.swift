@@ -21,6 +21,7 @@ final class TranscriptionCoordinator: ObservableObject {
     @Published private(set) var error: String?
 
     private let audioCaptureManager = AudioCaptureManager()
+    private let systemAudioCapturer = SystemAudioCapturer()
     private var engine: TranscriptionEngine?
     private var cancellables = Set<AnyCancellable>()
     private var autoOfferTimer: Timer?
@@ -103,6 +104,10 @@ final class TranscriptionCoordinator: ObservableObject {
             let processBuffer = engine.makeBufferProcessor(speaker: .me)
             try audioCaptureManager.startMicCapture(bufferHandler: processBuffer)
 
+            // Start system audio capture for "Others" diarization.
+            // Non-fatal: if screen recording is denied, mic-only still works.
+            await startSystemAudioCapture(engine: engine)
+
             state = .recording
             error = nil
             NotificationCenter.default.post(name: .transcriptionDidStart, object: nil)
@@ -121,6 +126,7 @@ final class TranscriptionCoordinator: ObservableObject {
 
         // Stop capture and engine
         audioCaptureManager.stopMicCapture()
+        await systemAudioCapturer.stopCapture()
         await engine?.stop()
         engine = nil
 
@@ -147,6 +153,7 @@ final class TranscriptionCoordinator: ObservableObject {
     func pauseTranscription() {
         guard state == .recording else { return }
         audioCaptureManager.stopMicCapture()
+        Task { await systemAudioCapturer.stopCapture() }
         state = .paused
         Logger.transcription.info("Transcription paused")
     }
@@ -156,6 +163,7 @@ final class TranscriptionCoordinator: ObservableObject {
         do {
             let processBuffer = engine.makeBufferProcessor(speaker: .me)
             try audioCaptureManager.startMicCapture(bufferHandler: processBuffer)
+            Task { await startSystemAudioCapture(engine: engine) }
             state = .recording
             Logger.transcription.info("Transcription resumed")
         } catch {
@@ -210,6 +218,19 @@ final class TranscriptionCoordinator: ObservableObject {
             Logger.transcription.error("Failed to save transcript: \(error.localizedDescription)")
             self.error = "Failed to save: \(error.localizedDescription)"
             updateBanner(.error("Save failed: \(error.localizedDescription)"))
+        }
+    }
+
+    // MARK: - System audio
+
+    private func startSystemAudioCapture(engine: TranscriptionEngine) async {
+        do {
+            let processBuffer = engine.makeBufferProcessor(speaker: .others)
+            try await systemAudioCapturer.startCapture(bufferHandler: processBuffer)
+        } catch {
+            Logger.transcription.warning(
+                "System audio capture unavailable (mic-only mode): \(error.localizedDescription)"
+            )
         }
     }
 

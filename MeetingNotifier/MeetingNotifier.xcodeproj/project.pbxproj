@@ -95,6 +95,8 @@
 		F83226D88676031885A6C796 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE86981C5EB71FA2CEF65F7 /* StoreKitManager.swift */; };
 		FB3DC9BA85247D28FC65624B /* MicrosoftCalendarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68D727670FEA4120BE81D4B4 /* MicrosoftCalendarManager.swift */; };
 		FBA901730AB289EF928329C1 /* LocationCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E1BB08DA02D9C5A752D2F2 /* LocationCardView.swift */; };
+		AA1111111111111111111111 /* SystemAudioCapturer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2222222222222222222222 /* SystemAudioCapturer.swift */; };
+		AA3333333333333333333333 /* SystemAudioCapturerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4444444444444444444444 /* SystemAudioCapturerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -197,6 +199,8 @@
 		E8B29DDB763CCF0F1A656EC4 /* WisprEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WisprEngine.swift; sourceTree = "<group>"; };
 		EDE86981C5EB71FA2CEF65F7 /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		EFDF439A2AFA0B53E3DB79DC /* CoffeeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeeView.swift; sourceTree = "<group>"; };
+		AA2222222222222222222222 /* SystemAudioCapturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAudioCapturer.swift; sourceTree = "<group>"; };
+		AA4444444444444444444444 /* SystemAudioCapturerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAudioCapturerTests.swift; sourceTree = "<group>"; };
 		FA33B92040C92A34F2AEEBF2 /* TranscriptionBannerPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionBannerPanel.swift; sourceTree = "<group>"; };
 		FD1ADEAC2590B3EC21020B5D /* PeekWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeekWindowView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -309,6 +313,7 @@
 				450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */,
 				CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */,
 				5326575BF5C8A6B7163F6C59 /* NotificationManager.swift */,
+				AA2222222222222222222222 /* SystemAudioCapturer.swift */,
 				2B1D2E92430A8DABBD238EFF /* TranscriptionCoordinator.swift */,
 			);
 			path = Managers;
@@ -366,6 +371,7 @@
 		E0CA8BF2DD6F4B12EF8C4D8A /* MeetingNotifierTests */ = {
 			isa = PBXGroup;
 			children = (
+				AA4444444444444444444444 /* SystemAudioCapturerTests.swift */,
 				1612900B2D43945D64CCB667 /* TranscriptDocumentTests.swift */,
 				95A42B25C0C37FC78CC5E356 /* TranscriptFormatterTests.swift */,
 				C3816F76B19E8A2B9066233D /* TranscriptSegmentTests.swift */,
@@ -510,6 +516,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA3333333333333333333333 /* SystemAudioCapturerTests.swift in Sources */,
 				5B6D5CFFB796A64797529723 /* TranscriptDocumentTests.swift in Sources */,
 				7CAEFDCE34D0A7957E63CB27 /* TranscriptFormatterTests.swift in Sources */,
 				88AEBDFD4A0ECC98684340DF /* TranscriptSegmentTests.swift in Sources */,
@@ -580,6 +587,7 @@
 				A1C431A93B365F47D57EFFEF /* SimpleMeetingRowView.swift in Sources */,
 				103D45956BAC1AEF57FB8B39 /* SpeechAnalyzerEngine.swift in Sources */,
 				F83226D88676031885A6C796 /* StoreKitManager.swift in Sources */,
+				AA1111111111111111111111 /* SystemAudioCapturer.swift in Sources */,
 				F3E7562B45866CE45B03CF99 /* TranscriptDocument.swift in Sources */,
 				3B2A830A62DD2B1B4CB0C19E /* TranscriptFormatter.swift in Sources */,
 				082D83340C0CB8EC6E2BF674 /* TranscriptSegment.swift in Sources */,
