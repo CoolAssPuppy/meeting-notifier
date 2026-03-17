@@ -30,7 +30,11 @@
 	<string>MeetingNotifier needs your location to calculate travel time to meeting locations.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>MeetingNotifier needs your location to calculate travel time to meeting locations.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MeetingNotifier needs microphone access to transcribe your meetings.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>MeetingNotifier uses speech recognition to transcribe your meetings into notes.</string>
 </dict>
 </plist>

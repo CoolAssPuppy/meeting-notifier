@@ -19,4 +19,6 @@ extension Logger {
     static let notifications = Logger(subsystem: subsystem, category: "notifications")
     static let storekit = Logger(subsystem: subsystem, category: "storekit")
     static let settings = Logger(subsystem: subsystem, category: "settings")
+    static let transcription = Logger(subsystem: subsystem, category: "transcription")
+    static let audio = Logger(subsystem: subsystem, category: "audio")
 }

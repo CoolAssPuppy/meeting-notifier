@@ -12,4 +12,12 @@ extension Notification.Name {
     static let settingsRequested = Notification.Name("settingsRequested")
     static let accountsDidUpdate = Notification.Name("accountsDidUpdate")
     static let toggleDropdown = Notification.Name("toggleDropdown")
+
+    // Notetaker notifications
+    static let microphoneDidActivate = Notification.Name("microphoneDidActivate")
+    static let microphoneDidDeactivate = Notification.Name("microphoneDidDeactivate")
+    static let transcriptionDidStart = Notification.Name("transcriptionDidStart")
+    static let transcriptionDidStop = Notification.Name("transcriptionDidStop")
+    static let startTranscriptionRequested = Notification.Name("startTranscriptionRequested")
+    static let stopTranscriptionRequested = Notification.Name("stopTranscriptionRequested")
 }

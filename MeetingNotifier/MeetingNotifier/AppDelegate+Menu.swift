@@ -11,6 +11,7 @@ import AppKit
 
 private enum MenuItemTag: Int {
     case refresh
+    case transcriptionToggle
     case separatorBelowRefresh
     case separatorAboveSettings
 }
@@ -29,6 +30,15 @@ extension AppDelegate {
         refreshItem.tag = MenuItemTag.refresh.rawValue
         menu.addItem(refreshItem)
 
+        let transcriptionItem = NSMenuItem(
+            title: NSLocalizedString("Start Transcription", comment: ""),
+            action: #selector(toggleTranscription),
+            keyEquivalent: ""
+        )
+        transcriptionItem.tag = MenuItemTag.transcriptionToggle.rawValue
+        transcriptionItem.image = NSImage(systemSymbolName: "waveform.circle", accessibilityDescription: "Transcription")
+        menu.addItem(transcriptionItem)
+
         let separatorBelowRefresh = NSMenuItem.separator()
         separatorBelowRefresh.tag = MenuItemTag.separatorBelowRefresh.rawValue
         menu.addItem(separatorBelowRefresh)
@@ -45,6 +55,8 @@ extension AppDelegate {
     }
 
     func updateNativeMenu(_ menu: NSMenu) {
+        updateTranscriptionMenuItem(in: menu)
+
         let indexBelowRefresh = menu.indexOfItem(withTag: MenuItemTag.separatorBelowRefresh.rawValue)
         let indexAboveSettings = menu.indexOfItem(withTag: MenuItemTag.separatorAboveSettings.rawValue)
 
@@ -67,6 +79,37 @@ extension AppDelegate {
         Task {
             await CalendarDataManager.shared.refreshEvents()
         }
+    }
+
+    @objc func toggleTranscription() {
+        let coordinator = TranscriptionCoordinator.shared
+        Task { @MainActor in
+            if coordinator.state.isActive {
+                await coordinator.stopTranscription()
+            } else {
+                // Find active/upcoming meeting
+                let now = Date()
+                let activeMeeting = CalendarDataManager.shared.events.first { event in
+                    event.startDate <= now.addingTimeInterval(60) && event.endDate > now
+                }
+                await coordinator.startTranscription(for: activeMeeting)
+            }
+        }
+    }
+
+    func updateTranscriptionMenuItem(in menu: NSMenu) {
+        guard let item = menu.item(withTag: MenuItemTag.transcriptionToggle.rawValue) else { return }
+        let coordinator = TranscriptionCoordinator.shared
+
+        if coordinator.state.isActive {
+            item.title = NSLocalizedString("Stop Transcription", comment: "")
+            item.image = NSImage(systemSymbolName: "stop.circle.fill", accessibilityDescription: "Stop")
+        } else {
+            item.title = NSLocalizedString("Start Transcription", comment: "")
+            item.image = NSImage(systemSymbolName: "waveform.circle", accessibilityDescription: "Transcription")
+        }
+
+        item.isHidden = !AppSettings.shared.notetakerEnabled
     }
 }
 

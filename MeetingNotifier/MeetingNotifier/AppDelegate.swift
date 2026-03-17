@@ -10,6 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarUpdateTimer: Timer?
     private var eventMonitor: Any?
     var peekWindowPanel: PeekWindowPanel?
+    var transcriptionBannerPanel: TranscriptionBannerPanel?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
@@ -21,6 +22,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         _ = NotificationManager.shared
         _ = KeyboardShortcutManager.shared
         _ = LocationManager.shared
+        _ = MeetingDetector.shared
+        _ = TranscriptionCoordinator.shared
 
         #if DEBUG
         if CommandLine.arguments.contains("--uitesting") {
@@ -39,6 +42,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(handleSettingsRequest), name: .settingsRequested, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(toggleDropdown), name: .toggleDropdown, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleAccountsDidUpdate), name: .accountsDidUpdate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(showTranscriptionBanner), name: .transcriptionDidStart, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(hideTranscriptionBanner), name: .transcriptionDidStop, object: nil)
     }
 
     // MARK: - Setup
@@ -150,8 +155,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startMonitoringForClicksOutsidePopover() {
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            if self?.popover?.isShown == true {
-                self?.closePopover()
+            Task { @MainActor [weak self] in
+                if self?.popover?.isShown == true {
+                    self?.closePopover()
+                }
             }
         }
     }
@@ -234,8 +241,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func openSettings() {
         NSApp.setActivationPolicy(.regular)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            guard let self = self else { return }
+        Task { @MainActor [weak self] in
+            // Small delay to let activation policy change take effect
+            try? await Task.sleep(for: .milliseconds(100))
+
+            guard let self else { return }
 
             NSApp.activate(ignoringOtherApps: true)
 

@@ -10,7 +10,6 @@ class LocationManager: NSObject, ObservableObject {
     @Published var travelTimeCache: [String: TravelTimeInfo] = [:]
     @Published var isCalculating = false
 
-    private let geocoder = CLGeocoder()
     private var locationManager = CLLocationManager()
     private var currentLocation: CLLocation?
 
@@ -57,11 +56,10 @@ class LocationManager: NSObject, ObservableObject {
 
         do {
             // Geocode the destination
-            let placemarks = try await geocoder.geocodeAddressString(location)
-            guard let placemark = placemarks.first,
-                  let destinationLocation = placemark.location else {
+            guard let destination = try await geocodeDestination(address: location) else {
                 return nil
             }
+            let destinationLocation = CLLocation(latitude: destination.coordinate.latitude, longitude: destination.coordinate.longitude)
 
             // Get current location or use default (user's approximate location)
             let sourceLocation = currentLocation ?? CLLocation(latitude: 37.7749, longitude: -122.4194)
@@ -78,8 +76,8 @@ class LocationManager: NSObject, ObservableObject {
                 eventId: event.id,
                 travelTimeMinutes: travelInfo.travelTimeMinutes,
                 distance: travelInfo.distance,
-                formattedAddress: placemark.formattedAddress,
-                coordinate: destinationLocation.coordinate,
+                formattedAddress: destination.formattedAddress,
+                coordinate: destination.coordinate,
                 calculatedAt: Date(),
                 leaveByTime: event.startDate.addingTimeInterval(-Double(travelInfo.travelTimeMinutes * 60))
             )
@@ -90,6 +88,29 @@ class LocationManager: NSObject, ObservableObject {
         } catch {
             Logger.location.error("Error calculating travel time: \(error.localizedDescription)")
             return nil
+        }
+    }
+
+    private func geocodeDestination(address: String) async throws -> GeocodedDestination? {
+        var request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = address
+        request.resultTypes = [.address]
+        let search = MKLocalSearch(request: request)
+
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<GeocodedDestination?, Error>) in
+            search.start { response, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                let destination = response?.mapItems.first.map {
+                    GeocodedDestination(
+                        coordinate: $0.placemark.coordinate,
+                        formattedAddress: $0.placemark.formattedAddress
+                    )
+                }
+                continuation.resume(returning: destination)
+            }
         }
     }
 
@@ -237,6 +258,11 @@ struct TravelTimeInfo: Codable {
         self.calculatedAt = calculatedAt
         self.leaveByTime = leaveByTime
     }
+}
+
+private struct GeocodedDestination: Sendable {
+    let coordinate: CLLocationCoordinate2D
+    let formattedAddress: String
 }
 
 // Wrapper to make CLLocationCoordinate2D Codable without extending imported type

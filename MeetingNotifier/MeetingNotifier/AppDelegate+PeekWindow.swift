@@ -11,58 +11,52 @@ import AppKit
 
 extension AppDelegate {
     func updatePeekWindow() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
+        let meeting = getNextMeetingForMenuBar()
+        let settings = AppSettings.shared
 
-            let meeting = self.getNextMeetingForMenuBar()
-            let settings = AppSettings.shared
+        if meeting == nil {
+            hidePeekWindow()
+            return
+        }
 
-            if meeting == nil {
-                self.hidePeekWindow()
-                return
+        if let existingPanel = peekWindowPanel {
+            existingPanel.updateMeeting(
+                meeting,
+                settings: settings,
+                onTap: { [weak self] in
+                    self?.handlePeekMeetingTap()
+                },
+                onClose: { [weak self] in
+                    self?.hidePeekWindow()
+                }
+            )
+            if let statusItem {
+                existingPanel.positionBelowStatusItem(statusItem, animated: false)
             }
-
-            if let existingPanel = self.peekWindowPanel {
-                existingPanel.updateMeeting(
-                    meeting,
-                    settings: settings,
-                    onTap: { [weak self] in
-                        self?.handlePeekMeetingTap()
-                    },
-                    onClose: { [weak self] in
-                        self?.hidePeekWindow()
-                    }
-                )
-                if let statusItem = self.statusItem {
-                    existingPanel.positionBelowStatusItem(statusItem, animated: false)
+        } else {
+            let panel = PeekWindowPanel(
+                meeting: meeting,
+                settings: settings,
+                onTap: { [weak self] in
+                    self?.handlePeekMeetingTap()
+                },
+                onClose: { [weak self] in
+                    self?.hidePeekWindow()
                 }
-            } else {
-                let panel = PeekWindowPanel(
-                    meeting: meeting,
-                    settings: settings,
-                    onTap: { [weak self] in
-                        self?.handlePeekMeetingTap()
-                    },
-                    onClose: { [weak self] in
-                        self?.hidePeekWindow()
-                    }
-                )
+            )
 
-                panel.orderFrontRegardless()
-                self.peekWindowPanel = panel
+            panel.orderFrontRegardless()
+            peekWindowPanel = panel
 
-                if let statusItem = self.statusItem {
-                    panel.positionBelowStatusItem(statusItem, animated: true)
-                }
+            if let statusItem {
+                panel.positionBelowStatusItem(statusItem, animated: true)
             }
         }
     }
 
     func hidePeekWindow() {
-        DispatchQueue.main.async { [weak self] in
-            self?.peekWindowPanel?.close()
-            self?.peekWindowPanel = nil
-        }
+        peekWindowPanel?.close()
+        peekWindowPanel = nil
     }
 
     private func handlePeekMeetingTap() {

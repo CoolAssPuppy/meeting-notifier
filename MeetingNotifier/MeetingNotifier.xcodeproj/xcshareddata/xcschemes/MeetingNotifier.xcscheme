@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2610"
+   LastUpgradeVersion = "1430"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
-      buildArchitectures = "Automatic">
+      runPostActionsOnFailure = "NO">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -21,6 +21,20 @@
                ReferencedContainer = "container:MeetingNotifier.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "0226E4AA3BA0300C1AEE0EB6"
+               BuildableName = "MeetingNotifierTests.xctest"
+               BlueprintName = "MeetingNotifierTests"
+               ReferencedContainer = "container:MeetingNotifier.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -28,20 +42,31 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
+      onlyGenerateCoverageForSpecifiedTargets = "NO">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "BC2D3AB9B58F4B9C36B1381B"
+            BuildableName = "MeetingNotifier.app"
+            BlueprintName = "MeetingNotifier"
+            ReferencedContainer = "container:MeetingNotifier.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <Testables>
          <TestableReference
             skipped = "NO"
-            parallelizable = "YES">
+            parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "8F3E08432EB9E76E00A2E8EF"
-               BuildableName = "MeetingNotifierUITests.xctest"
-               BlueprintName = "MeetingNotifierUITests"
+               BlueprintIdentifier = "0226E4AA3BA0300C1AEE0EB6"
+               BuildableName = "MeetingNotifierTests.xctest"
+               BlueprintName = "MeetingNotifierTests"
                ReferencedContainer = "container:MeetingNotifier.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -63,9 +88,8 @@
             ReferencedContainer = "container:MeetingNotifier.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <StoreKitConfigurationFileReference
-         identifier = "../../Configuration.storekit">
-      </StoreKitConfigurationFileReference>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -83,6 +107,8 @@
             ReferencedContainer = "container:MeetingNotifier.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

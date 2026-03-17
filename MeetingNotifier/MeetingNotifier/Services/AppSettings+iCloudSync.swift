@@ -29,7 +29,11 @@ extension AppSettings {
             "menuBarShowIcon", "menuBarShowTitle", "menuBarShowTime", "menuBarShowCountdown",
             "menuBarThresholdMinutes", "showAllDayInMenuBar", "showMeetingCountBadge",
             "showTravelTimeAlerts", "defaultTravelMode", "preferredMapProvider", "doubleBookingPreference",
-            "dropDownStyle"
+            "dropDownStyle",
+            "notetakerEnabled", "autoOfferTranscription", "transcriptionEngine",
+            "transcriptionLocale", "notesFolderPath", "fileNamingSchema",
+            "frontMatterTemplate", "speakerDisplayName", "othersDisplayName",
+            "summarizationPlatform"
         ]
 
         for key in settingsKeys {
@@ -70,8 +74,8 @@ extension AppSettings {
             }
         }
 
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
 
             self.isUpdatingFromiCloud = true
             defer { self.isUpdatingFromiCloud = false }
@@ -143,6 +147,38 @@ extension AppSettings {
         if keys.contains("dropDownStyle") {
             let raw = UserDefaults.standard.string(forKey: "dropDownStyle") ?? DropDownStyle.simple.rawValue
             dropDownStyle = DropDownStyle(rawValue: raw) ?? .simple
+        }
+        if keys.contains("notetakerEnabled") {
+            notetakerEnabled = UserDefaults.standard.bool(forKey: "notetakerEnabled")
+        }
+        if keys.contains("autoOfferTranscription") {
+            autoOfferTranscription = UserDefaults.standard.bool(forKey: "autoOfferTranscription")
+        }
+        if keys.contains("transcriptionEngine") {
+            let raw = UserDefaults.standard.string(forKey: "transcriptionEngine") ?? TranscriptionEngineType.apple.rawValue
+            transcriptionEngine = TranscriptionEngineType(rawValue: raw) ?? .apple
+        }
+        if keys.contains("transcriptionLocale") {
+            transcriptionLocale = UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "en_US"
+        }
+        if keys.contains("notesFolderPath") {
+            notesFolderPath = UserDefaults.standard.string(forKey: "notesFolderPath") ?? notesFolderPath
+        }
+        if keys.contains("fileNamingSchema") {
+            fileNamingSchema = UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{mm}{dd}-{title}"
+        }
+        if keys.contains("frontMatterTemplate") {
+            frontMatterTemplate = UserDefaults.standard.string(forKey: "frontMatterTemplate") ?? ""
+        }
+        if keys.contains("speakerDisplayName") {
+            speakerDisplayName = UserDefaults.standard.string(forKey: "speakerDisplayName") ?? "Me"
+        }
+        if keys.contains("othersDisplayName") {
+            othersDisplayName = UserDefaults.standard.string(forKey: "othersDisplayName") ?? "Others"
+        }
+        if keys.contains("summarizationPlatform") {
+            let raw = UserDefaults.standard.string(forKey: "summarizationPlatform") ?? SummarizationPlatform.openai.rawValue
+            summarizationPlatform = SummarizationPlatform(rawValue: raw) ?? .openai
         }
         if keys.contains("customCalendarColors") {
             loadCustomCalendarColors()

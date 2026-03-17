@@ -7,6 +7,17 @@ class KeychainManager {
     static let shared = KeychainManager()
     private let serviceName = "com.strategicnerds.meetingnotifier"
 
+    /// Keychain accounts that sync via iCloud Keychain.
+    /// These are user-provided API keys entered in Settings.
+    /// OAuth tokens are device-specific and do NOT sync.
+    private let syncableAccounts: Set<String> = [
+        "openai_api_key",
+        "anthropic_api_key",
+        "gemini_api_key",
+        "wispr_api_key",
+        "deepgram_api_key",
+    ]
+
     private init() {}
 
     func save(token: String, forAccount account: String) -> Bool {
@@ -15,15 +26,20 @@ class KeychainManager {
             return false
         }
 
-        let searchQuery: [String: Any] = [
+        let shouldSync = syncableAccounts.contains(account)
+
+        var searchQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
-            kSecAttrAccount as String: account
+            kSecAttrAccount as String: account,
         ]
+        if shouldSync {
+            searchQuery[kSecAttrSynchronizable as String] = kCFBooleanTrue
+        }
 
         let attributes: [String: Any] = [
             kSecValueData as String: tokenData,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
         ]
 
         // Try to update existing item first
@@ -33,7 +49,6 @@ class KeychainManager {
             Logger.keychain.debug("Successfully updated token for \(account, privacy: .private)")
             return true
         } else if updateStatus == errSecItemNotFound {
-            // Item doesn't exist, try to add it
             Logger.keychain.debug("No existing item for \(account, privacy: .private), attempting to add new item")
 
             var addQuery = searchQuery
@@ -46,21 +61,20 @@ class KeychainManager {
                 Logger.keychain.debug("Successfully added token for \(account, privacy: .private)")
                 return true
             } else if addStatus == errSecDuplicateItem || addStatus == -2147413719 {
-                // Duplicate item error - try aggressive cleanup
                 Logger.keychain.warning("Duplicate item detected for \(account, privacy: .private), attempting cleanup and retry")
 
-                // Try deleting with minimal query
-                let cleanupQuery: [String: Any] = [
+                var cleanupQuery: [String: Any] = [
                     kSecClass as String: kSecClassGenericPassword,
                     kSecAttrService as String: serviceName,
                     kSecAttrAccount as String: account,
-                    kSecMatchLimit as String: kSecMatchLimitAll
                 ]
+                if shouldSync {
+                    cleanupQuery[kSecAttrSynchronizable as String] = kCFBooleanTrue
+                }
 
                 let deleteStatus = SecItemDelete(cleanupQuery as CFDictionary)
                 Logger.keychain.debug("Cleanup delete result: \(deleteStatus) (\(self.keychainErrorMessage(deleteStatus)))")
 
-                // Retry add after cleanup
                 let retryStatus = SecItemAdd(addQuery as CFDictionary, nil)
                 if retryStatus == errSecSuccess {
                     Logger.keychain.debug("Successfully added token after cleanup for \(account, privacy: .private)")
@@ -105,13 +119,18 @@ class KeychainManager {
     }
 
     func retrieve(forAccount account: String) -> String? {
-        let query: [String: Any] = [
+        let shouldSync = syncableAccounts.contains(account)
+
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: account,
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
+            kSecMatchLimit as String: kSecMatchLimitOne,
         ]
+        if shouldSync {
+            query[kSecAttrSynchronizable as String] = kCFBooleanTrue
+        }
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -126,11 +145,16 @@ class KeychainManager {
     }
 
     func delete(forAccount account: String) -> Bool {
-        let query: [String: Any] = [
+        let shouldSync = syncableAccounts.contains(account)
+
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
-            kSecAttrAccount as String: account
+            kSecAttrAccount as String: account,
         ]
+        if shouldSync {
+            query[kSecAttrSynchronizable as String] = kCFBooleanTrue
+        }
 
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess || status == errSecItemNotFound

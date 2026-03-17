@@ -114,6 +114,48 @@ class AppSettings: ObservableObject {
         didSet { saveCustomCalendarColors() }
     }
 
+    // MARK: - Notetaker settings
+
+    @Published var notetakerEnabled: Bool {
+        didSet { saveSetting(notetakerEnabled, forKey: "notetakerEnabled") }
+    }
+
+    @Published var autoOfferTranscription: Bool {
+        didSet { saveSetting(autoOfferTranscription, forKey: "autoOfferTranscription") }
+    }
+
+    @Published var transcriptionEngine: TranscriptionEngineType {
+        didSet { saveSetting(transcriptionEngine.rawValue, forKey: "transcriptionEngine") }
+    }
+
+    @Published var transcriptionLocale: String {
+        didSet { saveSetting(transcriptionLocale, forKey: "transcriptionLocale") }
+    }
+
+    @Published var notesFolderPath: String {
+        didSet { saveSetting(notesFolderPath, forKey: "notesFolderPath") }
+    }
+
+    @Published var fileNamingSchema: String {
+        didSet { saveSetting(fileNamingSchema, forKey: "fileNamingSchema") }
+    }
+
+    @Published var frontMatterTemplate: String {
+        didSet { saveSetting(frontMatterTemplate, forKey: "frontMatterTemplate") }
+    }
+
+    @Published var speakerDisplayName: String {
+        didSet { saveSetting(speakerDisplayName, forKey: "speakerDisplayName") }
+    }
+
+    @Published var othersDisplayName: String {
+        didSet { saveSetting(othersDisplayName, forKey: "othersDisplayName") }
+    }
+
+    @Published var summarizationPlatform: SummarizationPlatform {
+        didSet { saveSetting(summarizationPlatform.rawValue, forKey: "summarizationPlatform") }
+    }
+
     // MARK: - Initialization
 
     private init() {
@@ -186,6 +228,35 @@ class AppSettings: ObservableObject {
         self.dropDownStyle = DropDownStyle(rawValue: dropDownStyleRaw) ?? .simple
 
         self.customCalendarColors = [:]
+
+        // Notetaker settings
+        self.notetakerEnabled = iCloudStore.object(forKey: "notetakerEnabled") as? Bool
+            ?? UserDefaults.standard.object(forKey: "notetakerEnabled") as? Bool ?? true
+        self.autoOfferTranscription = iCloudStore.object(forKey: "autoOfferTranscription") as? Bool
+            ?? UserDefaults.standard.object(forKey: "autoOfferTranscription") as? Bool ?? true
+
+        let engineRaw = iCloudStore.string(forKey: "transcriptionEngine")
+            ?? UserDefaults.standard.string(forKey: "transcriptionEngine") ?? TranscriptionEngineType.apple.rawValue
+        self.transcriptionEngine = TranscriptionEngineType(rawValue: engineRaw) ?? .apple
+
+        self.transcriptionLocale = iCloudStore.string(forKey: "transcriptionLocale")
+            ?? UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "en_US"
+
+        let defaultNotesPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.path ?? "~/Documents"
+        self.notesFolderPath = iCloudStore.string(forKey: "notesFolderPath")
+            ?? UserDefaults.standard.string(forKey: "notesFolderPath") ?? defaultNotesPath + "/MeetingNotes"
+        self.fileNamingSchema = iCloudStore.string(forKey: "fileNamingSchema")
+            ?? UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{mm}{dd}-{title}"
+        self.frontMatterTemplate = iCloudStore.string(forKey: "frontMatterTemplate")
+            ?? UserDefaults.standard.string(forKey: "frontMatterTemplate") ?? ""
+        self.speakerDisplayName = iCloudStore.string(forKey: "speakerDisplayName")
+            ?? UserDefaults.standard.string(forKey: "speakerDisplayName") ?? "Me"
+        self.othersDisplayName = iCloudStore.string(forKey: "othersDisplayName")
+            ?? UserDefaults.standard.string(forKey: "othersDisplayName") ?? "Others"
+
+        let platformRaw = iCloudStore.string(forKey: "summarizationPlatform")
+            ?? UserDefaults.standard.string(forKey: "summarizationPlatform") ?? SummarizationPlatform.openai.rawValue
+        self.summarizationPlatform = SummarizationPlatform(rawValue: platformRaw) ?? .openai
 
         loadAccounts()
         loadNotificationTracking()
@@ -356,7 +427,7 @@ class AppSettings: ObservableObject {
                 UserDefaults.standard.set(true, forKey: "launchAtLogin")
                 iCloudStore.set(true, forKey: "launchAtLogin")
                 iCloudStore.synchronize()
-                DispatchQueue.main.async { [weak self] in
+                Task { @MainActor [weak self] in
                     self?.launchAtLogin = true
                 }
             }
