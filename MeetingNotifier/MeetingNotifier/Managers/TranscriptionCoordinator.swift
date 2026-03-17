@@ -22,7 +22,8 @@ final class TranscriptionCoordinator: ObservableObject {
 
     private let audioCaptureManager = AudioCaptureManager()
     private let systemAudioCapturer = SystemAudioCapturer()
-    private var engine: TranscriptionEngine?
+    private var micEngine: TranscriptionEngine?
+    private var systemEngine: TranscriptionEngine?
     private var cancellables = Set<AnyCancellable>()
     private var autoOfferTimer: Timer?
 
@@ -68,9 +69,10 @@ final class TranscriptionCoordinator: ObservableObject {
             return
         }
 
-        // Create the transcription engine
-        engine = createEngine(type: settings.transcriptionEngine)
-        guard let engine else {
+        // Create separate engines for mic and system audio so each
+        // has its own pipeline and speaker label (no race condition).
+        micEngine = createEngine(type: settings.transcriptionEngine)
+        guard let micEngine else {
             state = .error
             error = "Transcription engine is not available"
             return
@@ -88,25 +90,27 @@ final class TranscriptionCoordinator: ObservableObject {
             conferenceLink: event?.conferenceLink
         )
 
-        // Wire up segment handler
-        engine.setSegmentHandler { [weak self] segment in
+        // Shared segment handler for both engines
+        let segmentHandler: @Sendable (TranscriptSegment) -> Void = { [weak self] segment in
             Task { @MainActor in
                 self?.currentDocument?.segments.append(segment)
             }
         }
+        micEngine.setSegmentHandler(segmentHandler)
 
         do {
-            // Start engine
-            try await engine.start(locale: settings.transcriptionLocale)
-
-            // Get a direct buffer processor closure that captures only
-            // Sendable state -- no protocol existential on the audio thread.
-            let processBuffer = engine.makeBufferProcessor(speaker: .me)
+            // Start mic engine
+            try await micEngine.start(locale: settings.transcriptionLocale)
+            let processBuffer = micEngine.makeBufferProcessor(speaker: .me)
             try audioCaptureManager.startMicCapture(bufferHandler: processBuffer)
 
-            // Start system audio capture for "Others" diarization.
+            // Start system audio engine for "Others" diarization.
             // Non-fatal: if screen recording is denied, mic-only still works.
-            await startSystemAudioCapture(engine: engine)
+            await startSystemAudioCapture(
+                engineType: settings.transcriptionEngine,
+                locale: settings.transcriptionLocale,
+                segmentHandler: segmentHandler
+            )
 
             state = .recording
             error = nil
@@ -124,11 +128,13 @@ final class TranscriptionCoordinator: ObservableObject {
 
         state = .saving
 
-        // Stop capture and engine
+        // Stop capture and engines
         audioCaptureManager.stopMicCapture()
         await systemAudioCapturer.stopCapture()
-        await engine?.stop()
-        engine = nil
+        await micEngine?.stop()
+        await systemEngine?.stop()
+        micEngine = nil
+        systemEngine = nil
 
         // Finalize document
         currentDocument?.endDate = Date()
@@ -153,17 +159,35 @@ final class TranscriptionCoordinator: ObservableObject {
     func pauseTranscription() {
         guard state == .recording else { return }
         audioCaptureManager.stopMicCapture()
-        Task { await systemAudioCapturer.stopCapture() }
+        Task {
+            await systemAudioCapturer.stopCapture()
+            await systemEngine?.stop()
+            systemEngine = nil
+        }
         state = .paused
         Logger.transcription.info("Transcription paused")
     }
 
     func resumeTranscription() {
-        guard state == .paused, let engine else { return }
+        guard state == .paused, let micEngine else { return }
         do {
-            let processBuffer = engine.makeBufferProcessor(speaker: .me)
+            let processBuffer = micEngine.makeBufferProcessor(speaker: .me)
             try audioCaptureManager.startMicCapture(bufferHandler: processBuffer)
-            Task { await startSystemAudioCapture(engine: engine) }
+
+            let segmentHandler: @Sendable (TranscriptSegment) -> Void = { [weak self] segment in
+                Task { @MainActor in
+                    self?.currentDocument?.segments.append(segment)
+                }
+            }
+            let settings = AppSettings.shared
+            Task {
+                await startSystemAudioCapture(
+                    engineType: settings.transcriptionEngine,
+                    locale: settings.transcriptionLocale,
+                    segmentHandler: segmentHandler
+                )
+            }
+
             state = .recording
             Logger.transcription.info("Transcription resumed")
         } catch {
@@ -228,11 +252,25 @@ final class TranscriptionCoordinator: ObservableObject {
 
     // MARK: - System audio
 
-    private func startSystemAudioCapture(engine: TranscriptionEngine) async {
+    private func startSystemAudioCapture(
+        engineType: TranscriptionEngineType,
+        locale: String,
+        segmentHandler: @escaping @Sendable (TranscriptSegment) -> Void
+    ) async {
+        guard let engine = createEngine(type: engineType) else {
+            Logger.transcription.warning("System audio engine unavailable, mic-only mode")
+            return
+        }
+
+        engine.setSegmentHandler(segmentHandler)
+
         do {
+            try await engine.start(locale: locale)
             let processBuffer = engine.makeBufferProcessor(speaker: .others)
             try await systemAudioCapturer.startCapture(bufferHandler: processBuffer)
+            systemEngine = engine
         } catch {
+            await engine.stop()
             Logger.transcription.warning(
                 "System audio capture unavailable (mic-only mode): \(error.localizedDescription)"
             )
