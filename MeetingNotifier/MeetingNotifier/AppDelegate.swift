@@ -13,6 +13,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var transcriptionBannerPanel: TranscriptionBannerPanel?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Recover any transcript from a prior crash before anything else
+        TranscriptionCoordinator.recoverTranscriptIfNeeded()
+
         setupMenuBar()
         setupPopover()
         setupNativeMenu()
@@ -44,6 +47,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(handleAccountsDidUpdate), name: .accountsDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(showTranscriptionBanner), name: .transcriptionDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(hideTranscriptionBanner), name: .transcriptionDidStop, object: nil)
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        TranscriptionCoordinator.shared.emergencySave()
     }
 
     // MARK: - Setup

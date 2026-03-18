@@ -14,6 +14,8 @@ class TranscriptionBannerPanel: NSPanel {
     private var onStopAction: () -> Void = {}
     private var lastError: String = ""
 
+    override var canBecomeKey: Bool { true }
+
     init(onStop: @escaping () -> Void) {
         self.onStopAction = onStop
         super.init(

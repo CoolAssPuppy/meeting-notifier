@@ -75,14 +75,29 @@ final class SystemAudioCapturer: ObservableObject {
 
     func stopCapture() async {
         guard let stream else { return }
-        do {
-            try await stream.stopCapture()
-        } catch {
-            Logger.audio.warning("SCStream stop error (non-fatal): \(error.localizedDescription)")
-        }
+
+        // Clear state before awaiting the stop call so the capturer
+        // is logically stopped even if SCStream hangs.
         self.stream = nil
         streamOutput.bufferHandler = nil
         isCapturing = false
+
+        // Stop with a 3-second timeout so we never hang on a stuck SCStream.
+        // Both tasks run on MainActor to avoid sending the non-Sendable SCStream.
+        let stopTask = Task { @MainActor in
+            do {
+                try await stream.stopCapture()
+            } catch {
+                Logger.audio.warning("SCStream stop error (non-fatal): \(error.localizedDescription)")
+            }
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            stopTask.cancel()
+        }
+
+        await stopTask.value
         Logger.audio.info("System audio capture stopped")
     }
 

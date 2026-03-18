@@ -27,6 +27,28 @@ final class TranscriptionCoordinator: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var autoOfferTimer: Timer?
 
+    // Inactivity detection (Bug 1)
+    private var lastSegmentTimestamp: Date?
+    private var inactivityTimer: Timer?
+    private static let inactivityCheckInterval: TimeInterval = 10
+    private static let inactivityTimeout: TimeInterval = 30
+
+    // Auto-save for crash recovery (Bug 3)
+    private var autoSaveTimer: Timer?
+    private static let autoSaveInterval: TimeInterval = 30
+
+    // When true, suppress auto-start until the mic is released.
+    // Set on manual/inactivity stop, cleared on mic deactivation
+    // or explicit user-initiated start.
+    private var suppressAutoStart = false
+
+    static var recoveryFileURL: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return appSupport
+            .appendingPathComponent("MeetingNotifier/recovery", isDirectory: true)
+            .appendingPathComponent("active-transcript.json")
+    }
+
     private init() {
         setupNotificationObservers()
         startAutoOfferPolling()
@@ -94,6 +116,7 @@ final class TranscriptionCoordinator: ObservableObject {
         let segmentHandler: @Sendable (TranscriptSegment) -> Void = { [weak self] segment in
             Task { @MainActor in
                 self?.currentDocument?.segments.append(segment)
+                self?.lastSegmentTimestamp = Date()
             }
         }
         micEngine.setSegmentHandler(segmentHandler)
@@ -114,6 +137,9 @@ final class TranscriptionCoordinator: ObservableObject {
 
             state = .recording
             error = nil
+            lastSegmentTimestamp = Date()
+            startInactivityTimer()
+            startAutoSaveTimer()
             NotificationCenter.default.post(name: .transcriptionDidStart, object: nil)
             Logger.transcription.info("Transcription started for: \(title)")
         } catch {
@@ -127,8 +153,12 @@ final class TranscriptionCoordinator: ObservableObject {
         guard state.isActive else { return }
 
         state = .saving
+        suppressAutoStart = true
+        stopInactivityTimer()
+        stopAutoSaveTimer()
 
-        // Stop capture and engines
+        // Stop capture and engines. SystemAudioCapturer.stopCapture()
+        // has its own 3-second internal timeout to avoid hanging.
         audioCaptureManager.stopMicCapture()
         await systemAudioCapturer.stopCapture()
         await micEngine?.stop()
@@ -148,6 +178,9 @@ final class TranscriptionCoordinator: ObservableObject {
             await saveTranscript(document)
         }
 
+        // Clean up recovery file after successful save
+        removeRecoveryFile()
+
         state = .idle
         NotificationCenter.default.post(name: .transcriptionDidStop, object: nil)
         Logger.transcription.info("Transcription stopped and saved")
@@ -164,6 +197,8 @@ final class TranscriptionCoordinator: ObservableObject {
             await systemEngine?.stop()
             systemEngine = nil
         }
+        stopInactivityTimer()
+        stopAutoSaveTimer()
         state = .paused
         Logger.transcription.info("Transcription paused")
     }
@@ -188,6 +223,9 @@ final class TranscriptionCoordinator: ObservableObject {
                 )
             }
 
+            lastSegmentTimestamp = Date()
+            startInactivityTimer()
+            startAutoSaveTimer()
             state = .recording
             Logger.transcription.info("Transcription resumed")
         } catch {
@@ -302,6 +340,7 @@ final class TranscriptionCoordinator: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
+                self?.suppressAutoStart = false
                 await self?.startTranscription()
             }
         }
@@ -331,6 +370,7 @@ final class TranscriptionCoordinator: ObservableObject {
                 Logger.transcription.info("Mic activated. State: \(self.state.rawValue), enabled: \(settings.notetakerEnabled), auto-offer: \(settings.autoOfferTranscription)")
 
                 guard self.state == .idle,
+                      !self.suppressAutoStart,
                       settings.notetakerEnabled,
                       settings.autoOfferTranscription else {
                     return
@@ -347,16 +387,21 @@ final class TranscriptionCoordinator: ObservableObject {
             }
         }
 
-        // Auto-stop when mic deactivates (meeting ended)
+        // Mic released: auto-stop if recording, and clear the
+        // suppression latch so the next mic activation can auto-start.
         NotificationCenter.default.addObserver(
             forName: .microphoneDidDeactivate,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                guard let self, self.state.isActive else { return }
-                print("[AutoStop] Mic deactivated while recording, stopping transcription")
+                guard let self else { return }
+                self.suppressAutoStart = false
+                guard self.state.isActive else { return }
+                Logger.transcription.info("Mic deactivated while recording, stopping transcription")
                 await self.stopTranscription()
+                // Clear again since stopTranscription sets it
+                self.suppressAutoStart = false
             }
         }
     }
@@ -377,10 +422,10 @@ final class TranscriptionCoordinator: ObservableObject {
         let settings = AppSettings.shared
         let micActive = MeetingDetector.shared.isMicrophoneActive
 
-        // Debug: prints to Xcode console even with OS_ACTIVITY_MODE=disable
-        print("[AutoOffer] state=\(state.rawValue) enabled=\(settings.notetakerEnabled) autoOffer=\(settings.autoOfferTranscription) micActive=\(micActive)")
+        Logger.transcription.debug("AutoOffer check: state=\(self.state.rawValue) enabled=\(settings.notetakerEnabled) autoOffer=\(settings.autoOfferTranscription) micActive=\(micActive)")
 
         guard state == .idle,
+              !suppressAutoStart,
               settings.notetakerEnabled,
               settings.autoOfferTranscription,
               micActive else {
@@ -388,7 +433,7 @@ final class TranscriptionCoordinator: ObservableObject {
         }
 
         let meeting = findBestMeeting()
-        print("[AutoOffer] STARTING transcription. Meeting: \(meeting?.title ?? "none")")
+        Logger.transcription.info("AutoOffer starting transcription. Meeting: \(meeting?.title ?? "none")")
 
         Task {
             await startTranscription(for: meeting)
@@ -429,6 +474,121 @@ final class TranscriptionCoordinator: ObservableObject {
     private func dismissBannerAfterDelay(_ state: BannerState) {
         guard let appDelegate = NSApp.delegate as? AppDelegate else { return }
         appDelegate.showBannerThenDismiss(state)
+    }
+
+    // MARK: - Inactivity detection
+
+    private func startInactivityTimer() {
+        stopInactivityTimer()
+        inactivityTimer = Timer.scheduledTimer(
+            withTimeInterval: Self.inactivityCheckInterval,
+            repeats: true
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.checkInactivity()
+            }
+        }
+    }
+
+    private func stopInactivityTimer() {
+        inactivityTimer?.invalidate()
+        inactivityTimer = nil
+    }
+
+    private func checkInactivity() {
+        guard state == .recording,
+              let lastTimestamp = lastSegmentTimestamp else { return }
+
+        let elapsed = Date().timeIntervalSince(lastTimestamp)
+        if elapsed >= Self.inactivityTimeout {
+            Logger.transcription.info(
+                "No segments for \(Int(elapsed))s, auto-stopping transcription"
+            )
+            Task {
+                await stopTranscription()
+            }
+        }
+    }
+
+    // MARK: - Auto-save for crash recovery
+
+    private func startAutoSaveTimer() {
+        stopAutoSaveTimer()
+        autoSaveTimer = Timer.scheduledTimer(
+            withTimeInterval: Self.autoSaveInterval,
+            repeats: true
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.writeRecoveryFile()
+            }
+        }
+    }
+
+    private func stopAutoSaveTimer() {
+        autoSaveTimer?.invalidate()
+        autoSaveTimer = nil
+    }
+
+    private func writeRecoveryFile() {
+        guard let document = currentDocument else { return }
+        do {
+            let data = try JSONEncoder().encode(document)
+            let url = Self.recoveryFileURL
+            try FileManager.default.createDirectory(
+                at: url.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            try data.write(to: url, options: .atomic)
+        } catch {
+            Logger.transcription.warning("Recovery file write failed: \(error.localizedDescription)")
+        }
+    }
+
+    private func removeRecoveryFile() {
+        try? FileManager.default.removeItem(at: Self.recoveryFileURL)
+    }
+
+    /// Called on app launch to recover a transcript from a prior crash.
+    /// Saves the recovered document as markdown without AI summarization.
+    static func recoverTranscriptIfNeeded() {
+        let url = recoveryFileURL
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+
+        do {
+            let data = try Data(contentsOf: url)
+            var document = try JSONDecoder().decode(TranscriptDocument.self, from: data)
+            if document.endDate == nil {
+                document.endDate = document.segments.last?.timestamp ?? document.startDate
+            }
+
+            let settings = AppSettings.shared
+            let formatter = TranscriptFormatter(
+                speakerNameMe: settings.speakerDisplayName,
+                speakerNameOthers: settings.othersDisplayName
+            )
+            let markdown = formatter.formatMarkdown(document: document, summary: nil)
+            let filename = formatter.generateFilename(document: document, schema: settings.fileNamingSchema)
+
+            let folderURL = settings.resolveNotesFolderURL()
+                ?? URL(fileURLWithPath: settings.notesFolderPath)
+            let didStartAccess = folderURL.startAccessingSecurityScopedResource()
+            defer { if didStartAccess { folderURL.stopAccessingSecurityScopedResource() } }
+
+            try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+            let fileURL = folderURL.appendingPathComponent(filename)
+            try markdown.write(to: fileURL, atomically: true, encoding: .utf8)
+
+            Logger.transcription.info("Recovered transcript saved to: \(fileURL.path)")
+            try FileManager.default.removeItem(at: url)
+        } catch {
+            Logger.transcription.error("Transcript recovery failed: \(error.localizedDescription)")
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+
+    /// Best-effort save of current document, called from applicationWillTerminate.
+    func emergencySave() {
+        writeRecoveryFile()
     }
 
     // MARK: - Helpers
