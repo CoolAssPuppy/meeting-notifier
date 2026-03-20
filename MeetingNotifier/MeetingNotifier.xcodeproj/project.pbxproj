@@ -27,6 +27,7 @@
 		36F54450635365BF67EE7D82 /* NotificationNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B07734D803FB1B95DE2CFDF /* NotificationNames.swift */; };
 		3B2A830A62DD2B1B4CB0C19E /* TranscriptFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D9DA8E82CA17B9EA4C10CA /* TranscriptFormatter.swift */; };
 		3CFF191707A6873AB78AE022 /* DeepgramEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031FA91B65CED41BF7F11170 /* DeepgramEngine.swift */; };
+		A1B2C3D4E5F60718A9B0C1D2 /* EchoDeduplicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E1D2C3B4A596870FEDCBA9 /* EchoDeduplicator.swift */; };
 		4006EB83C168C88E291A3C9A /* AccountsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB280D116A6BA40C66783C9C /* AccountsTab.swift */; };
 		42BE51C983A54FFB9EE5B869 /* CalendarsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E3FFD5D42715A0F4F02280D /* CalendarsTab.swift */; };
 		46348A2F57F37A46468CA6E2 /* AppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = B71D4203DD432764F0184D4C /* AppAuth */; };
@@ -125,6 +126,7 @@
 		017F77775495E428F019E6DA /* long-chimes.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = "long-chimes.aiff"; sourceTree = "<group>"; };
 		02F09D38E7A39AE7CCFE9BEA /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 		031FA91B65CED41BF7F11170 /* DeepgramEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepgramEngine.swift; sourceTree = "<group>"; };
+		F0E1D2C3B4A596870FEDCBA9 /* EchoDeduplicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoDeduplicator.swift; sourceTree = "<group>"; };
 		0E3FFD5D42715A0F4F02280D /* CalendarsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarsTab.swift; sourceTree = "<group>"; };
 		1112CFED9032AB54B3A4ED09 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		13BF0360CDF7986C60D9CF2C /* zoom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = zoom.png; sourceTree = "<group>"; };
@@ -319,6 +321,7 @@
 			isa = PBXGroup;
 			children = (
 				031FA91B65CED41BF7F11170 /* DeepgramEngine.swift */,
+				F0E1D2C3B4A596870FEDCBA9 /* EchoDeduplicator.swift */,
 				475314D25149BE27157285CB /* SpeechAnalyzerEngine.swift */,
 				252500A71F0AFBFAFFED45BC /* TranscriptionEngineProtocol.swift */,
 				9D562369ADABD9CD00155B49 /* TranscriptionError.swift */,
@@ -637,6 +640,7 @@
 				02F6DC3339B09E8449E37C47 /* ConfigTab+NotificationSettings.swift in Sources */,
 				7073ACC50C6F18B1E3318E5B /* ConfigTab.swift in Sources */,
 				3CFF191707A6873AB78AE022 /* DeepgramEngine.swift in Sources */,
+				A1B2C3D4E5F60718A9B0C1D2 /* EchoDeduplicator.swift in Sources */,
 				8C4857E641290D4F4980ED75 /* EmptyStateView.swift in Sources */,
 				28FC0A3BB60B42E65BE0F7D0 /* GoogleCalendarManager.swift in Sources */,
 				4CA823206BA08E8C0FE3B013 /* GoogleOAuthManager.swift in Sources */,

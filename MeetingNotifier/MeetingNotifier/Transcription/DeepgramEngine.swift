@@ -32,7 +32,7 @@ final class DeepgramEngine: TranscriptionEngine {
         sessionStartTime = Date()
 
         let languageCode = locale.replacingOccurrences(of: "_", with: "-").lowercased()
-        let urlString = "wss://api.deepgram.com/v1/listen?model=nova-2&language=\(languageCode)&punctuate=true&smart_format=true"
+        let urlString = "wss://api.deepgram.com/v1/listen?model=nova-2&language=\(languageCode)&punctuate=true&smart_format=true&diarize=true"
 
         guard let url = URL(string: urlString) else {
             throw TranscriptionError.connectionFailed
@@ -114,14 +114,88 @@ final class DeepgramEngine: TranscriptionEngine {
         let start = (json["start"] as? Double) ?? max(0, elapsed - 3)
         let duration = (json["duration"] as? Double) ?? 3.0
 
-        let segment = TranscriptSegment(
-            speaker: currentSpeaker,
-            text: transcript,
-            startTime: start,
-            endTime: start + duration
-        )
+        // When diarize=true, Deepgram returns words with speaker indices.
+        // Group consecutive words by speaker and emit separate segments.
+        if let words = alternatives["words"] as? [[String: Any]],
+           !words.isEmpty,
+           words.first?["speaker"] != nil {
+            let grouped = groupWordsBySpeaker(words)
+            for group in grouped {
+                let segment = TranscriptSegment(
+                    speaker: speakerLabel(for: group.speakerIndex),
+                    text: group.text,
+                    startTime: group.start,
+                    endTime: group.end
+                )
+                segmentHandler?(segment)
+            }
+        } else {
+            let segment = TranscriptSegment(
+                speaker: currentSpeaker,
+                text: transcript,
+                startTime: start,
+                endTime: start + duration
+            )
+            segmentHandler?(segment)
+        }
+    }
 
-        segmentHandler?(segment)
+    // MARK: - Diarization helpers
+
+    private struct SpeakerGroup {
+        let speakerIndex: Int
+        let text: String
+        let start: Double
+        let end: Double
+    }
+
+    private func groupWordsBySpeaker(_ words: [[String: Any]]) -> [SpeakerGroup] {
+        var groups: [SpeakerGroup] = []
+        var currentWords: [String] = []
+        var currentSpeakerIdx = -1
+        var groupStart: Double = 0
+        var groupEnd: Double = 0
+
+        for word in words {
+            let speaker = word["speaker"] as? Int ?? 0
+            let wordText = word["punctuated_word"] as? String ?? word["word"] as? String ?? ""
+            let wordStart = word["start"] as? Double ?? groupEnd
+            let wordEnd = word["end"] as? Double ?? wordStart
+
+            if speaker != currentSpeakerIdx && !currentWords.isEmpty {
+                groups.append(SpeakerGroup(
+                    speakerIndex: currentSpeakerIdx,
+                    text: currentWords.joined(separator: " "),
+                    start: groupStart,
+                    end: groupEnd
+                ))
+                currentWords = []
+            }
+
+            if currentWords.isEmpty {
+                groupStart = wordStart
+            }
+            currentSpeakerIdx = speaker
+            currentWords.append(wordText)
+            groupEnd = wordEnd
+        }
+
+        if !currentWords.isEmpty {
+            groups.append(SpeakerGroup(
+                speakerIndex: currentSpeakerIdx,
+                text: currentWords.joined(separator: " "),
+                start: groupStart,
+                end: groupEnd
+            ))
+        }
+
+        return groups
+    }
+
+    /// Map Deepgram speaker index to SpeakerLabel.
+    /// Speaker 0 is assumed to be "me" (the local user), all others are "others".
+    private func speakerLabel(for index: Int) -> SpeakerLabel {
+        index == 0 ? .me : .others
     }
 
     // MARK: - Helpers

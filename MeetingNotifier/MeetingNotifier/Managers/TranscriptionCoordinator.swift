@@ -24,6 +24,7 @@ final class TranscriptionCoordinator: ObservableObject {
 
     private let audioCaptureManager = AudioCaptureManager()
     private let systemAudioCapturer = SystemAudioCapturer()
+    private let echoDeduplicator = EchoDeduplicator()
     private var micEngine: TranscriptionEngine?
     private var systemEngine: TranscriptionEngine?
     private var cancellables = Set<AnyCancellable>()
@@ -118,8 +119,13 @@ final class TranscriptionCoordinator: ObservableObject {
             calendarName: event?.calendarName
         )
 
-        // Shared segment handler for both engines
+        // Reset echo deduplicator for the new session
+        echoDeduplicator.reset()
+
+        // Shared segment handler for both engines, with echo deduplication
+        let deduplicator = echoDeduplicator
         let segmentHandler: @Sendable (TranscriptSegment) -> Void = { [weak self] segment in
+            guard deduplicator.shouldKeep(segment) else { return }
             Task { @MainActor in
                 self?.currentDocument?.segments.append(segment)
                 self?.lastSegmentTimestamp = Date()
@@ -218,7 +224,9 @@ final class TranscriptionCoordinator: ObservableObject {
             let processBuffer = micEngine.makeBufferProcessor(speaker: .me)
             try audioCaptureManager.startMicCapture(bufferHandler: processBuffer)
 
+            let deduplicator = echoDeduplicator
             let segmentHandler: @Sendable (TranscriptSegment) -> Void = { [weak self] segment in
+                guard deduplicator.shouldKeep(segment) else { return }
                 Task { @MainActor in
                     self?.currentDocument?.segments.append(segment)
                 }
