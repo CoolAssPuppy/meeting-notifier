@@ -33,6 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if CommandLine.arguments.contains("--uitesting") {
             setupTestDataForUITesting()
         }
+        handleUITestingArguments()
         #endif
 
         NSAppleEventManager.shared().setEventHandler(

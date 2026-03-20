@@ -10,6 +10,23 @@ import Foundation
 #if DEBUG
 
 extension AppDelegate {
+    func handleUITestingArguments() {
+        if CommandLine.arguments.contains("--show-dropdown") {
+            // Force glass style so the popover shows (not native menu)
+            AppSettings.shared.dropDownStyle = .glass
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                NotificationCenter.default.post(name: .toggleDropdown, object: nil)
+            }
+        }
+        if CommandLine.arguments.contains("--open-settings") {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                openSettings()
+            }
+        }
+    }
+
     func setupTestDataForUITesting() {
         let calendar = Calendar.current
         let now = Date()

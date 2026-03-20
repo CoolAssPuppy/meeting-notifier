@@ -22,6 +22,7 @@ struct SettingsView: View {
                             .padding(.horizontal, 14)
                     }
                     .buttonStyle(TabButtonStyle(isSelected: selectedTab == index))
+                    .accessibilityIdentifier("tab-\(tab.0)")
                 }
             }
             .padding(.top, 10)
