@@ -11,7 +11,6 @@ import SwiftUI
 @MainActor
 final class BannerViewModel: ObservableObject {
     @Published var state: BannerState = .recording
-    @Published var audioLevel: Float = 0
     var lastError: String = ""
     var onStop: () -> Void = {}
 }
@@ -49,10 +48,6 @@ class TranscriptionBannerPanel: NSPanel {
         if case .error(let msg) = newState {
             viewModel.lastError = msg
         }
-    }
-
-    func updateAudioLevel(_ level: Float) {
-        viewModel.audioLevel = level
     }
 
     private func setupView() {

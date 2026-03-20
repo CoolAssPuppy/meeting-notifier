@@ -41,7 +41,7 @@ struct TranscriptionBannerView: View {
     private var statusDot: some View {
         switch viewModel.state {
         case .recording:
-            AudioWaveformView(audioLevel: viewModel.audioLevel)
+            AudioWaveformView()
         case .ended:
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 12))

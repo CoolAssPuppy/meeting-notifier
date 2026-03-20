@@ -45,19 +45,13 @@ final class AudioCaptureManager: ObservableObject {
         let levelState = AudioLevelState()
 
         Logger.audio.info("Installing mic tap (sampleRate: \(format.sampleRate)Hz, channels: \(format.channelCount))")
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
             bufferHandler(buffer)
 
             levelState.count += 1
             guard levelState.count % 4 == 0 else { return }
-            guard !levelState.dispatchPending else { return }
 
-            let rms = AudioCaptureManager.computeRMS(buffer)
-            levelState.dispatchPending = true
-            DispatchQueue.main.async {
-                levelState.dispatchPending = false
-                self?.micLevel = rms
-            }
+            MicLevelBridge.current = AudioCaptureManager.computeRMS(buffer)
         }
 
         do {
@@ -78,6 +72,7 @@ final class AudioCaptureManager: ObservableObject {
         micEngine = nil
         isCapturing = false
         micLevel = 0
+        MicLevelBridge.current = 0
         Logger.audio.info("Mic capture stopped")
     }
 
@@ -95,7 +90,7 @@ final class AudioCaptureManager: ObservableObject {
             sumOfSquares += sample * sample
         }
         let rms = sqrtf(sumOfSquares / Float(frameLength))
-        return min(rms * 3.0, 1.0)
+        return min(rms * 8.0, 1.0)
     }
 
     // MARK: - Permission
@@ -113,7 +108,12 @@ final class AudioCaptureManager: ObservableObject {
 
 private final class AudioLevelState: @unchecked Sendable {
     var count: Int = 0
-    var dispatchPending: Bool = false
+}
+
+// Shared mic level that the audio thread writes and the UI reads.
+// Float reads/writes are atomic on ARM64, so no lock needed.
+enum MicLevelBridge {
+    nonisolated(unsafe) static var current: Float = 0
 }
 
 // MARK: - Errors

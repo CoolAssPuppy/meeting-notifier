@@ -6,7 +6,6 @@
 //
 
 import AppKit
-import Combine
 
 // MARK: - Transcription banner management
 
@@ -30,8 +29,6 @@ extension AppDelegate {
             if let statusItem {
                 panel.positionBelowStatusItem(statusItem, animated: true)
             }
-
-            startAudioLevelUpdates()
         }
 
         if shouldTintIcon {
@@ -40,7 +37,6 @@ extension AppDelegate {
     }
 
     @objc func hideTranscriptionBanner() {
-        stopAudioLevelUpdates()
         transcriptionBannerPanel?.close()
         transcriptionBannerPanel = nil
         setMenuBarIconRecording(false)
@@ -56,18 +52,5 @@ extension AppDelegate {
             try? await Task.sleep(for: .seconds(seconds))
             hideTranscriptionBanner()
         }
-    }
-
-    private func startAudioLevelUpdates() {
-        audioLevelCancellable = TranscriptionCoordinator.shared.$micLevel
-            .receive(on: RunLoop.main)
-            .sink { [weak self] level in
-                self?.transcriptionBannerPanel?.updateAudioLevel(level)
-            }
-    }
-
-    private func stopAudioLevelUpdates() {
-        audioLevelCancellable?.cancel()
-        audioLevelCancellable = nil
     }
 }
