@@ -114,7 +114,15 @@ class AppSettings: ObservableObject {
         didSet { saveCustomCalendarColors() }
     }
 
+    nonisolated static let defaultFrontMatterTemplate = "title: {title}\ndate: {date}\nend_date: {end_date}\nduration: {duration}\nengine: {engine}\nlocale: {locale}\nword_count: {words}\nspeakers: [{speakers}]\nattendees: {attendees}\nattendee_names: [{attendee_names}]\nconference_link: {link}\ncalendar_event_id: {event_id}\ntags: [meeting]"
+
+    nonisolated private static let legacyFrontMatterDefault = "tags: [meeting]\nspeakers: [{speakers}]\nattendees: {attendees}\nduration: {duration}\nengine: {engine}"
+
     // MARK: - Notetaker settings
+
+    @Published var transcriptionIndicatorMode: TranscriptionIndicatorMode {
+        didSet { saveSetting(transcriptionIndicatorMode.rawValue, forKey: "transcriptionIndicatorMode") }
+    }
 
     @Published var notetakerEnabled: Bool {
         didSet { saveSetting(notetakerEnabled, forKey: "notetakerEnabled") }
@@ -182,6 +190,14 @@ class AppSettings: ObservableObject {
         } catch {
             Logger.settings.error("Failed to create bookmark for notes folder: \(error.localizedDescription)")
         }
+    }
+
+    @Published var calendarSubfoldersEnabled: Bool {
+        didSet { saveSetting(calendarSubfoldersEnabled, forKey: "calendarSubfoldersEnabled") }
+    }
+
+    @Published var calendarSubfolderMappings: [String: String] {
+        didSet { saveSubfolderMappings() }
     }
 
     @Published var fileNamingSchema: String {
@@ -278,6 +294,10 @@ class AppSettings: ObservableObject {
         self.customCalendarColors = [:]
 
         // Notetaker settings
+        let indicatorRaw = iCloudStore.string(forKey: "transcriptionIndicatorMode")
+            ?? UserDefaults.standard.string(forKey: "transcriptionIndicatorMode") ?? TranscriptionIndicatorMode.menuBarDropdown.rawValue
+        self.transcriptionIndicatorMode = TranscriptionIndicatorMode(rawValue: indicatorRaw) ?? .menuBarDropdown
+
         self.notetakerEnabled = iCloudStore.object(forKey: "notetakerEnabled") as? Bool
             ?? UserDefaults.standard.object(forKey: "notetakerEnabled") as? Bool ?? true
         self.autoOfferTranscription = iCloudStore.object(forKey: "autoOfferTranscription") as? Bool
@@ -290,13 +310,30 @@ class AppSettings: ObservableObject {
         self.transcriptionLocale = iCloudStore.string(forKey: "transcriptionLocale")
             ?? UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "en_US"
 
+        self.calendarSubfoldersEnabled = iCloudStore.object(forKey: "calendarSubfoldersEnabled") as? Bool
+            ?? UserDefaults.standard.object(forKey: "calendarSubfoldersEnabled") as? Bool ?? false
+        if let mappingsData = iCloudStore.data(forKey: "calendarSubfolderMappings")
+            ?? UserDefaults.standard.data(forKey: "calendarSubfolderMappings"),
+           let decoded = try? JSONDecoder().decode([String: String].self, from: mappingsData) {
+            self.calendarSubfolderMappings = decoded
+        } else {
+            self.calendarSubfolderMappings = [:]
+        }
+
         let defaultNotesPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.path ?? "~/Documents"
         self.notesFolderPath = iCloudStore.string(forKey: "notesFolderPath")
             ?? UserDefaults.standard.string(forKey: "notesFolderPath") ?? defaultNotesPath + "/MeetingNotes"
         self.fileNamingSchema = iCloudStore.string(forKey: "fileNamingSchema")
             ?? UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{MM}{dd}-{title}"
-        self.frontMatterTemplate = iCloudStore.string(forKey: "frontMatterTemplate")
-            ?? UserDefaults.standard.string(forKey: "frontMatterTemplate") ?? "tags: [meeting]\nspeakers: [{speakers}]\nattendees: {attendees}\nduration: {duration}\nengine: {engine}"
+        let storedFrontMatter = iCloudStore.string(forKey: "frontMatterTemplate")
+            ?? UserDefaults.standard.string(forKey: "frontMatterTemplate")
+        let hasMigrated = UserDefaults.standard.bool(forKey: "frontMatterTemplateMigratedV2")
+        if !hasMigrated, let stored = storedFrontMatter, stored == Self.legacyFrontMatterDefault {
+            self.frontMatterTemplate = Self.defaultFrontMatterTemplate
+            UserDefaults.standard.set(true, forKey: "frontMatterTemplateMigratedV2")
+        } else {
+            self.frontMatterTemplate = storedFrontMatter ?? Self.defaultFrontMatterTemplate
+        }
         self.speakerDisplayName = iCloudStore.string(forKey: "speakerDisplayName")
             ?? UserDefaults.standard.string(forKey: "speakerDisplayName") ?? "Me"
         self.othersDisplayName = iCloudStore.string(forKey: "othersDisplayName")
@@ -451,6 +488,16 @@ class AppSettings: ObservableObject {
         customCalendarColors[accountEmail]?[calendarId] = nil
         if customCalendarColors[accountEmail]?.isEmpty == true {
             customCalendarColors[accountEmail] = nil
+        }
+    }
+
+    private func saveSubfolderMappings() {
+        if let encoded = try? JSONEncoder().encode(calendarSubfolderMappings) {
+            UserDefaults.standard.set(encoded, forKey: "calendarSubfolderMappings")
+            if !isUpdatingFromiCloud {
+                iCloudStore.set(encoded, forKey: "calendarSubfolderMappings")
+                iCloudStore.synchronize()
+            }
         }
     }
 

@@ -6,30 +6,44 @@
 //
 
 import AppKit
+import Combine
 
 // MARK: - Transcription banner management
 
 extension AppDelegate {
     @objc func showTranscriptionBanner() {
-        guard transcriptionBannerPanel == nil else { return }
+        let mode = AppSettings.shared.transcriptionIndicatorMode
 
-        let panel = TranscriptionBannerPanel(onStop: { [weak self] in
-            Task { @MainActor in
-                await TranscriptionCoordinator.shared.stopTranscription()
+        let shouldShowDropdown = mode == .menuBarDropdown || mode == .both
+        let shouldTintIcon = mode == .changeIconColor || mode == .both
+
+        if shouldShowDropdown, transcriptionBannerPanel == nil {
+            let panel = TranscriptionBannerPanel(onStop: { [weak self] in
+                Task { @MainActor in
+                    await TranscriptionCoordinator.shared.stopTranscription()
+                }
+            })
+
+            panel.orderFrontRegardless()
+            transcriptionBannerPanel = panel
+
+            if let statusItem {
+                panel.positionBelowStatusItem(statusItem, animated: true)
             }
-        })
 
-        panel.orderFrontRegardless()
-        transcriptionBannerPanel = panel
+            startAudioLevelUpdates()
+        }
 
-        if let statusItem {
-            panel.positionBelowStatusItem(statusItem, animated: true)
+        if shouldTintIcon {
+            setMenuBarIconRecording(true)
         }
     }
 
     @objc func hideTranscriptionBanner() {
+        stopAudioLevelUpdates()
         transcriptionBannerPanel?.close()
         transcriptionBannerPanel = nil
+        setMenuBarIconRecording(false)
     }
 
     func updateBannerState(_ state: BannerState) {
@@ -42,5 +56,18 @@ extension AppDelegate {
             try? await Task.sleep(for: .seconds(seconds))
             hideTranscriptionBanner()
         }
+    }
+
+    private func startAudioLevelUpdates() {
+        audioLevelCancellable = TranscriptionCoordinator.shared.$micLevel
+            .receive(on: RunLoop.main)
+            .sink { [weak self] level in
+                self?.transcriptionBannerPanel?.updateAudioLevel(level)
+            }
+    }
+
+    private func stopAudioLevelUpdates() {
+        audioLevelCancellable?.cancel()
+        audioLevelCancellable = nil
     }
 }

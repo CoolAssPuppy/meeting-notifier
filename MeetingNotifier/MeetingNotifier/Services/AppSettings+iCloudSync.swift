@@ -30,6 +30,8 @@ extension AppSettings {
             "menuBarThresholdMinutes", "showAllDayInMenuBar", "showMeetingCountBadge",
             "showTravelTimeAlerts", "defaultTravelMode", "preferredMapProvider", "doubleBookingPreference",
             "dropDownStyle",
+            "transcriptionIndicatorMode",
+            "calendarSubfoldersEnabled", "calendarSubfolderMappings",
             "notetakerEnabled", "autoOfferTranscription", "transcriptionEngine",
             "transcriptionLocale", "notesFolderPath", "fileNamingSchema",
             "frontMatterTemplate", "speakerDisplayName", "othersDisplayName",
@@ -147,6 +149,19 @@ extension AppSettings {
         if keys.contains("dropDownStyle") {
             let raw = UserDefaults.standard.string(forKey: "dropDownStyle") ?? DropDownStyle.simple.rawValue
             dropDownStyle = DropDownStyle(rawValue: raw) ?? .simple
+        }
+        if keys.contains("transcriptionIndicatorMode") {
+            let raw = UserDefaults.standard.string(forKey: "transcriptionIndicatorMode") ?? TranscriptionIndicatorMode.menuBarDropdown.rawValue
+            transcriptionIndicatorMode = TranscriptionIndicatorMode(rawValue: raw) ?? .menuBarDropdown
+        }
+        if keys.contains("calendarSubfoldersEnabled") {
+            calendarSubfoldersEnabled = UserDefaults.standard.bool(forKey: "calendarSubfoldersEnabled")
+        }
+        if keys.contains("calendarSubfolderMappings") {
+            if let data = UserDefaults.standard.data(forKey: "calendarSubfolderMappings"),
+               let decoded = try? JSONDecoder().decode([String: String].self, from: data) {
+                calendarSubfolderMappings = decoded
+            }
         }
         if keys.contains("notetakerEnabled") {
             notetakerEnabled = UserDefaults.standard.bool(forKey: "notetakerEnabled")

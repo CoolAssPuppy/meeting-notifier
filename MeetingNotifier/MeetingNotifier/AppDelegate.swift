@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
@@ -11,6 +12,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var eventMonitor: Any?
     var peekWindowPanel: PeekWindowPanel?
     var transcriptionBannerPanel: TranscriptionBannerPanel?
+    var audioLevelCancellable: AnyCancellable?
+    var isRecordingIndicatorActive = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Recover any transcript from a prior crash before anything else

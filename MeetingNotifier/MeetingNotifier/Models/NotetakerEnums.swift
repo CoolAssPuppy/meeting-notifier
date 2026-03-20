@@ -127,6 +127,26 @@ enum SummarizationPlatform: String, CaseIterable, Codable, Identifiable {
     }
 }
 
+// MARK: - Transcription indicator mode
+
+enum TranscriptionIndicatorMode: String, CaseIterable, Codable, Identifiable {
+    case none = "None"
+    case menuBarDropdown = "MenuBarDropdown"
+    case changeIconColor = "ChangeIconColor"
+    case both = "Both"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .none: return "None"
+        case .menuBarDropdown: return "Menu Bar Dropdown"
+        case .changeIconColor: return "Change Icon Color"
+        case .both: return "Both Menu and Icon"
+        }
+    }
+}
+
 // MARK: - Speaker label
 
 enum SpeakerLabel: String, Codable, Hashable {

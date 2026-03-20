@@ -20,6 +20,16 @@ final class SystemAudioCapturer: ObservableObject {
 
     init() {}
 
+    // MARK: - Permission checks
+
+    static func hasScreenCapturePermission() -> Bool {
+        CGPreflightScreenCaptureAccess()
+    }
+
+    static func requestScreenCapturePermission() -> Bool {
+        CGRequestScreenCaptureAccess()
+    }
+
     // MARK: - Capture lifecycle
 
     func startCapture(bufferHandler: @escaping @Sendable (AVAudioPCMBuffer) -> Void) async throws {
@@ -28,11 +38,16 @@ final class SystemAudioCapturer: ObservableObject {
             return
         }
 
+        guard Self.hasScreenCapturePermission() else {
+            Logger.audio.error("Screen recording permission not granted (pre-flight check)")
+            throw SystemAudioCaptureError.permissionDenied
+        }
+
         streamOutput.bufferHandler = bufferHandler
 
         let content: SCShareableContent
         do {
-            content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
         } catch {
             Logger.audio.error("Screen recording permission denied or unavailable: \(error.localizedDescription)")
             throw SystemAudioCaptureError.permissionDenied
@@ -159,10 +174,20 @@ final class SystemAudioCapturer: ObservableObject {
 private final class SystemAudioStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate, @unchecked Sendable {
     let queue = DispatchQueue(label: "com.strategicnerds.meetingnotifier.systemaudio", qos: .userInitiated)
     var bufferHandler: (@Sendable (AVAudioPCMBuffer) -> Void)?
+    private var bufferCount = 0
+    private var hasLoggedFirstBuffer = false
 
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
         guard type == .audio else { return }
-        guard let pcmBuffer = SystemAudioCapturer.pcmBuffer(from: sampleBuffer) else { return }
+        guard let pcmBuffer = SystemAudioCapturer.pcmBuffer(from: sampleBuffer) else {
+            Logger.audio.debug("System audio: buffer conversion failed (frame \(self.bufferCount))")
+            return
+        }
+        bufferCount += 1
+        if !hasLoggedFirstBuffer {
+            hasLoggedFirstBuffer = true
+            Logger.audio.info("System audio: first audio buffer received (frames: \(pcmBuffer.frameLength))")
+        }
         bufferHandler?(pcmBuffer)
     }
 

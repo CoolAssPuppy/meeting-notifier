@@ -8,16 +8,22 @@
 import AppKit
 import SwiftUI
 
+@MainActor
+final class BannerViewModel: ObservableObject {
+    @Published var state: BannerState = .recording
+    @Published var audioLevel: Float = 0
+    var lastError: String = ""
+    var onStop: () -> Void = {}
+}
+
 class TranscriptionBannerPanel: NSPanel {
     private var hostingView: NSHostingView<TranscriptionBannerView>?
-    private var currentState: BannerState = .recording
-    private var onStopAction: () -> Void = {}
-    private var lastError: String = ""
+    let viewModel = BannerViewModel()
 
     override var canBecomeKey: Bool { true }
 
     init(onStop: @escaping () -> Void) {
-        self.onStopAction = onStop
+        viewModel.onStop = onStop
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 300, height: 40),
             styleMask: [.nonactivatingPanel, .borderless],
@@ -35,37 +41,28 @@ class TranscriptionBannerPanel: NSPanel {
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         self.ignoresMouseEvents = false
 
-        updateView()
+        setupView()
     }
 
     func updateState(_ newState: BannerState) {
-        currentState = newState
+        viewModel.state = newState
         if case .error(let msg) = newState {
-            lastError = msg
+            viewModel.lastError = msg
         }
-        updateView()
     }
 
-    private func updateView() {
-        let bannerView = TranscriptionBannerView(
-            state: currentState,
-            onStop: onStopAction,
-            onCopyError: { [weak self] in
-                guard let self else { return }
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(self.lastError, forType: .string)
-            }
-        )
+    func updateAudioLevel(_ level: Float) {
+        viewModel.audioLevel = level
+    }
 
-        if let hostingView {
-            hostingView.rootView = bannerView
-        } else {
-            let hosting = NSHostingView(rootView: bannerView)
-            hosting.frame = self.contentView?.bounds ?? .zero
-            hosting.autoresizingMask = [.width, .height]
-            self.contentView = hosting
-            self.hostingView = hosting
-        }
+    private func setupView() {
+        let bannerView = TranscriptionBannerView(viewModel: viewModel)
+
+        let hosting = NSHostingView(rootView: bannerView)
+        hosting.frame = self.contentView?.bounds ?? .zero
+        hosting.autoresizingMask = [.width, .height]
+        self.contentView = hosting
+        self.hostingView = hosting
     }
 
     func positionBelowStatusItem(_ statusItem: NSStatusItem, animated: Bool = false) {

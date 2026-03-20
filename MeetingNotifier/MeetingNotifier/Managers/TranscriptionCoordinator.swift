@@ -19,6 +19,8 @@ final class TranscriptionCoordinator: ObservableObject {
     @Published private(set) var state: TranscriptionState = .idle
     @Published private(set) var currentDocument: TranscriptDocument?
     @Published private(set) var error: String?
+    @Published private(set) var isDiarizationActive = false
+    @Published private(set) var micLevel: Float = 0
 
     private let audioCaptureManager = AudioCaptureManager()
     private let systemAudioCapturer = SystemAudioCapturer()
@@ -52,6 +54,9 @@ final class TranscriptionCoordinator: ObservableObject {
     private init() {
         setupNotificationObservers()
         startAutoOfferPolling()
+        audioCaptureManager.$micLevel
+            .receive(on: RunLoop.main)
+            .assign(to: &$micLevel)
     }
 
     // MARK: - Public API
@@ -109,7 +114,8 @@ final class TranscriptionCoordinator: ObservableObject {
             calendarEventId: event?.id,
             attendeeCount: event?.attendeeCount,
             attendeeNames: event?.attendeeNames,
-            conferenceLink: event?.conferenceLink
+            conferenceLink: event?.conferenceLink,
+            calendarName: event?.calendarName
         )
 
         // Shared segment handler for both engines
@@ -117,6 +123,7 @@ final class TranscriptionCoordinator: ObservableObject {
             Task { @MainActor in
                 self?.currentDocument?.segments.append(segment)
                 self?.lastSegmentTimestamp = Date()
+                Logger.transcription.debug("Segment received: speaker=\(segment.speaker.rawValue) text=\"\(segment.text.prefix(50))\"")
             }
         }
         micEngine.setSegmentHandler(segmentHandler)
@@ -165,6 +172,8 @@ final class TranscriptionCoordinator: ObservableObject {
         await systemEngine?.stop()
         micEngine = nil
         systemEngine = nil
+        isDiarizationActive = false
+        micLevel = 0
 
         // Finalize document
         currentDocument?.endDate = Date()
@@ -270,14 +279,22 @@ final class TranscriptionCoordinator: ObservableObject {
         let filename = formatter.generateFilename(document: document, schema: settings.fileNamingSchema)
 
         // Resolve the security-scoped bookmark, falling back to the raw path
-        let folderURL = settings.resolveNotesFolderURL()
+        let baseFolderURL = settings.resolveNotesFolderURL()
             ?? URL(fileURLWithPath: settings.notesFolderPath)
-        let didStartAccess = folderURL.startAccessingSecurityScopedResource()
-        defer { if didStartAccess { folderURL.stopAccessingSecurityScopedResource() } }
+        let didStartAccess = baseFolderURL.startAccessingSecurityScopedResource()
+        defer { if didStartAccess { baseFolderURL.stopAccessingSecurityScopedResource() } }
+
+        let subfolder = SubfolderResolver.resolve(
+            calendarName: document.calendarName,
+            isEnabled: settings.calendarSubfoldersEnabled,
+            mappings: settings.calendarSubfolderMappings
+        )
+        let folderURL = subfolder.map { baseFolderURL.appendingPathComponent($0) } ?? baseFolderURL
 
         do {
             try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
-            let fileURL = folderURL.appendingPathComponent(filename)
+            let candidateURL = folderURL.appendingPathComponent(filename)
+            let fileURL = TranscriptFormatter.deduplicatedFileURL(for: candidateURL)
             try markdown.write(to: fileURL, atomically: true, encoding: .utf8)
             Logger.transcription.info("Transcript saved to: \(fileURL.path)")
             dismissBannerAfterDelay(.saved)
@@ -295,8 +312,15 @@ final class TranscriptionCoordinator: ObservableObject {
         locale: String,
         segmentHandler: @escaping @Sendable (TranscriptSegment) -> Void
     ) async {
+        guard SystemAudioCapturer.hasScreenCapturePermission() else {
+            Logger.transcription.warning("Screen recording permission not granted, mic-only mode (no diarization)")
+            isDiarizationActive = false
+            return
+        }
+
         guard let engine = createEngine(type: engineType) else {
             Logger.transcription.warning("System audio engine unavailable, mic-only mode")
+            isDiarizationActive = false
             return
         }
 
@@ -307,8 +331,11 @@ final class TranscriptionCoordinator: ObservableObject {
             let processBuffer = engine.makeBufferProcessor(speaker: .others)
             try await systemAudioCapturer.startCapture(bufferHandler: processBuffer)
             systemEngine = engine
+            isDiarizationActive = true
+            Logger.transcription.info("System audio engine active, diarization enabled")
         } catch {
             await engine.stop()
+            isDiarizationActive = false
             Logger.transcription.warning(
                 "System audio capture unavailable (mic-only mode): \(error.localizedDescription)"
             )
@@ -569,13 +596,21 @@ final class TranscriptionCoordinator: ObservableObject {
             let markdown = formatter.formatMarkdown(document: document, summary: nil)
             let filename = formatter.generateFilename(document: document, schema: settings.fileNamingSchema)
 
-            let folderURL = settings.resolveNotesFolderURL()
+            let baseFolderURL = settings.resolveNotesFolderURL()
                 ?? URL(fileURLWithPath: settings.notesFolderPath)
-            let didStartAccess = folderURL.startAccessingSecurityScopedResource()
-            defer { if didStartAccess { folderURL.stopAccessingSecurityScopedResource() } }
+            let didStartAccess = baseFolderURL.startAccessingSecurityScopedResource()
+            defer { if didStartAccess { baseFolderURL.stopAccessingSecurityScopedResource() } }
+
+            let subfolder = SubfolderResolver.resolve(
+                calendarName: document.calendarName,
+                isEnabled: settings.calendarSubfoldersEnabled,
+                mappings: settings.calendarSubfolderMappings
+            )
+            let folderURL = subfolder.map { baseFolderURL.appendingPathComponent($0) } ?? baseFolderURL
 
             try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
-            let fileURL = folderURL.appendingPathComponent(filename)
+            let candidateURL = folderURL.appendingPathComponent(filename)
+            let fileURL = TranscriptFormatter.deduplicatedFileURL(for: candidateURL)
             try markdown.write(to: fileURL, atomically: true, encoding: .utf8)
 
             Logger.transcription.info("Recovered transcript saved to: \(fileURL.path)")

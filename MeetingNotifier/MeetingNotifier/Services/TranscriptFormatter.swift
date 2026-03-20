@@ -57,45 +57,9 @@ struct TranscriptFormatter {
     // MARK: - Front matter
 
     private func formatFrontMatter(document: TranscriptDocument, template: String?) -> String {
-        let dateFormatter = ISO8601DateFormatter()
-
-        var lines = ["---"]
-        lines.append("title: \(document.meetingTitle)")
-        lines.append("date: \(dateFormatter.string(from: document.startDate))")
-
-        if let endDate = document.endDate {
-            lines.append("end_date: \(dateFormatter.string(from: endDate))")
-        }
-        if let duration = document.formattedDuration {
-            lines.append("duration: \(duration)")
-        }
-
-        lines.append("engine: \(document.engine.displayName)")
-        lines.append("locale: \(document.locale)")
-        lines.append("word_count: \(document.wordCount)")
-
-        let speakers = document.speakerNames.map { speakerDisplayName($0) }
-        lines.append("speakers: [\(speakers.joined(separator: ", "))]")
-
-        if let attendeeCount = document.attendeeCount {
-            lines.append("attendees: \(attendeeCount)")
-        }
-        if let names = document.attendeeNames, !names.isEmpty {
-            lines.append("attendee_names: [\(names.joined(separator: ", "))]")
-        }
-        if let link = document.conferenceLink {
-            lines.append("conference_link: \(link)")
-        }
-        if let eventId = document.calendarEventId {
-            lines.append("calendar_event_id: \(eventId)")
-        }
-
-        if let template, !template.isEmpty {
-            lines.append(expandTemplate(template, document: document))
-        }
-
-        lines.append("---")
-        return lines.joined(separator: "\n")
+        let resolvedTemplate = template ?? AppSettings.defaultFrontMatterTemplate
+        let expanded = expandTemplate(resolvedTemplate, document: document)
+        return "---\n\(expanded)\n---"
     }
 
     // MARK: - Summary
@@ -197,6 +161,7 @@ struct TranscriptFormatter {
 
     private func expandTemplate(_ template: String, document: TranscriptDocument) -> String {
         let dateFormatter = DateFormatter()
+        let isoFormatter = ISO8601DateFormatter()
 
         dateFormatter.dateFormat = "yyyy"
         var result = template.replacingOccurrences(of: "{yyyy}", with: dateFormatter.string(from: document.startDate))
@@ -217,11 +182,18 @@ struct TranscriptFormatter {
         result = result.replacingOccurrences(of: "{mm}", with: dateFormatter.string(from: document.startDate))
 
         result = result.replacingOccurrences(of: "{title}", with: document.meetingTitle)
+        result = result.replacingOccurrences(of: "{date}", with: isoFormatter.string(from: document.startDate))
+
+        let endDateString = document.endDate.map { isoFormatter.string(from: $0) } ?? ""
+        result = result.replacingOccurrences(of: "{end_date}", with: endDateString)
 
         let speakers = document.speakerNames.map { speakerDisplayName($0) }
         result = result.replacingOccurrences(of: "{speakers}", with: speakers.joined(separator: ", "))
 
         result = result.replacingOccurrences(of: "{attendees}", with: "\(document.attendeeCount ?? 0)")
+
+        let attendeeNamesString = document.attendeeNames?.joined(separator: ", ") ?? ""
+        result = result.replacingOccurrences(of: "{attendee_names}", with: attendeeNamesString)
 
         result = result.replacingOccurrences(of: "{engine}", with: document.engine.displayName)
         result = result.replacingOccurrences(of: "{locale}", with: document.locale)
@@ -231,6 +203,24 @@ struct TranscriptFormatter {
         result = result.replacingOccurrences(of: "{event_id}", with: document.calendarEventId ?? "")
 
         return result
+    }
+
+    static func deduplicatedFileURL(for fileURL: URL) -> URL {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: fileURL.path) else { return fileURL }
+
+        let directory = fileURL.deletingLastPathComponent()
+        let stem = fileURL.deletingPathExtension().lastPathComponent
+        let ext = fileURL.pathExtension
+
+        var counter = 1
+        while true {
+            let candidate = directory.appendingPathComponent("\(stem)-\(counter).\(ext)")
+            if !fm.fileExists(atPath: candidate.path) {
+                return candidate
+            }
+            counter += 1
+        }
     }
 
     private func sanitizeFilename(_ name: String) -> String {

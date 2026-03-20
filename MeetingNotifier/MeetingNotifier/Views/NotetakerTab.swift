@@ -17,12 +17,15 @@ struct NotetakerTab: View {
     @State var deepgramKey = KeychainManager.shared.retrieve(forAccount: "deepgram_api_key") ?? ""
     @State var aiKey = ""
     @State private var lastAiPlatform: SummarizationPlatform?
+    @State var newMappingCalendar = ""
+    @State var newMappingFolder = ""
 
     var body: some View {
         Form {
             Section {
                 notetakerToggle
                 autoOfferToggle
+                indicatorModePicker
             } header: {
                 sectionHeader(icon: "waveform.circle.fill", title: "Transcription", gradient: [.blue, .purple])
             }
@@ -52,6 +55,7 @@ struct NotetakerTab: View {
 
             Section {
                 notesFolderPicker
+                calendarSubfoldersSection
                 fileNamingField
                 frontMatterField
             } header: {

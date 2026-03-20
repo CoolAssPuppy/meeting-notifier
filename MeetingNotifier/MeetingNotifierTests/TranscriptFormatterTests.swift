@@ -45,19 +45,41 @@ final class TranscriptFormatterTests: XCTestCase {
         XCTAssertTrue(result.contains("conference_link: https://zoom.us/j/123"))
     }
 
-    func testFrontMatterIncludesCustomTemplate() {
+    func testFrontMatterUsesCustomTemplate() {
         let doc = TranscriptionTestFactories.makeDocument()
-        let result = formatter.formatMarkdown(document: doc, summary: nil, frontMatterTemplate: "tags: [meeting, standup]")
+        let template = "tags: [meeting, standup]\ntitle: {title}"
+        let result = formatter.formatMarkdown(document: doc, summary: nil, frontMatterTemplate: template)
 
         XCTAssertTrue(result.contains("tags: [meeting, standup]"))
+        XCTAssertTrue(result.contains("title: Team Standup"))
     }
 
-    func testFrontMatterOmitsEndDateWhenNil() {
-        let doc = TranscriptionTestFactories.makeDocument(endDate: nil)
-        let result = formatter.formatMarkdown(document: doc, summary: nil)
+    func testFrontMatterExpandsDateToken() {
+        let doc = TranscriptionTestFactories.makeDocument()
+        let template = "date: {date}"
+        let result = formatter.formatMarkdown(document: doc, summary: nil, frontMatterTemplate: template)
 
-        XCTAssertFalse(result.contains("end_date:"))
-        XCTAssertFalse(result.contains("duration:"))
+        XCTAssertTrue(result.contains("date: "))
+        XCTAssertFalse(result.contains("{date}"))
+    }
+
+    func testFrontMatterExpandsAttendeeNamesToken() {
+        let doc = TranscriptionTestFactories.makeDocument(
+            attendeeNames: ["Alice", "Bob"]
+        )
+        let template = "attendee_names: [{attendee_names}]"
+        let result = formatter.formatMarkdown(document: doc, summary: nil, frontMatterTemplate: template)
+
+        XCTAssertTrue(result.contains("attendee_names: [Alice, Bob]"))
+    }
+
+    func testFrontMatterEndDateEmptyWhenNil() {
+        let doc = TranscriptionTestFactories.makeDocument(endDate: nil)
+        let template = "end_date: {end_date}\nduration: {duration}"
+        let result = formatter.formatMarkdown(document: doc, summary: nil, frontMatterTemplate: template)
+
+        XCTAssertTrue(result.contains("end_date: \n"))
+        XCTAssertTrue(result.contains("duration: \n"))
     }
 
     // MARK: - Summary section
@@ -163,6 +185,50 @@ final class TranscriptFormatterTests: XCTestCase {
         XCTAssertFalse(filename.contains(":"))
         XCTAssertFalse(filename.contains("&"))
         XCTAssertFalse(filename.contains("!"))
+    }
+
+    // MARK: - File deduplication
+
+    func testDeduplicatedFileURLReturnsOriginalWhenNoConflict() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let fileURL = tempDir.appendingPathComponent("notes.md")
+        let result = TranscriptFormatter.deduplicatedFileURL(for: fileURL)
+
+        XCTAssertEqual(result.lastPathComponent, "notes.md")
+    }
+
+    func testDeduplicatedFileURLAppendsSuffixWhenFileExists() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let fileURL = tempDir.appendingPathComponent("notes.md")
+        FileManager.default.createFile(atPath: fileURL.path, contents: Data("existing".utf8))
+
+        let result = TranscriptFormatter.deduplicatedFileURL(for: fileURL)
+
+        XCTAssertEqual(result.lastPathComponent, "notes-1.md")
+    }
+
+    func testDeduplicatedFileURLIncrementsUntilAvailable() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let fileURL = tempDir.appendingPathComponent("notes.md")
+        FileManager.default.createFile(atPath: fileURL.path, contents: Data("v1".utf8))
+        let dash1 = tempDir.appendingPathComponent("notes-1.md")
+        FileManager.default.createFile(atPath: dash1.path, contents: Data("v2".utf8))
+
+        let result = TranscriptFormatter.deduplicatedFileURL(for: fileURL)
+
+        XCTAssertEqual(result.lastPathComponent, "notes-2.md")
     }
 
     // MARK: - Speaker display name

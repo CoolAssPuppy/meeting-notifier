@@ -53,6 +53,21 @@ extension NotetakerTab {
         }
     }
 
+    var indicatorModePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Picker("Active indicator", selection: $settings.transcriptionIndicatorMode) {
+                ForEach(TranscriptionIndicatorMode.allCases) { mode in
+                    Text(mode.displayName)
+                        .tag(mode)
+                }
+            }
+
+            Text("How to show that transcription is active")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
     var autoOfferToggle: some View {
         VStack(alignment: .leading, spacing: 8) {
             Toggle("Auto-offer transcription", isOn: $settings.autoOfferTranscription)

@@ -46,6 +46,8 @@ extension AppDelegate {
 
             updatePeekWindow()
         }
+
+        applyRecordingTintIfNeeded()
     }
 
     private func applyCalendarIconWithBadge(to button: NSStatusBarButton, settings: AppSettings) {
@@ -207,6 +209,34 @@ extension AppDelegate {
         }
 
         return nil
+    }
+
+    func setMenuBarIconRecording(_ isRecording: Bool) {
+        isRecordingIndicatorActive = isRecording
+        if isRecording {
+            applyRecordingTintIfNeeded()
+        } else {
+            updateMenuBarText()
+        }
+    }
+
+    func applyRecordingTintIfNeeded() {
+        guard let button = statusItem?.button else { return }
+        guard isRecordingIndicatorActive else { return }
+
+        // Re-render the current icon in red. Menu bar SF Symbols are template
+        // images (monochrome), so we draw a non-template copy tinted red.
+        guard let currentImage = button.image else { return }
+
+        let size = currentImage.size
+        let tinted = NSImage(size: size, flipped: false) { rect in
+            currentImage.draw(in: rect)
+            NSColor.systemRed.set()
+            rect.fill(using: .sourceAtop)
+            return true
+        }
+        tinted.isTemplate = false
+        button.image = tinted
     }
 
     private func truncateTitle(_ title: String, maxLength: Int) -> String {

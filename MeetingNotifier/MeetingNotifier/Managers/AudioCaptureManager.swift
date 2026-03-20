@@ -13,6 +13,7 @@ import os
 @MainActor
 final class AudioCaptureManager: ObservableObject {
     @Published private(set) var isCapturing = false
+    @Published private(set) var micLevel: Float = 0
 
     private var micEngine: AVAudioEngine?
 
@@ -40,9 +41,23 @@ final class AudioCaptureManager: ObservableObject {
             throw AudioCaptureError.invalidFormat
         }
 
+        // State lives outside the actor so the audio thread can freely mutate it.
+        let levelState = AudioLevelState()
+
         Logger.audio.info("Installing mic tap (sampleRate: \(format.sampleRate)Hz, channels: \(format.channelCount))")
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             bufferHandler(buffer)
+
+            levelState.count += 1
+            guard levelState.count % 4 == 0 else { return }
+            guard !levelState.dispatchPending else { return }
+
+            let rms = AudioCaptureManager.computeRMS(buffer)
+            levelState.dispatchPending = true
+            DispatchQueue.main.async {
+                levelState.dispatchPending = false
+                self?.micLevel = rms
+            }
         }
 
         do {
@@ -62,7 +77,25 @@ final class AudioCaptureManager: ObservableObject {
         micEngine?.stop()
         micEngine = nil
         isCapturing = false
+        micLevel = 0
         Logger.audio.info("Mic capture stopped")
+    }
+
+    // MARK: - RMS computation
+
+    nonisolated static func computeRMS(_ buffer: AVAudioPCMBuffer) -> Float {
+        guard let channelData = buffer.floatChannelData else { return 0 }
+        let frameLength = Int(buffer.frameLength)
+        guard frameLength > 0 else { return 0 }
+
+        let samples = channelData[0]
+        var sumOfSquares: Float = 0
+        for i in 0..<frameLength {
+            let sample = samples[i]
+            sumOfSquares += sample * sample
+        }
+        let rms = sqrtf(sumOfSquares / Float(frameLength))
+        return min(rms * 3.0, 1.0)
     }
 
     // MARK: - Permission
@@ -74,6 +107,13 @@ final class AudioCaptureManager: ObservableObject {
             }
         }
     }
+}
+
+// MARK: - Audio level state (lives on the audio thread, not main actor)
+
+private final class AudioLevelState: @unchecked Sendable {
+    var count: Int = 0
+    var dispatchPending: Bool = false
 }
 
 // MARK: - Errors

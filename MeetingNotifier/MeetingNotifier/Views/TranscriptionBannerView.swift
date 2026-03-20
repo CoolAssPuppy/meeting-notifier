@@ -16,11 +16,7 @@ enum BannerState {
 }
 
 struct TranscriptionBannerView: View {
-    let state: BannerState
-    let onStop: () -> Void
-    let onCopyError: () -> Void
-
-    @State private var dotOpacity: Double = 1.0
+    @ObservedObject var viewModel: BannerViewModel
 
     var body: some View {
         HStack(spacing: 10) {
@@ -43,18 +39,9 @@ struct TranscriptionBannerView: View {
 
     @ViewBuilder
     private var statusDot: some View {
-        switch state {
+        switch viewModel.state {
         case .recording:
-            Circle()
-                .fill(Color.green)
-                .frame(width: 8, height: 8)
-                .shadow(color: .green.opacity(0.8), radius: 4)
-                .opacity(dotOpacity)
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                        dotOpacity = 0.3
-                    }
-                }
+            AudioWaveformView(audioLevel: viewModel.audioLevel)
         case .ended:
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 12))
@@ -75,7 +62,7 @@ struct TranscriptionBannerView: View {
 
     @ViewBuilder
     private var statusText: some View {
-        switch state {
+        switch viewModel.state {
         case .recording:
             Text("Transcription Active")
                 .font(.system(size: 12, weight: .medium))
@@ -108,9 +95,9 @@ struct TranscriptionBannerView: View {
 
     @ViewBuilder
     private var actionButton: some View {
-        switch state {
+        switch viewModel.state {
         case .recording:
-            Button(action: onStop) {
+            Button(action: viewModel.onStop) {
                 Text("Stop")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white)
@@ -125,7 +112,10 @@ struct TranscriptionBannerView: View {
             .buttonStyle(.plain)
             .fixedSize()
         case .error:
-            Button(action: onCopyError) {
+            Button {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(viewModel.lastError, forType: .string)
+            } label: {
                 Image(systemName: "doc.on.clipboard")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
@@ -135,18 +125,5 @@ struct TranscriptionBannerView: View {
         default:
             EmptyView()
         }
-    }
-}
-
-struct TranscriptionBannerView_Previews: PreviewProvider {
-    static var previews: some View {
-        VStack(spacing: 20) {
-            TranscriptionBannerView(state: .recording, onStop: {}, onCopyError: {})
-            TranscriptionBannerView(state: .ended, onStop: {}, onCopyError: {})
-            TranscriptionBannerView(state: .analyzing, onStop: {}, onCopyError: {})
-            TranscriptionBannerView(state: .saved, onStop: {}, onCopyError: {})
-            TranscriptionBannerView(state: .error("OpenAI API returned status 401"), onStop: {}, onCopyError: {})
-        }
-        .padding()
     }
 }
