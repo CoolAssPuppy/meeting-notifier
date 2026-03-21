@@ -25,6 +25,7 @@ final class TranscriptionCoordinator: ObservableObject {
     private let audioCaptureManager = AudioCaptureManager()
     private let systemAudioCapturer = SystemAudioCapturer()
     private let echoDeduplicator = EchoDeduplicator()
+    private let systemAudioEnergyTracker = SystemAudioEnergyTracker()
     private var micEngine: TranscriptionEngine?
     private var systemEngine: TranscriptionEngine?
     private var cancellables = Set<AnyCancellable>()
@@ -119,17 +120,31 @@ final class TranscriptionCoordinator: ObservableObject {
             calendarName: event?.calendarName
         )
 
-        // Reset echo deduplicator for the new session
+        // Reset deduplicator and energy tracker for the new session
         echoDeduplicator.reset()
+        systemAudioEnergyTracker.reset()
 
-        // Shared segment handler for both engines, with echo deduplication
+        // Shared segment handler for both engines, with echo deduplication.
+        // For the Apple engine, relabel mic segments as "Others" when system
+        // audio energy is detected (speaker bleed through the mic).
         let deduplicator = echoDeduplicator
+        let energyTracker = systemAudioEnergyTracker
+        let useEnergyLabeling = settings.transcriptionEngine == .apple
         let segmentHandler: @Sendable (TranscriptSegment) -> Void = { [weak self] segment in
-            guard deduplicator.shouldKeep(segment) else { return }
+            var labeled = segment
+            if useEnergyLabeling && segment.speaker == .me && energyTracker.isActive {
+                labeled = TranscriptSegment(
+                    speaker: .others,
+                    text: segment.text,
+                    startTime: segment.startTime,
+                    endTime: segment.endTime
+                )
+            }
+            guard deduplicator.shouldKeep(labeled) else { return }
             Task { @MainActor in
-                self?.currentDocument?.segments.append(segment)
+                self?.currentDocument?.segments.append(labeled)
                 self?.lastSegmentTimestamp = Date()
-                Logger.transcription.debug("Segment received: speaker=\(segment.speaker.rawValue) text=\"\(segment.text.prefix(50))\"")
+                Logger.transcription.debug("Segment received: speaker=\(labeled.speaker.rawValue) text=\"\(labeled.text.prefix(50))\"")
             }
         }
         micEngine.setSegmentHandler(segmentHandler)
@@ -225,13 +240,24 @@ final class TranscriptionCoordinator: ObservableObject {
             try audioCaptureManager.startMicCapture(bufferHandler: processBuffer)
 
             let deduplicator = echoDeduplicator
+            let energyTracker = systemAudioEnergyTracker
+            let settings = AppSettings.shared
+            let useEnergyLabeling = settings.transcriptionEngine == .apple
             let segmentHandler: @Sendable (TranscriptSegment) -> Void = { [weak self] segment in
-                guard deduplicator.shouldKeep(segment) else { return }
+                var labeled = segment
+                if useEnergyLabeling && segment.speaker == .me && energyTracker.isActive {
+                    labeled = TranscriptSegment(
+                        speaker: .others,
+                        text: segment.text,
+                        startTime: segment.startTime,
+                        endTime: segment.endTime
+                    )
+                }
+                guard deduplicator.shouldKeep(labeled) else { return }
                 Task { @MainActor in
-                    self?.currentDocument?.segments.append(segment)
+                    self?.currentDocument?.segments.append(labeled)
                 }
             }
-            let settings = AppSettings.shared
             Task {
                 await startSystemAudioCapture(
                     engineType: settings.transcriptionEngine,
@@ -320,14 +346,33 @@ final class TranscriptionCoordinator: ObservableObject {
         locale: String,
         segmentHandler: @escaping @Sendable (TranscriptSegment) -> Void
     ) async {
-        guard SystemAudioCapturer.hasScreenCapturePermission() else {
+        let hasPermission = SystemAudioCapturer.hasScreenCapturePermission()
+        Logger.transcription.info("System audio: screen capture permission = \(hasPermission)")
+        guard hasPermission else {
             Logger.transcription.warning("Screen recording permission not granted, mic-only mode (no diarization)")
             isDiarizationActive = false
             return
         }
 
+        // Apple's SpeechAnalyzer does not support concurrent instances.
+        // Use energy-based speaker labeling: track system audio energy
+        // and relabel mic segments when a remote participant is speaking.
+        if engineType == .apple {
+            do {
+                let processBuffer = systemAudioEnergyTracker.makeBufferProcessor()
+                try await systemAudioCapturer.startCapture(bufferHandler: processBuffer)
+                isDiarizationActive = true
+                Logger.transcription.info("System audio energy tracking active (Apple engine diarization)")
+            } catch {
+                isDiarizationActive = false
+                Logger.transcription.warning("System audio capture failed: \(error.localizedDescription)")
+            }
+            return
+        }
+
+        // Deepgram/Wispr: create a second engine for system audio transcription.
         guard let engine = createEngine(type: engineType) else {
-            Logger.transcription.warning("System audio engine unavailable, mic-only mode")
+            Logger.transcription.warning("System audio engine unavailable (createEngine returned nil for \(engineType.rawValue)), mic-only mode")
             isDiarizationActive = false
             return
         }
@@ -345,7 +390,7 @@ final class TranscriptionCoordinator: ObservableObject {
             await engine.stop()
             isDiarizationActive = false
             Logger.transcription.warning(
-                "System audio capture unavailable (mic-only mode): \(error.localizedDescription)"
+                "System audio capture failed (mic-only mode): \(error.localizedDescription)"
             )
         }
     }

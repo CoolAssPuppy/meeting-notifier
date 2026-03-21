@@ -68,6 +68,7 @@
 		A4F08C706C6731554F907AA4 /* google.png in Resources */ = {isa = PBXBuildFile; fileRef = A4D9826C6DC9F4AFD0F08816 /* google.png */; };
 		A50CC64E33A45541CCB067AD /* MicrosoftOAuthSecret.swift.template in Resources */ = {isa = PBXBuildFile; fileRef = CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */; };
 		AA1111111111111111111111 /* SystemAudioCapturer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2222222222222222222222 /* SystemAudioCapturer.swift */; };
+		CC1111111111111111111111 /* SystemAudioEnergyTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2222222222222222222222 /* SystemAudioEnergyTracker.swift */; };
 		AA3333333333333333333333 /* SystemAudioCapturerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4444444444444444444444 /* SystemAudioCapturerTests.swift */; };
 		AB467029041473760473FFAD /* NotetakerTab+OutputSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001570B4ACE123EB1763A40A /* NotetakerTab+OutputSettings.swift */; };
 		AD7530A7C0415650ECC26600 /* teams.png in Resources */ = {isa = PBXBuildFile; fileRef = 8FC3285303293546DEEAB083 /* teams.png */; };
@@ -187,6 +188,7 @@
 		A7C5C033BBD4E2CDC73AB8BE /* TranscriptSegment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptSegment.swift; sourceTree = "<group>"; };
 		A8CE3151B90368012D5C7D67 /* GoogleOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthManager.swift; sourceTree = "<group>"; };
 		AA2222222222222222222222 /* SystemAudioCapturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAudioCapturer.swift; sourceTree = "<group>"; };
+		CC2222222222222222222222 /* SystemAudioEnergyTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAudioEnergyTracker.swift; sourceTree = "<group>"; };
 		AA4444444444444444444444 /* SystemAudioCapturerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAudioCapturerTests.swift; sourceTree = "<group>"; };
 		AB280D116A6BA40C66783C9C /* AccountsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsTab.swift; sourceTree = "<group>"; };
 		AD899C544CCC4FBF71F6F194 /* microsoft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = microsoft.png; sourceTree = "<group>"; };
@@ -349,6 +351,7 @@
 				CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */,
 				5326575BF5C8A6B7163F6C59 /* NotificationManager.swift */,
 				AA2222222222222222222222 /* SystemAudioCapturer.swift */,
+				CC2222222222222222222222 /* SystemAudioEnergyTracker.swift */,
 				2B1D2E92430A8DABBD238EFF /* TranscriptionCoordinator.swift */,
 			);
 			path = Managers;
@@ -676,6 +679,7 @@
 				F83226D88676031885A6C796 /* StoreKitManager.swift in Sources */,
 				BB8888888888888888888888 /* SubfolderResolver.swift in Sources */,
 				AA1111111111111111111111 /* SystemAudioCapturer.swift in Sources */,
+				CC1111111111111111111111 /* SystemAudioEnergyTracker.swift in Sources */,
 				F3E7562B45866CE45B03CF99 /* TranscriptDocument.swift in Sources */,
 				3B2A830A62DD2B1B4CB0C19E /* TranscriptFormatter.swift in Sources */,
 				082D83340C0CB8EC6E2BF674 /* TranscriptSegment.swift in Sources */,

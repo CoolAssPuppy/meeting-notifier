@@ -64,9 +64,10 @@ final class SystemAudioCapturer: ObservableObject {
         config.sampleRate = 48000
         config.channelCount = 1
 
-        // Minimize mandatory video capture: 1x1 pixel at lowest frame rate
-        config.width = 1
-        config.height = 1
+        // We only need audio. Minimize video to avoid unnecessary overhead,
+        // but keep dimensions valid (some macOS versions reject 1x1).
+        config.width = 2
+        config.height = 2
         config.minimumFrameInterval = CMTime(value: 1, timescale: 1)
 
         let filter = SCContentFilter(display: display, excludingWindows: [])

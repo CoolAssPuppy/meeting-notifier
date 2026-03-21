@@ -21,6 +21,8 @@ final class DeepgramEngine: TranscriptionEngine {
     private var webSocketTask: URLSessionWebSocketTask?
     private var sessionStartTime: Date?
     private var currentSpeaker: SpeakerLabel = .me
+    private var sendCount = 0
+    private var receiveCount = 0
 
     // MARK: - TranscriptionEngine
 
@@ -64,7 +66,15 @@ final class DeepgramEngine: TranscriptionEngine {
         Task { @MainActor [weak self] in
             guard let self else { return }
             self.currentSpeaker = speaker
-            try? await self.webSocketTask?.send(.data(data))
+            self.sendCount += 1
+            if self.sendCount == 1 || self.sendCount % 100 == 0 {
+                Logger.transcription.info("[\(speaker.rawValue) engine] sent \(self.sendCount) buffers to Deepgram (\(data.count) bytes)")
+            }
+            do {
+                try await self.webSocketTask?.send(.data(data))
+            } catch {
+                Logger.transcription.error("[\(speaker.rawValue) engine] WebSocket send failed: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -98,6 +108,11 @@ final class DeepgramEngine: TranscriptionEngine {
     }
 
     private func handleMessage(_ message: URLSessionWebSocketTask.Message) {
+        receiveCount += 1
+        if receiveCount == 1 {
+            Logger.transcription.info("[\(self.currentSpeaker.rawValue) engine] first WebSocket message received")
+        }
+
         guard case .string(let text) = message,
               let data = text.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -116,13 +131,19 @@ final class DeepgramEngine: TranscriptionEngine {
 
         // When diarize=true, Deepgram returns words with speaker indices.
         // Group consecutive words by speaker and emit separate segments.
+        // For the system audio stream (currentSpeaker == .others), always
+        // label as .others since Deepgram's indices are per-stream and
+        // speaker 0 does NOT mean "the local user" on that stream.
         if let words = alternatives["words"] as? [[String: Any]],
            !words.isEmpty,
            words.first?["speaker"] != nil {
             let grouped = groupWordsBySpeaker(words)
             for group in grouped {
+                let speaker = currentSpeaker == .others
+                    ? SpeakerLabel.others
+                    : speakerLabel(for: group.speakerIndex)
                 let segment = TranscriptSegment(
-                    speaker: speakerLabel(for: group.speakerIndex),
+                    speaker: speaker,
                     text: group.text,
                     startTime: group.start,
                     endTime: group.end
