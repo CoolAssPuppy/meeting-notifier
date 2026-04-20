@@ -614,11 +614,17 @@ final class TranscriptionCoordinator: ObservableObject {
         do {
             let data = try JSONEncoder().encode(document)
             let url = Self.recoveryFileURL
+            let directory = url.deletingLastPathComponent()
             try FileManager.default.createDirectory(
-                at: url.deletingLastPathComponent(),
-                withIntermediateDirectories: true
+                at: directory,
+                withIntermediateDirectories: true,
+                attributes: [.posixPermissions: 0o700]
             )
-            try data.write(to: url, options: .atomic)
+            try data.write(to: url, options: [.atomic, .completeFileProtection])
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o600],
+                ofItemAtPath: url.path
+            )
         } catch {
             Logger.transcription.warning("Recovery file write failed: \(error.localizedDescription)")
         }

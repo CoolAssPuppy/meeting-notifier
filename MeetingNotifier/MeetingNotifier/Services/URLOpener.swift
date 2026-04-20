@@ -37,7 +37,7 @@ enum URLOpener {
 
         case .custom:
             if let customPath = UserDefaults.standard.string(forKey: "customMeetAppPath"),
-               let appURL = URL(fileURLWithPath: customPath) as URL? {
+               let appURL = validatedCustomAppURL(atPath: customPath) {
                 NSWorkspace.shared.open(
                     [finalURL],
                     withApplicationAt: appURL,
@@ -59,5 +59,23 @@ enum URLOpener {
                 NSWorkspace.shared.open(finalURL)
             }
         }
+    }
+
+    /// Validates that the configured path points to an existing `.app` bundle
+    /// before launching. Prevents a tampered preference from pointing at an
+    /// arbitrary binary.
+    private static func validatedCustomAppURL(atPath path: String) -> URL? {
+        let url = URL(fileURLWithPath: path)
+        guard url.pathExtension.lowercased() == "app" else { return nil }
+
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
+              isDirectory.boolValue else {
+            return nil
+        }
+
+        guard Bundle(url: url)?.bundleIdentifier != nil else { return nil }
+
+        return url
     }
 }

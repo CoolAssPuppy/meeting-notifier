@@ -238,8 +238,12 @@ final class AISummarizer {
         }
 
         guard httpResponse.statusCode == 200 else {
-            let responseBody = String(data: data, encoding: .utf8) ?? "no body"
-            Logger.transcription.error("AI API error \(httpResponse.statusCode): \(responseBody, privacy: .public)")
+            let requestId = httpResponse.value(forHTTPHeaderField: "x-request-id")
+                ?? httpResponse.value(forHTTPHeaderField: "X-Request-ID")
+                ?? ""
+            Logger.transcription.error(
+                "AI API error status=\(httpResponse.statusCode) requestId=\(requestId, privacy: .public)"
+            )
             throw SummarizerError.apiError(statusCode: httpResponse.statusCode)
         }
 

@@ -5,7 +5,6 @@
 //  Copyright (c) 2025 Strategic Nerds. All rights reserved.
 //
 
-import AVFoundation
 import Combine
 import CoreAudio
 import Foundation
@@ -16,7 +15,6 @@ final class MeetingDetector: ObservableObject {
     static let shared = MeetingDetector()
 
     @Published private(set) var isMicrophoneActive = false
-    @Published private(set) var isCameraActive = false
 
     private var micPropertyListenerBlock: AudioObjectPropertyListenerBlock?
     nonisolated(unsafe) private var pollTimer: Timer?
@@ -28,16 +26,11 @@ final class MeetingDetector: ObservableObject {
     // MARK: - Monitoring
 
     private func startMonitoring() {
-        // Poll mic/camera status every 2 seconds
         // CoreAudio property listeners require careful lifecycle management,
-        // so polling is more reliable for a menu bar app
+        // so polling is more reliable for a menu bar app.
         pollTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.checkMicrophoneStatus()
-                // Camera check disabled: AVCaptureDevice.DiscoverySession
-                // can trigger CMIO framework crashes when camera subsystem
-                // is in a bad state (e.g. with virtual cameras or background
-                // video apps). Mic detection is sufficient for transcription.
             }
         }
 
@@ -133,28 +126,5 @@ final class MeetingDetector: ObservableObject {
 
         let status = AudioObjectGetPropertyData(deviceId, &address, 0, nil, &size, &isRunning)
         return status == noErr && isRunning != 0
-    }
-
-    // MARK: - Camera detection
-
-    private func checkCameraStatus() {
-        let wasActive = isCameraActive
-        isCameraActive = isCameraInUse()
-
-        if isCameraActive && !wasActive {
-            Logger.transcription.info("Camera became active")
-        } else if !isCameraActive && wasActive {
-            Logger.transcription.info("Camera became inactive")
-        }
-    }
-
-    private func isCameraInUse() -> Bool {
-        let devices = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [.builtInWideAngleCamera, .external],
-            mediaType: .video,
-            position: .unspecified
-        ).devices
-
-        return devices.contains { $0.isInUseByAnotherApplication }
     }
 }

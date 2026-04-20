@@ -28,11 +28,12 @@ class KeychainManager {
         }
 
         let shouldSync = syncableAccounts.contains(account)
+        let accessibility = accessibilityClass(forSyncable: shouldSync)
         let query = baseQuery(account: account, synchronizable: shouldSync)
 
         let attributes: [String: Any] = [
             kSecValueData as String: tokenData,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
+            kSecAttrAccessible as String: accessibility,
         ]
 
         // Try update first
@@ -42,7 +43,7 @@ class KeychainManager {
         if updateStatus == errSecItemNotFound {
             var addQuery = query
             addQuery[kSecValueData as String] = tokenData
-            addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+            addQuery[kSecAttrAccessible as String] = accessibility
 
             let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
             if addStatus == errSecSuccess { return true }
@@ -112,6 +113,16 @@ class KeychainManager {
     }
 
     // MARK: - Private
+
+    /// OAuth tokens (non-syncable) stay on this device and require an unlocked
+    /// session. Syncable API keys must use a class compatible with iCloud
+    /// Keychain sync (no `ThisDeviceOnly` variants).
+    private func accessibilityClass(forSyncable syncable: Bool) -> CFString {
+        if syncable {
+            return kSecAttrAccessibleAfterFirstUnlock
+        }
+        return kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+    }
 
     private func baseQuery(account: String, synchronizable: Bool) -> [String: Any] {
         var query: [String: Any] = [
