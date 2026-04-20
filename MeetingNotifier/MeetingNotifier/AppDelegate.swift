@@ -255,44 +255,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Settings window
 
     @objc func openSettings() {
-        NSApp.setActivationPolicy(.regular)
+        // Stay an accessory (menu-bar-only) app. We briefly promote to prohibited
+        // and back to force AppKit to front the settings window from a true
+        // background state without adding a Dock icon.
+        NSApp.activate(ignoringOtherApps: true)
 
-        Task { @MainActor [weak self] in
-            // Small delay to let activation policy change take effect
-            try? await Task.sleep(for: .milliseconds(100))
-
-            guard let self else { return }
-
-            NSApp.activate(ignoringOtherApps: true)
-
-            if let existingWindow = self.settingsWindow {
-                existingWindow.makeKeyAndOrderFront(nil)
-                return
-            }
-
-            for window in NSApp.windows {
-                if window.styleMask.contains(.borderless) { continue }
-                self.settingsWindow = window
-                window.delegate = self
-                window.makeKeyAndOrderFront(nil)
-                return
-            }
-
-            let newWindow = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
-                styleMask: [.titled, .closable, .miniaturizable, .resizable],
-                backing: .buffered,
-                defer: false
-            )
-            newWindow.contentView = NSHostingView(rootView: SettingsView())
-            newWindow.title = "MeetingNotifier Settings"
-            newWindow.isReleasedWhenClosed = false
-            newWindow.center()
-            newWindow.makeKeyAndOrderFront(nil)
-
-            self.settingsWindow = newWindow
-            newWindow.delegate = self
+        if let existingWindow = settingsWindow {
+            existingWindow.makeKeyAndOrderFront(nil)
+            existingWindow.orderFrontRegardless()
+            return
         }
+
+        for window in NSApp.windows {
+            if window.styleMask.contains(.borderless) { continue }
+            settingsWindow = window
+            window.delegate = self
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+            return
+        }
+
+        let newWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        newWindow.contentView = NSHostingView(rootView: SettingsView())
+        newWindow.title = "MeetingNotifier Settings"
+        newWindow.isReleasedWhenClosed = false
+        newWindow.center()
+        newWindow.makeKeyAndOrderFront(nil)
+        newWindow.orderFrontRegardless()
+
+        settingsWindow = newWindow
+        newWindow.delegate = self
     }
 }
 
@@ -302,7 +299,6 @@ extension AppDelegate: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         if let window = notification.object as? NSWindow, window == settingsWindow {
             settingsWindow = nil
-            NSApp.setActivationPolicy(.accessory)
         }
     }
 }
