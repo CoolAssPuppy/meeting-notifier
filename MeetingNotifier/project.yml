@@ -35,7 +35,7 @@ targets:
         NSScreenCaptureUsageDescription: "MeetingNotifier captures system audio to transcribe what other meeting participants say."
         LSApplicationCategoryType: "public.app-category.productivity"
         SUFeedURL: "https://coolasspuppy.com/meeting-notifier-updates"
-        SUPublicEDKey: "PASTE_BASE64_PUBLIC_KEY_HERE"
+        SUPublicEDKey: "V0ppFFCAZx+/Q+9ndF8BdFPpDdUPagRw4Bcp8rLu9Go="
         SUEnableAutomaticChecks: true
     entitlements:
       path: MeetingNotifier/MeetingNotifier.entitlements

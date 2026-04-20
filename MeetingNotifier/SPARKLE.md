@@ -46,7 +46,7 @@ It will:
   -x ~/meeting-notifier-sparkle-private.pem
 ```
 
-The contents of `~/meeting-notifier-sparkle-private.pem` are stored in **Doppler** under `agent-server/prd` as `MEETING_NOTIFIER_SPARKLE_PRIVATE_KEY`.
+The contents of `~/meeting-notifier-sparkle-private.pem` are stored in **Doppler** under `meeting-notifier/dev` as `SPARKLE_PRIVATE_KEY`. (This is a different Doppler project from mail-notifier so the two keys don't collide.)
 
 After confirming the secret is in Doppler, wipe the local file:
 
@@ -57,8 +57,8 @@ rm -P ~/meeting-notifier-sparkle-private.pem
 ### Restoring the private key on a new machine
 
 ```bash
-doppler secrets get MEETING_NOTIFIER_SPARKLE_PRIVATE_KEY \
-  --project agent-server --config prd --plain \
+doppler secrets get SPARKLE_PRIVATE_KEY \
+  --project meeting-notifier --config dev --plain \
   > /tmp/meeting-notifier-sparkle-private.pem
 
 ~/Library/Developer/Xcode/DerivedData/MeetingNotifier-*/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys \
