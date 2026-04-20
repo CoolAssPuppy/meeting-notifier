@@ -98,11 +98,13 @@ xcodebuild -project "$REPO_ROOT/MeetingNotifier.xcodeproj" \
   -scheme MeetingNotifier \
   -configuration Release \
   -archivePath "$ARCHIVE" \
+  -allowProvisioningUpdates \
   archive | xcpretty 2>/dev/null || \
 xcodebuild -project "$REPO_ROOT/MeetingNotifier.xcodeproj" \
   -scheme MeetingNotifier \
   -configuration Release \
   -archivePath "$ARCHIVE" \
+  -allowProvisioningUpdates \
   archive >/dev/null
 
 #----------------------------------------------------------------------
@@ -114,7 +116,8 @@ echo "==> Exporting .app"
 xcodebuild -exportArchive \
   -archivePath "$ARCHIVE" \
   -exportPath "$EXPORT_DIR" \
-  -exportOptionsPlist "$SCRIPTS/export-options.plist" >/dev/null
+  -exportOptionsPlist "$SCRIPTS/export-options.plist" \
+  -allowProvisioningUpdates >/dev/null
 
 APP_PATH="$EXPORT_DIR/MeetingNotifier.app"
 if [ ! -d "$APP_PATH" ]; then

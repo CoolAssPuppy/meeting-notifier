@@ -5,5 +5,23 @@
     <link>https://hlwjnusdotqtmtwrjidu.supabase.co/storage/v1/object/public/downloads/meeting-notifier-appcast.xml</link>
     <description>MeetingNotifier updates</description>
     <language>en</language>
+    <item>
+      <title>Version 1.2.0</title>
+      <pubDate>Mon, 20 Apr 2026 19:21:31 +0000</pubDate>
+      <sparkle:version>4</sparkle:version>
+      <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul>
+          <li>First standalone release outside the Mac App Store, with automatic updates via Sparkle.</li><li>New calendar-style app icon.</li><li>Security hardening: strict meeting-link host allowlist, per-device keychain accessibility for OAuth tokens, and stricter permissions on the crash-recovery transcript.</li><li>No more Dock icon when Settings is open.</li>
+        </ul>
+      ]]></description>
+      <enclosure
+        url="https://hlwjnusdotqtmtwrjidu.supabase.co/storage/v1/object/public/downloads/MeetingNotifier-1.2.0.dmg"
+        sparkle:edSignature="MkVL+2cOhYaq+z84pWMhnwRCXyf2cISSquLu0yxq8P7KcPSaUtU/RUaj5WQQRZ4a4/Az+MI6wSrI1d4H5YdkAg=="
+        length="3358867"
+        type="application/x-apple-diskimage" />
+    </item>
+
   </channel>
 </rss>
