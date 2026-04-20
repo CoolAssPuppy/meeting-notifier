@@ -48,6 +48,7 @@ extension AppDelegate {
         menu.addItem(separatorAboveSettings)
 
         menu.addItem(withTitle: NSLocalizedString("Settings...", comment: ""), action: #selector(openSettings), keyEquivalent: "")
+        menu.addItem(withTitle: NSLocalizedString("Check for Updates…", comment: ""), action: #selector(checkForUpdates), keyEquivalent: "")
         menu.addItem(NSMenuItem.separator())
         menu.addItem(withTitle: NSLocalizedString("Quit MeetingNotifier", comment: ""), action: #selector(NSApp.terminate(_:)), keyEquivalent: "")
 

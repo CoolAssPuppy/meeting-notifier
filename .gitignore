@@ -54,3 +54,10 @@ MeetingNotifier/screenshots/
 
 # Archives
 *.xcarchive
+
+# Release artifacts (MeetingNotifier/dist/appcast.xml is the canonical record and is kept)
+MeetingNotifier/dist/*.dmg
+MeetingNotifier/dist/*.sparkle.txt
+MeetingNotifier/dist/*.xcarchive/
+MeetingNotifier/dist/export-*/
+MeetingNotifier/dist/debug/

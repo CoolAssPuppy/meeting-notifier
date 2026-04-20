@@ -28,6 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         _ = LocationManager.shared
         _ = MeetingDetector.shared
         _ = TranscriptionCoordinator.shared
+        _ = UpdaterManager.shared
 
         #if DEBUG
         if CommandLine.arguments.contains("--uitesting") {
@@ -243,6 +244,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    // MARK: - Updater
+
+    @objc func checkForUpdates() {
+        UpdaterManager.shared.checkForUpdates()
     }
 
     // MARK: - Settings window

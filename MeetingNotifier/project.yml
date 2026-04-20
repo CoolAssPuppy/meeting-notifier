@@ -7,6 +7,9 @@ packages:
   AppAuth:
     url: https://github.com/openid/AppAuth-iOS
     from: 1.6.0
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
 targets:
   MeetingNotifier:
     type: application
@@ -31,20 +34,15 @@ targets:
         NSSpeechRecognitionUsageDescription: "MeetingNotifier uses speech recognition to transcribe your meetings into notes."
         NSScreenCaptureUsageDescription: "MeetingNotifier captures system audio to transcribe what other meeting participants say."
         LSApplicationCategoryType: "public.app-category.productivity"
+        SUFeedURL: "https://coolasspuppy.com/meeting-notifier-updates"
+        SUPublicEDKey: "PASTE_BASE64_PUBLIC_KEY_HERE"
+        SUEnableAutomaticChecks: true
     entitlements:
       path: MeetingNotifier/MeetingNotifier.entitlements
       properties:
-        com.apple.developer.aps-environment: development
-        com.apple.developer.icloud-container-identifiers:
-          - iCloud.com.strategicnerds.meetingnotifier
-        com.apple.developer.icloud-services:
-          - CloudKit
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
         keychain-access-groups:
           - $(AppIdentifierPrefix)com.strategicnerds.meetingnotifier
-        com.apple.security.device.audio-input: true
-        com.apple.security.device.camera: true
-        com.apple.security.network.client: true
     settings:
       base:
         PRODUCT_NAME: MeetingNotifier
@@ -60,9 +58,11 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 955GSY56UT
         ENABLE_HARDENED_RUNTIME: YES
+        ENABLE_APP_SANDBOX: NO
         ENABLE_APP_INTENTS_METADATA_GENERATION: NO
     dependencies:
       - package: AppAuth
+      - package: Sparkle
       - sdk: AppIntents.framework
 
   MeetingNotifierTests:
