@@ -19,7 +19,24 @@ extension AppSettings {
             object: iCloudStore
         )
 
+        verifyiCloudAvailability()
         iCloudStore.synchronize()
+    }
+
+    /// Writes a sentinel key and reports whether the ubiquity KV store is
+    /// actually provisioned. A `false` from `synchronize()` means either the
+    /// user is signed out of iCloud or the app's provisioning profile is
+    /// missing the Key-Value Storage capability. See SPARKLE.md for how to
+    /// enable it in the Apple Developer portal.
+    private func verifyiCloudAvailability() {
+        let probeKey = "__kvstore_probe_last_launch"
+        iCloudStore.set(Date().timeIntervalSince1970, forKey: probeKey)
+        let persisted = iCloudStore.synchronize()
+        if persisted {
+            Logger.sync.info("iCloud KV store is provisioned and reachable")
+        } else {
+            Logger.sync.error("iCloud KV store NOT provisioned — check entitlement and Apple Developer portal Key-Value Storage capability")
+        }
     }
 
     func syncAllSettingsFromiCloudToUserDefaults() {

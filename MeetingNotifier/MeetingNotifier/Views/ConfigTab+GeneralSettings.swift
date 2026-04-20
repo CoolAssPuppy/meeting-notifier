@@ -147,7 +147,7 @@ extension ConfigTab {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            Text("Build \(appBuildNumber)")
+            Text("Version \(appVersion)")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
@@ -156,9 +156,9 @@ extension ConfigTab {
         }
     }
 
-    var appBuildNumber: String {
-        if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-            return build
+    var appVersion: String {
+        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+            return version
         }
         return "Unknown"
     }

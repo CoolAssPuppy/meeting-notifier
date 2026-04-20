@@ -184,6 +184,25 @@ If the check says "You're up to date", something is off:
 
 If the download fails signature verification, the Ed25519 key in Keychain doesn't match `SUPublicEDKey` in the shipped `Info.plist`, or the DMG was modified after `sign_update` ran.
 
+## iCloud Key-Value Storage (one-time)
+
+Settings and the account list sync across your Macs via `NSUbiquitousKeyValueStore`. Under App Store distribution this worked automatically. Under Developer ID you need to enable the capability once in the Apple Developer portal so it flows into the provisioning profile.
+
+1. Open https://developer.apple.com/account/resources/identifiers/list
+2. Click the `com.strategicnerds.meetingnotifier` identifier.
+3. In **App Services**, enable **iCloud** and click **Configure**.
+4. Tick **Key-Value Storage**. Leave **CloudKit** off — this app doesn't use it.
+5. Save. Apple regenerates the associated provisioning profile.
+6. Run `xcodegen generate` then `./scripts/debug.sh` once so automatic signing pulls the new profile down.
+
+To verify it worked, launch the app and watch the log:
+
+```bash
+log stream --predicate 'subsystem == "com.strategicnerds.meetingnotifier" AND category == "sync"' --info --debug
+```
+
+You should see `iCloud KV store is provisioned and reachable` on every launch. If it says `NOT provisioned`, either the portal step didn't propagate to the profile, or the user is signed out of iCloud.
+
 ## Notes
 
 - Do not amend released `<item>` entries. If you ship a bad build, bump the version again.
