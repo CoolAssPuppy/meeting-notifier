@@ -3,8 +3,10 @@ import SwiftUI
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
+    static weak var shared: AppDelegate?
+
     var statusItem: NSStatusItem?
-    private var settingsWindow: NSWindow?
+    var settingsWindow: NSWindow?
     private var popover: NSPopover?
     var nativeMenu: NSMenu?
     private var menuBarUpdateTimer: Timer?
@@ -13,8 +15,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var transcriptionBannerPanel: TranscriptionBannerPanel?
     var isRecordingIndicatorActive = false
 
+    override init() {
+        super.init()
+        AppDelegate.shared = self
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Recover any transcript from a prior crash before anything else
         TranscriptionCoordinator.recoverTranscriptIfNeeded()
 
         setupMenuBar()
@@ -92,22 +98,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Dropdown toggle
 
-    @objc private func toggleDropdown() {
-        guard let button = statusItem?.button else { return }
-
-        if AppSettings.shared.dropDownStyle == .simple {
-            if let menu = nativeMenu {
-                updateNativeMenu(menu)
-                applySystemAppearance(to: menu)
-                menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 5), in: button)
-            }
-        } else {
-            if popover?.isShown == true {
-                closePopover()
-            } else {
-                showPopover()
-            }
-        }
+    @objc func toggleDropdown() {
+        togglePopover()
     }
 
     @objc private func handleAccountsDidUpdate() {
@@ -128,20 +120,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func menuBarButtonClicked() {
-        guard let button = statusItem?.button else { return }
+        togglePopover()
+    }
 
-        if AppSettings.shared.dropDownStyle == .simple {
-            if let menu = nativeMenu {
-                updateNativeMenu(menu)
-                applySystemAppearance(to: menu)
-                menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 5), in: button)
-            }
+    private func togglePopover() {
+        guard statusItem?.button != nil else { return }
+        if popover?.isShown == true {
+            closePopover()
         } else {
-            if popover?.isShown == true {
-                closePopover()
-            } else {
-                showPopover()
-            }
+            showPopover()
         }
     }
 
@@ -158,7 +145,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         startMonitoringForClicksOutsidePopover()
     }
 
-    private func closePopover() {
+    func closePopover() {
         popover?.performClose(nil)
         stopMonitoringForClicksOutsidePopover()
     }
@@ -201,7 +188,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         openSettings()
     }
 
-    @objc private func addAccount() {
+    @objc func addAccount() {
         let alert = NSAlert()
         alert.messageText = "Add Account"
         alert.informativeText = "Choose the type of account to add:"
@@ -218,7 +205,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func addGoogleAccount() {
+    @objc func addGoogleAccount() {
         AuthManager.shared.addGoogleAccount { result in
             Task { @MainActor in
                 if case .failure(let error) = result {
@@ -232,7 +219,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func addMicrosoftAccount() {
+    @objc func addMicrosoftAccount() {
         AuthManager.shared.addMicrosoftAccount { result in
             Task { @MainActor in
                 if case .failure(let error) = result {
@@ -246,18 +233,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func reauthorizeAccount(_ account: CalendarAccount) {
+        switch account.provider {
+        case .google:
+            addGoogleAccount()
+        case .microsoft:
+            addMicrosoftAccount()
+        }
+    }
+
     // MARK: - Updater
 
     @objc func checkForUpdates() {
         UpdaterManager.shared.checkForUpdates()
     }
 
-    // MARK: - Settings window
+    // MARK: - Settings / transcription drawers
 
     @objc func openSettings() {
-        // Stay an accessory (menu-bar-only) app. We briefly promote to prohibited
-        // and back to force AppKit to front the settings window from a true
-        // background state without adding a Dock icon.
+        showMainWindow()
+        DrawerState.shared.open(.settings)
+    }
+
+    func openTranscriptionDrawer() {
+        showMainWindow()
+        DrawerState.shared.open(.transcription)
+    }
+
+    private func showMainWindow() {
         NSApp.activate(ignoringOtherApps: true)
 
         if let existingWindow = settingsWindow {
@@ -266,24 +269,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        for window in NSApp.windows {
-            if window.styleMask.contains(.borderless) { continue }
-            settingsWindow = window
-            window.delegate = self
-            window.makeKeyAndOrderFront(nil)
-            window.orderFrontRegardless()
-            return
-        }
-
         let newWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            contentRect: NSRect(x: 0, y: 0, width: 920, height: 620),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
-        newWindow.contentView = NSHostingView(rootView: SettingsView())
-        newWindow.title = "MeetingNotifier Settings"
+        newWindow.contentView = NSHostingView(rootView: MainView())
+        newWindow.title = "Meeting Notifier"
+        newWindow.titlebarAppearsTransparent = true
+        newWindow.titleVisibility = .hidden
+        newWindow.isMovableByWindowBackground = true
         newWindow.isReleasedWhenClosed = false
+        newWindow.minSize = NSSize(width: 880, height: 580)
         newWindow.center()
         newWindow.makeKeyAndOrderFront(nil)
         newWindow.orderFrontRegardless()

@@ -2,7 +2,7 @@
 //  AppDelegate+TranscriptionBanner.swift
 //  MeetingNotifier
 //
-//  Copyright (c) 2025 Strategic Nerds. All rights reserved.
+//  Copyright (c) 2026 Strategic Nerds. All rights reserved.
 //
 
 import AppKit
@@ -17,11 +17,29 @@ extension AppDelegate {
         let shouldTintIcon = mode == .changeIconColor || mode == .both
 
         if shouldShowDropdown, transcriptionBannerPanel == nil {
-            let panel = TranscriptionBannerPanel(onStop: { [weak self] in
-                Task { @MainActor in
-                    await TranscriptionCoordinator.shared.stopTranscription()
+            let panel = TranscriptionBannerPanel(
+                onPause: {
+                    Task { @MainActor in
+                        TranscriptionCoordinator.shared.pauseTranscription()
+                    }
+                },
+                onResume: {
+                    Task { @MainActor in
+                        TranscriptionCoordinator.shared.resumeTranscription()
+                    }
+                },
+                onStop: {
+                    Task { @MainActor in
+                        await TranscriptionCoordinator.shared.stopTranscription()
+                    }
                 }
-            })
+            )
+
+            let current = TranscriptionCoordinator.shared.currentDocument?.meetingTitle
+            panel.configure(
+                meetingTitle: current,
+                engineLabel: AppSettings.shared.transcriptionEngine.displayName
+            )
 
             panel.orderFrontRegardless()
             transcriptionBannerPanel = panel

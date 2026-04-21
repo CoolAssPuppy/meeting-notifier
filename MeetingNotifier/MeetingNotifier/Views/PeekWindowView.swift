@@ -1,3 +1,10 @@
+//
+//  PeekWindowView.swift
+//  MeetingNotifier
+//
+//  Copyright (c) 2026 Strategic Nerds. All rights reserved.
+//
+
 import SwiftUI
 import AppKit
 
@@ -7,144 +14,97 @@ struct PeekWindowView: View {
     let onTap: () -> Void
     let onClose: () -> Void
 
+    @ObservedObject private var themeStore = ThemeStore.shared
+
     var body: some View {
-        HStack(spacing: 0) {
+        let theme = themeStore.palette
+        return Group {
             if let meeting = meeting {
-                // Close button on the left
-                Button(action: onClose) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary.opacity(0.5))
-                }
-                .buttonStyle(.plain)
-                .padding(.leading, 12)
-                .padding(.trailing, 8)
-                .help("Close")
-
-                // Meeting info - matches menu bar display
-                Button(action: onTap) {
-                    HStack(spacing: 6) {
-                        // Icon (if enabled)
-                        if settings.menuBarShowIcon {
-                            if let iconImage = getIconImage(for: meeting) {
-                                Image(nsImage: iconImage)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 16, height: 16)
-                            } else {
-                                Text(getIconEmoji(for: meeting))
-                                    .font(.system(size: 14))
-                            }
-                        }
-
-                        // Time (if enabled)
-                        if settings.menuBarShowTime {
-                            Text(meeting.formattedTime)
-                                .font(.system(size: 13))
-                        }
-
-                        // Countdown (if enabled)
-                        if settings.menuBarShowCountdown {
-                            Text(meeting.timeUntilStart)
-                                .font(.system(size: 13))
-                                .foregroundColor(.secondary)
-                        }
-
-                        // Title (if enabled)
-                        if settings.menuBarShowTitle {
-                            Text(truncateTitle(meeting.title, maxLength: 30))
-                                .font(.system(size: 13))
-                                .lineLimit(1)
-                        }
-
-                        // Show default if nothing is configured
-                        if !settings.menuBarShowIcon && !settings.menuBarShowTitle &&
-                           !settings.menuBarShowTime && !settings.menuBarShowCountdown {
-                            Image(systemName: "calendar")
-                                .font(.system(size: 14))
-                        }
-                    }
-                    .foregroundColor(.primary)
-                }
-                .buttonStyle(.plain)
-                .padding(.trailing, 12)
-                .contentShape(Rectangle())
+                content(meeting: meeting, theme: theme)
+            } else {
+                EmptyView()
             }
         }
+        .environment(\.theme, theme)
+        .environment(\.colorScheme, theme.isDark ? .dark : .light)
+    }
+
+    @ViewBuilder
+    private func content(meeting: CalendarEvent, theme: ThemePalette) -> some View {
+        HStack(spacing: 10) {
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(theme.tertiary)
+                    .frame(width: 16, height: 16)
+                    .background(
+                        Circle().fill(theme.cardInset)
+                    )
+                    .overlay(Circle().strokeBorder(theme.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .help("Dismiss")
+
+            countdownPill(meeting: meeting, theme: theme)
+
+            Button(action: onTap) {
+                Text(meeting.title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(theme.foreground)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: 210, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+
+            Button(action: onTap) {
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(theme.primaryForeground)
+                    .frame(width: 20, height: 20)
+                    .background(
+                        Circle().fill(
+                            LinearGradient(colors: [theme.primary, theme.primaryDeep],
+                                           startPoint: .topLeading, endPoint: .bottomTrailing)
+                        )
+                    )
+            }
+            .buttonStyle(.plain)
+            .help(meeting.hasVideoLink ? "Join meeting" : "Open meeting")
+        }
+        .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .frame(minWidth: 150)
         .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(.regularMaterial)
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(theme.surface.opacity(0.94))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(theme.border, lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.4), radius: 10, y: 4)
     }
 
-    private func getIconImage(for event: CalendarEvent) -> NSImage? {
-        guard let platform = event.videoPlatform else { return nil }
-
-        switch platform {
-        case .meet:
-            if let imagePath = Bundle.main.path(forResource: "meet", ofType: "png"),
-               let image = NSImage(contentsOfFile: imagePath) {
-                image.size = NSSize(width: 16, height: 16)
-                return image
-            }
-        case .zoom:
-            if let imagePath = Bundle.main.path(forResource: "zoom", ofType: "png"),
-               let image = NSImage(contentsOfFile: imagePath) {
-                image.size = NSSize(width: 16, height: 16)
-                return image
-            }
-        case .teams:
-            if let imagePath = Bundle.main.path(forResource: "teams", ofType: "png"),
-               let image = NSImage(contentsOfFile: imagePath) {
-                image.size = NSSize(width: 16, height: 16)
-                return image
-            }
-        case .webex:
-            break
+    @ViewBuilder
+    private func countdownPill(meeting: CalendarEvent, theme: ThemePalette) -> some View {
+        let color: Color = meeting.isHappening ? theme.destructive : theme.warning
+        let label: String = {
+            if meeting.isHappening { return "LIVE" }
+            let m = max(0, Int(meeting.startDate.timeIntervalSinceNow / 60))
+            if m < 60 { return "\(m) MIN" }
+            return "\(m / 60) H"
+        }()
+        HStack(spacing: 4) {
+            Image(systemName: meeting.isHappening ? "dot.radiowaves.left.and.right" : "clock")
+                .font(.system(size: 9, weight: .bold))
+            Text(label)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(0.3)
         }
-
-        return nil
-    }
-
-    private func getIconEmoji(for event: CalendarEvent) -> String {
-        if let platform = event.videoPlatform {
-            switch platform {
-            case .meet:
-                return "📞"
-            case .zoom:
-                return "💻"
-            case .teams:
-                return "👥"
-            case .webex:
-                return "📹"
-            }
-        }
-        return "📅"
-    }
-
-    private func truncateTitle(_ title: String, maxLength: Int) -> String {
-        if title.count <= maxLength {
-            return title
-        }
-        let index = title.index(title.startIndex, offsetBy: maxLength - 3)
-        return String(title[..<index]) + "..."
-    }
-}
-
-struct PeekWindowView_Previews: PreviewProvider {
-    static var previews: some View {
-        PeekWindowView(
-            meeting: nil,
-            settings: AppSettings.shared,
-            onTap: {},
-            onClose: {}
-        )
+        .foregroundStyle(color)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(color.opacity(0.14)))
+        .overlay(Capsule().strokeBorder(color.opacity(0.35), lineWidth: 1))
     }
 }

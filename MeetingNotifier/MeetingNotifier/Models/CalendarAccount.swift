@@ -37,9 +37,13 @@ struct CalendarAccount: Codable, Identifiable, Hashable {
     var selectedCalendarIds: Set<String> = []
     var authStatus: AuthStatus = .valid
     var lastAuthError: Date?
+    var friendlyName: String?
 
+    /// Shown wherever the user sees the account (sidebar, header, etc).
+    /// Falls back to the raw email until the user sets a friendly name.
     var displayName: String {
-        email
+        let trimmed = friendlyName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? email : trimmed
     }
 
     var providerName: String {

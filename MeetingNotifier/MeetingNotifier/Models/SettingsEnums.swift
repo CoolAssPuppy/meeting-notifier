@@ -118,20 +118,3 @@ enum DoubleBookingPreference: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Dropdown style
-
-enum DropDownStyle: String, CaseIterable, Identifiable {
-    case simple = "Simple"
-    case glass = "Glass"
-
-    var id: String { rawValue }
-
-    var description: String {
-        switch self {
-        case .simple:
-            return "Clean, minimal Apple-style design"
-        case .glass:
-            return "Modern glassmorphic design with effects"
-        }
-    }
-}

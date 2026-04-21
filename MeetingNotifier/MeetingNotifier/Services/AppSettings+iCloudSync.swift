@@ -46,7 +46,6 @@ extension AppSettings {
             "menuBarShowIcon", "menuBarShowTitle", "menuBarShowTime", "menuBarShowCountdown",
             "menuBarThresholdMinutes", "showAllDayInMenuBar", "showMeetingCountBadge",
             "showTravelTimeAlerts", "defaultTravelMode", "preferredMapProvider", "doubleBookingPreference",
-            "dropDownStyle",
             "transcriptionIndicatorMode",
             "calendarSubfoldersEnabled", "calendarSubfolderMappings",
             "notetakerEnabled", "autoOfferTranscription", "transcriptionEngine",
@@ -162,10 +161,6 @@ extension AppSettings {
         if keys.contains("doubleBookingPreference") {
             let raw = UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
             doubleBookingPreference = DoubleBookingPreference(rawValue: raw) ?? .fewerAttendees
-        }
-        if keys.contains("dropDownStyle") {
-            let raw = UserDefaults.standard.string(forKey: "dropDownStyle") ?? DropDownStyle.simple.rawValue
-            dropDownStyle = DropDownStyle(rawValue: raw) ?? .simple
         }
         if keys.contains("transcriptionIndicatorMode") {
             let raw = UserDefaults.standard.string(forKey: "transcriptionIndicatorMode") ?? TranscriptionIndicatorMode.menuBarDropdown.rawValue

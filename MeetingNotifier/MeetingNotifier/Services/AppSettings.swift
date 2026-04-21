@@ -106,10 +106,6 @@ class AppSettings: ObservableObject {
         didSet { saveSetting(doubleBookingPreference.rawValue, forKey: "doubleBookingPreference") }
     }
 
-    @Published var dropDownStyle: DropDownStyle {
-        didSet { saveSetting(dropDownStyle.rawValue, forKey: "dropDownStyle") }
-    }
-
     @Published var customCalendarColors: [String: [String: String]] {
         didSet { saveCustomCalendarColors() }
     }
@@ -286,10 +282,6 @@ class AppSettings: ObservableObject {
         let doubleBookingRaw = iCloudStore.string(forKey: "doubleBookingPreference")
             ?? UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
         self.doubleBookingPreference = DoubleBookingPreference(rawValue: doubleBookingRaw) ?? .fewerAttendees
-
-        let dropDownStyleRaw = iCloudStore.string(forKey: "dropDownStyle")
-            ?? UserDefaults.standard.string(forKey: "dropDownStyle") ?? DropDownStyle.simple.rawValue
-        self.dropDownStyle = DropDownStyle(rawValue: dropDownStyleRaw) ?? .simple
 
         self.customCalendarColors = [:]
 
