@@ -43,7 +43,7 @@ struct Sidebar: View {
                 Text("Meeting Notifier")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(theme.foreground)
-                Text(appVersionLine)
+                Text(configuredLine)
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(theme.tertiary)
             }
@@ -51,8 +51,9 @@ struct Sidebar: View {
         }
     }
 
-    private var appVersionLine: String {
-        "v\(Bundle.main.appVersionString)"
+    private var configuredLine: String {
+        let count = appSettings.accounts.count
+        return "\(count) configured"
     }
 
     private var sectionLabel: some View {
