@@ -14,7 +14,6 @@ struct AccountView: View {
     @Environment(\.theme) private var theme
 
     @State private var calendars: [CalendarInfo] = []
-    @State private var isLoadingCalendars = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -68,12 +67,8 @@ struct AccountView: View {
     }
 
     private func loadCalendars() async {
-        isLoadingCalendars = true
         let fetched = await CalendarDataManager.shared.fetchCalendarsForAccount(account)
-        await MainActor.run {
-            self.calendars = fetched
-            self.isLoadingCalendars = false
-        }
+        await MainActor.run { self.calendars = fetched }
     }
 
     // MARK: - Header

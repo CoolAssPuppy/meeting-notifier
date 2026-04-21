@@ -9,10 +9,7 @@ import SwiftUI
 
 /// Menu-bar popover. One unified theme-driven design.
 struct CalendarDropdownView: View {
-    @ObservedObject private var dataManager = CalendarDataManager.shared
-    @ObservedObject private var appSettings = AppSettings.shared
     @ObservedObject private var themeStore = ThemeStore.shared
-    @ObservedObject private var transcription = TranscriptionCoordinator.shared
 
     var body: some View {
         let theme = themeStore.palette
@@ -504,14 +501,7 @@ struct ThemeStrip: View {
                     )
             }
         } else {
-            let palette = option.palette
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [palette.primary, palette.primaryDeep],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                )
+            Circle().fill(option.palette.primaryGradient)
         }
     }
 }
