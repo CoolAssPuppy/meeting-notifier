@@ -33,6 +33,13 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
         return startDate <= now && endDate > now
     }
 
+    /// Whole minutes between now and this event's start. Negative values
+    /// clamp to nil so callers can short-circuit "upcoming" checks.
+    var minutesUntilStart: Int? {
+        let m = Int(startDate.timeIntervalSinceNow / 60)
+        return m >= 0 ? m : nil
+    }
+
     var timeUntilStart: String {
         let now = Date()
         let interval = startDate.timeIntervalSince(now)

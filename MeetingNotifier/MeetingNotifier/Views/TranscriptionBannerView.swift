@@ -61,8 +61,7 @@ struct TranscriptionBannerView: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(outlineColor(theme: theme), lineWidth: 1.5)
                 .opacity(outlineOpacity)
-                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true),
-                           value: viewModel.state == .paused)
+                .animation(.easeInOut(duration: 0.45), value: viewModel.pulsePhase)
         )
         .shadow(color: Color.black.opacity(0.45), radius: 14, y: 6)
         .overlay(

@@ -79,25 +79,17 @@ private struct PopoverHeader: View {
     @ViewBuilder
     private var nextMeetingPill: some View {
         if let next = dataManager.events.first(where: { $0.startDate > Date() }) {
-            let minutes = max(0, Int(next.startDate.timeIntervalSinceNow / 60))
-            let text = minutes < 60 ? "IN \(minutes) MIN" : "IN \(minutes / 60) H"
-            HStack(spacing: 5) {
-                Image(systemName: "clock")
-                    .font(.system(size: 9, weight: .bold))
-                Text(text)
-                    .font(.system(size: 10, weight: .bold))
-                    .tracking(0.4)
-            }
-            .foregroundStyle(theme.warning)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 4)
-            .background(
-                Capsule().fill(theme.warning.opacity(0.12))
-            )
-            .overlay(
-                Capsule().strokeBorder(theme.warning.opacity(0.3), lineWidth: 1)
+            AppStatusPill(
+                text: countdownText(until: next.startDate),
+                systemImage: "clock",
+                style: .tinted(theme.warning)
             )
         }
+    }
+
+    private func countdownText(until date: Date) -> String {
+        let minutes = max(0, Int(date.timeIntervalSinceNow / 60))
+        return minutes < 60 ? "IN \(minutes) MIN" : "IN \(minutes / 60) H"
     }
 }
 
@@ -127,7 +119,7 @@ private struct PopoverBody: View {
                 let tomorrow = dataManager.tomorrowEvents()
 
                 if !today.isEmpty {
-                    MeetingSectionLabel(title: "Today · \(shortDate(Date()))",
+                    MeetingSectionLabel(title: "Today · \(Date().headerDateString)",
                                         trailing: lastUpdatedText)
                     ForEach(today) { event in
                         MeetingRow(event: event, onTap: { handleTap(event) })
@@ -135,7 +127,7 @@ private struct PopoverBody: View {
                 }
 
                 if !tomorrow.isEmpty {
-                    MeetingSectionLabel(title: "Tomorrow · \(shortDate(Date().addingTimeInterval(86_400)))",
+                    MeetingSectionLabel(title: "Tomorrow · \(Date().addingTimeInterval(86_400).headerDateString)",
                                         trailing: nil)
                     ForEach(tomorrow) { event in
                         MeetingRow(event: event, onTap: { handleTap(event) })
@@ -150,15 +142,7 @@ private struct PopoverBody: View {
 
     private var lastUpdatedText: String? {
         guard let last = dataManager.lastRefreshDate else { return nil }
-        let df = DateFormatter()
-        df.dateFormat = "H:mm"
-        return "Updated \(df.string(from: last))"
-    }
-
-    private func shortDate(_ date: Date) -> String {
-        let df = DateFormatter()
-        df.dateFormat = "EEE MMM d"
-        return df.string(from: date).uppercased()
+        return "Updated \(last.shortTimeString)"
     }
 
     private func handleTap(_ event: CalendarEvent) {
@@ -225,7 +209,7 @@ private struct MeetingRow: View {
             .background(theme.card)
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                    .strokeBorder(borderColor, lineWidth: isHovered ? 1 : 1)
+                    .strokeBorder(borderColor, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous))
         }
@@ -259,24 +243,10 @@ private struct MeetingRow: View {
     @ViewBuilder
     private var statusBadge: some View {
         if event.isHappening {
-            badge(text: "LIVE", color: theme.destructive, pulse: true)
+            AppStatusPill(text: "LIVE", style: .tinted(theme.destructive), pulse: true)
         } else if let minutes = minutesUntil, minutes <= 15 {
-            badge(text: "IN \(minutes) MIN", color: theme.warning, pulse: false)
+            AppStatusPill(text: "IN \(minutes) MIN", style: .tinted(theme.warning))
         }
-    }
-
-    private func badge(text: String, color: Color, pulse: Bool) -> some View {
-        HStack(spacing: 5) {
-            PulsingDot(color: color, active: pulse)
-            Text(text)
-                .font(.system(size: 9, weight: .bold))
-                .tracking(0.6)
-                .foregroundStyle(color)
-        }
-        .padding(.horizontal, 7)
-        .padding(.vertical, 3)
-        .background(Capsule().fill(color.opacity(0.15)))
-        .overlay(Capsule().strokeBorder(color.opacity(0.4), lineWidth: 1))
     }
 
     private var metaRow: some View {
@@ -298,14 +268,11 @@ private struct MeetingRow: View {
     }
 
     private var timeRange: String {
-        let df = DateFormatter()
-        df.dateFormat = "H:mm"
-        return "\(df.string(from: event.startDate)) – \(df.string(from: event.endDate))"
+        "\(event.startDate.shortTimeString) – \(event.endDate.shortTimeString)"
     }
 
     private var minutesUntil: Int? {
-        let m = Int(event.startDate.timeIntervalSinceNow / 60)
-        return m >= 0 ? m : nil
+        event.minutesUntilStart
     }
 }
 
@@ -360,32 +327,6 @@ private struct LocationChip: View {
         .padding(.vertical, 6)
         .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(theme.cardInset))
         .overlay(RoundedRectangle(cornerRadius: AppRadius.md).strokeBorder(theme.border, lineWidth: 1))
-    }
-}
-
-// MARK: - Pulsing dot
-
-struct PulsingDot: View {
-    let color: Color
-    var active: Bool = true
-    @State private var phase: Double = 0
-
-    var body: some View {
-        Circle()
-            .fill(color)
-            .frame(width: 6, height: 6)
-            .overlay(
-                Circle()
-                    .stroke(color.opacity(active ? 0.5 * (1 - phase) : 0), lineWidth: 2)
-                    .scaleEffect(1 + phase * 1.2)
-                    .opacity(active ? 1 : 0)
-            )
-            .onAppear {
-                guard active else { return }
-                withAnimation(.easeOut(duration: 1.2).repeatForever(autoreverses: false)) {
-                    phase = 1
-                }
-            }
     }
 }
 

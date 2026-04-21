@@ -188,13 +188,7 @@ struct AppPrimaryButton: View {
             .padding(.vertical, 8)
             .background(
                 Capsule(style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [theme.primary, theme.primaryDeep],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(theme.primaryGradient)
                     .opacity(isHovered ? 0.92 : 1.0)
             )
         }
@@ -270,13 +264,7 @@ struct BrandMark: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [theme.primary, theme.primaryDeep],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(theme.primaryGradient)
             Image(systemName: "calendar")
                 .font(.system(size: size * 0.54, weight: .semibold))
                 .foregroundStyle(theme.primaryForeground)
@@ -313,6 +301,167 @@ struct ProviderBadge: View {
             }
         }
         .frame(width: size, height: size)
+    }
+}
+
+// MARK: - Status pill (LIVE / IN 7 MIN / UP TO DATE / KEYCHAIN / OFF / etc.)
+
+/// Ambient style used when the pill is informational rather than semantic.
+enum AppStatusPillStyle {
+    case tinted(Color)
+    case neutral
+}
+
+struct AppStatusPill: View {
+    let text: String
+    var systemImage: String? = nil
+    var style: AppStatusPillStyle = .neutral
+    var pulse: Bool = false
+
+    @Environment(\.theme) private var theme
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if pulse, case .tinted(let color) = style {
+                PulsingDot(color: color, active: true)
+            } else if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.system(size: 9, weight: .bold))
+            }
+            Text(text)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(0.5)
+        }
+        .foregroundStyle(foreground)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(fill))
+        .overlay(Capsule().strokeBorder(border, lineWidth: 1))
+    }
+
+    private var foreground: Color {
+        switch style {
+        case .tinted(let c): return c
+        case .neutral:        return theme.tertiary
+        }
+    }
+
+    private var fill: Color {
+        switch style {
+        case .tinted(let c): return c.opacity(0.12)
+        case .neutral:        return theme.cardInset
+        }
+    }
+
+    private var border: Color {
+        switch style {
+        case .tinted(let c): return c.opacity(0.35)
+        case .neutral:        return theme.border
+        }
+    }
+}
+
+/// A pulsing colored dot used inside recording / LIVE badges. `active:false`
+/// skips the `repeatForever` animation so idle rows don't spin it on every
+/// render pass.
+struct PulsingDot: View {
+    let color: Color
+    var active: Bool = true
+    @State private var phase: Double = 0
+
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: 6, height: 6)
+            .overlay(
+                Circle()
+                    .stroke(color.opacity(active ? 0.5 * (1 - phase) : 0), lineWidth: 2)
+                    .scaleEffect(1 + phase * 1.2)
+                    .opacity(active ? 1 : 0)
+            )
+            .onAppear {
+                guard active else { return }
+                withAnimation(.easeOut(duration: 1.2).repeatForever(autoreverses: false)) {
+                    phase = 1
+                }
+            }
+    }
+}
+
+// MARK: - Drawer icon square
+
+struct DrawerIcon: View {
+    let systemName: String
+    @Environment(\.theme) private var theme
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: AppRadius.md)
+                .fill(theme.card)
+            RoundedRectangle(cornerRadius: AppRadius.md)
+                .strokeBorder(theme.borderStrong, lineWidth: 1)
+            Image(systemName: systemName)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(theme.primary)
+        }
+        .frame(width: 34, height: 34)
+    }
+}
+
+// MARK: - Close button (top-right on drawers)
+
+struct CloseButton: View {
+    let onClose: () -> Void
+    @Environment(\.theme) private var theme
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: onClose) {
+            Image(systemName: "xmark")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(theme.foreground)
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(isHovered ? theme.cardElevated : theme.card))
+                .overlay(Circle().strokeBorder(theme.borderStrong, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Inset input field chrome
+
+extension View {
+    /// Applies the standard inset field background used for TextField/SecureField
+    /// and read-only monospace display rows.
+    func appInsetField() -> some View {
+        modifier(AppInsetField())
+    }
+}
+
+private struct AppInsetField: ViewModifier {
+    @Environment(\.theme) private var theme
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(theme.cardInset))
+            .overlay(RoundedRectangle(cornerRadius: AppRadius.md).strokeBorder(theme.border, lineWidth: 1))
+    }
+}
+
+// MARK: - Primary gradient helper
+
+extension ThemePalette {
+    /// Canonical primary → primaryDeep gradient used by brand marks, primary
+    /// buttons, and theme swatches. Keeps the angle consistent across surfaces.
+    var primaryGradient: LinearGradient {
+        LinearGradient(
+            colors: [primary, primaryDeep],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 }
 

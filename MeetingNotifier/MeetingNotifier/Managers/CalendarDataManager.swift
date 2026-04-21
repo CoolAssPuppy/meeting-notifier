@@ -117,28 +117,49 @@ class CalendarDataManager: ObservableObject {
         isLoading = false
     }
 
-    func fetchCalendarsForAccount(_ account: CalendarAccount) async -> [CalendarInfo] {
+    /// Cache of per-account calendar lists. Populated by `fetchCalendarsForAccount`
+    /// and invalidated on refresh so repeated account switches in the main
+    /// window don't re-hit Google / Microsoft.
+    private var calendarCache: [String: [CalendarInfo]] = [:]
+
+    func fetchCalendarsForAccount(
+        _ account: CalendarAccount,
+        forceRefresh: Bool = false
+    ) async -> [CalendarInfo] {
+        if !forceRefresh, let cached = calendarCache[account.email] {
+            return cached
+        }
+
         do {
-            var calendars: [CalendarInfo]
+            let raw: [CalendarInfo]
             switch account.provider {
             case .google:
-                calendars = try await GoogleCalendarManager.shared.fetchCalendarList(forAccount: account)
+                raw = try await GoogleCalendarManager.shared.fetchCalendarList(forAccount: account)
             case .microsoft:
-                calendars = try await MicrosoftCalendarManager.shared.fetchCalendarList(forAccount: account)
+                raw = try await MicrosoftCalendarManager.shared.fetchCalendarList(forAccount: account)
             }
 
-            // Apply custom colors if available
-            return calendars.map { calendar in
-                if let customColor = AppSettings.shared.getCustomColor(forCalendar: calendar.id, account: account.email) {
-                    var updatedCalendar = calendar
-                    updatedCalendar.colorHex = customColor
-                    return updatedCalendar
+            let colored = raw.map { calendar -> CalendarInfo in
+                guard let customColor = AppSettings.shared.getCustomColor(forCalendar: calendar.id, account: account.email) else {
+                    return calendar
                 }
-                return calendar
+                var updated = calendar
+                updated.colorHex = customColor
+                return updated
             }
+            calendarCache[account.email] = colored
+            return colored
         } catch {
             Logger.calendar.error("Error fetching calendars for \(account.email, privacy: .private): \(error)")
-            return []
+            return calendarCache[account.email] ?? []
+        }
+    }
+
+    func invalidateCalendarCache(forAccount email: String? = nil) {
+        if let email {
+            calendarCache.removeValue(forKey: email)
+        } else {
+            calendarCache.removeAll()
         }
     }
 

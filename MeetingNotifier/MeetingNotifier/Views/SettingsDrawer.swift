@@ -41,7 +41,7 @@ struct SettingsDrawer: View {
 
     private var header: some View {
         HStack(spacing: AppSpacing.lg) {
-            drawerIcon(systemName: "gearshape")
+            DrawerIcon(systemName: "gearshape")
             VStack(alignment: .leading, spacing: 3) {
                 Text("Settings")
                     .font(.system(size: 18, weight: .semibold))
@@ -58,19 +58,6 @@ struct SettingsDrawer: View {
         .overlay(alignment: .bottom) {
             Rectangle().fill(theme.divider).frame(height: 1)
         }
-    }
-
-    private func drawerIcon(systemName: String) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: AppRadius.md)
-                .fill(theme.card)
-            RoundedRectangle(cornerRadius: AppRadius.md)
-                .strokeBorder(theme.borderStrong, lineWidth: 1)
-            Image(systemName: systemName)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(theme.primary)
-        }
-        .frame(width: 34, height: 34)
     }
 
     // MARK: - Cards
@@ -174,32 +161,17 @@ struct SettingsDrawer: View {
 
     private var updatesCard: some View {
         AppCard("Updates", trailing: {
-            HStack(spacing: 5) {
-                Circle().fill(theme.success).frame(width: 5, height: 5)
-                Text("UP TO DATE")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(theme.success)
-                    .tracking(0.6)
-            }
-            .padding(.horizontal, 8).padding(.vertical, 3)
-            .background(Capsule().fill(theme.success.opacity(0.12)))
-            .overlay(Capsule().strokeBorder(theme.success.opacity(0.35), lineWidth: 1))
+            AppStatusPill(text: "UP TO DATE", style: .tinted(theme.success))
         }, content: {
             VStack(spacing: AppSpacing.md) {
                 AppSettingRow("Version",
-                              description: versionString) {
+                              description: Bundle.main.appVersionWithBuild) {
                     AppSecondaryButton(title: "Check now") {
                         UpdaterManager.shared.checkForUpdates()
                     }
                 }
             }
         })
-    }
-
-    private var versionString: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(v) (build \(b))"
     }
 
     private var supportCard: some View {
@@ -221,28 +193,3 @@ struct SettingsDrawer: View {
     }
 }
 
-// MARK: - Close button
-
-struct CloseButton: View {
-    let onClose: () -> Void
-    @Environment(\.theme) private var theme
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: onClose) {
-            Image(systemName: "xmark")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(theme.foreground)
-                .frame(width: 28, height: 28)
-                .background(
-                    Circle()
-                        .fill(isHovered ? theme.cardElevated : theme.card)
-                )
-                .overlay(
-                    Circle().strokeBorder(theme.borderStrong, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-    }
-}

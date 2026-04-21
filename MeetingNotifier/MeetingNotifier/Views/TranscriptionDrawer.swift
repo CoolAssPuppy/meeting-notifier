@@ -48,7 +48,7 @@ struct TranscriptionDrawer: View {
 
     private var header: some View {
         HStack(spacing: AppSpacing.lg) {
-            drawerIcon
+            DrawerIcon(systemName: "waveform")
             VStack(alignment: .leading, spacing: 3) {
                 Text("Transcription")
                     .font(.system(size: 18, weight: .semibold))
@@ -68,47 +68,20 @@ struct TranscriptionDrawer: View {
         }
     }
 
-    private var drawerIcon: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: AppRadius.md)
-                .fill(theme.card)
-            RoundedRectangle(cornerRadius: AppRadius.md)
-                .strokeBorder(theme.borderStrong, lineWidth: 1)
-            Image(systemName: "waveform")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(theme.primary)
-        }
-        .frame(width: 34, height: 34)
+    private var recordingPill: some View {
+        let (color, text, active) = pillDescriptor(for: coordinator.state)
+        return AppStatusPill(text: text, style: .tinted(color), pulse: active)
     }
 
-    @ViewBuilder
-    private var recordingPill: some View {
-        let state = coordinator.state
-        let active = state == .recording || state == .transcribing
-        let paused = state == .paused
-        let color = paused ? theme.warning : (active ? theme.destructive : theme.tertiary)
-        let text: String = {
-            switch state {
-            case .recording:   return "● RECORDING"
-            case .transcribing: return "● TRANSCRIBING"
-            case .paused:      return "● PAUSED"
-            case .saving:      return "SAVING"
-            case .error:       return "ERROR"
-            default:           return "IDLE"
-            }
-        }()
-
-        HStack(spacing: 5) {
-            PulsingDot(color: color, active: active || paused)
-            Text(text)
-                .font(.system(size: 10, weight: .bold))
-                .tracking(0.6)
-                .foregroundStyle(color)
+    private func pillDescriptor(for state: TranscriptionState) -> (Color, String, Bool) {
+        switch state {
+        case .recording:    return (theme.destructive, "RECORDING", true)
+        case .transcribing: return (theme.destructive, "TRANSCRIBING", true)
+        case .paused:       return (theme.warning, "PAUSED", true)
+        case .saving:       return (theme.primary, "SAVING", false)
+        case .error:        return (theme.destructive, "ERROR", false)
+        default:            return (theme.tertiary, "IDLE", false)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(Capsule().fill(color.opacity(0.12)))
-        .overlay(Capsule().strokeBorder(color.opacity(0.35), lineWidth: 1))
     }
 
     // MARK: - Cards
@@ -153,8 +126,8 @@ struct TranscriptionDrawer: View {
                     AppRowDivider()
                     apiKeyField(
                         label: "\(appSettings.transcriptionEngine.displayName) API key",
-                        placeholder: apiKeyPlaceholder(for: appSettings.transcriptionEngine),
-                        keychainAccount: keychainAccount(for: appSettings.transcriptionEngine),
+                        placeholder: appSettings.transcriptionEngine.apiKeyPlaceholder,
+                        keychainAccount: appSettings.transcriptionEngine.keychainAccount,
                         draft: $engineApiKeyDraft
                     )
                 }
@@ -196,10 +169,7 @@ struct TranscriptionDrawer: View {
                             chooseNotesFolder()
                         }
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(theme.cardInset))
-                    .overlay(RoundedRectangle(cornerRadius: AppRadius.md).strokeBorder(theme.border, lineWidth: 1))
+                    .appInsetField()
                 }
 
                 AppSettingRow("Subfolder per calendar",
@@ -215,10 +185,7 @@ struct TranscriptionDrawer: View {
                         .textFieldStyle(.plain)
                         .font(.system(size: 12, design: .monospaced))
                         .foregroundStyle(theme.foreground)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(theme.cardInset))
-                        .overlay(RoundedRectangle(cornerRadius: AppRadius.md).strokeBorder(theme.border, lineWidth: 1))
+                        .appInsetField()
                 }
             }
         }
@@ -255,11 +222,8 @@ struct TranscriptionDrawer: View {
                         .textFieldStyle(.plain)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(theme.foreground)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
                         .frame(width: 150)
-                        .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(theme.cardInset))
-                        .overlay(RoundedRectangle(cornerRadius: AppRadius.md).strokeBorder(theme.border, lineWidth: 1))
+                        .appInsetField()
                 }
                 AppRowDivider()
                 AppSettingRow("Everyone else",
@@ -268,11 +232,8 @@ struct TranscriptionDrawer: View {
                         .textFieldStyle(.plain)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(theme.foreground)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
                         .frame(width: 150)
-                        .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(theme.cardInset))
-                        .overlay(RoundedRectangle(cornerRadius: AppRadius.md).strokeBorder(theme.border, lineWidth: 1))
+                        .appInsetField()
                 }
             }
         }
@@ -291,17 +252,9 @@ struct TranscriptionDrawer: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(theme.muted)
                 if stored {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 8, weight: .bold))
-                        Text("KEYCHAIN")
-                            .font(.system(size: 9, weight: .bold))
-                            .tracking(0.4)
-                    }
-                    .foregroundStyle(theme.success)
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(Capsule().fill(theme.success.opacity(0.12)))
-                    .overlay(Capsule().strokeBorder(theme.success.opacity(0.3), lineWidth: 1))
+                    AppStatusPill(text: "KEYCHAIN",
+                                  systemImage: "checkmark",
+                                  style: .tinted(theme.success))
                 }
                 Spacer(minLength: 0)
             }
@@ -310,11 +263,8 @@ struct TranscriptionDrawer: View {
                     .textFieldStyle(.plain)
                     .font(.system(size: 12, design: .monospaced).weight(.medium))
                     .foregroundStyle(theme.foreground)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
                     .frame(maxWidth: .infinity)
-                    .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(theme.cardInset))
-                    .overlay(RoundedRectangle(cornerRadius: AppRadius.md).strokeBorder(theme.border, lineWidth: 1))
+                    .appInsetField()
                 AppSecondaryButton(title: "Save", tint: .primary) {
                     _ = KeychainManager.shared.save(token: draft.wrappedValue, forAccount: keychainAccount)
                 }
@@ -322,29 +272,17 @@ struct TranscriptionDrawer: View {
         }
     }
 
-    private func keychainAccount(for engine: TranscriptionEngineType) -> String {
-        switch engine {
-        case .apple: return ""
-        case .wispr: return "wispr_api_key"
-        case .deepgram: return "deepgram_api_key"
-        }
-    }
-
-    private func apiKeyPlaceholder(for engine: TranscriptionEngineType) -> String {
-        switch engine {
-        case .apple: return ""
-        case .wispr: return "wispr_..."
-        case .deepgram: return "••••••••"
-        }
-    }
-
     private func loadKeysForEngine() {
         if appSettings.transcriptionEngine.requiresApiKey {
-            engineApiKeyDraft = KeychainManager.shared.retrieve(forAccount: keychainAccount(for: appSettings.transcriptionEngine)) ?? ""
+            engineApiKeyDraft = KeychainManager.shared.retrieve(
+                forAccount: appSettings.transcriptionEngine.keychainAccount
+            ) ?? ""
         } else {
             engineApiKeyDraft = ""
         }
-        summarizationKeyDraft = KeychainManager.shared.retrieve(forAccount: appSettings.summarizationPlatform.keychainAccount) ?? ""
+        summarizationKeyDraft = KeychainManager.shared.retrieve(
+            forAccount: appSettings.summarizationPlatform.keychainAccount
+        ) ?? ""
     }
 
     private func chooseNotesFolder() {
@@ -423,24 +361,10 @@ private struct EngineOptionRow: View {
         }
     }
 
-    @ViewBuilder
     private var capabilityBadge: some View {
-        if engine.requiresApiKey {
-            Text("API KEY")
-                .font(.system(size: 9, weight: .bold))
-                .tracking(0.4)
-                .foregroundStyle(theme.warning)
-                .padding(.horizontal, 6).padding(.vertical, 2)
-                .background(Capsule().fill(theme.warning.opacity(0.12)))
-                .overlay(Capsule().strokeBorder(theme.warning.opacity(0.3), lineWidth: 1))
-        } else {
-            Text("BUILT-IN")
-                .font(.system(size: 9, weight: .bold))
-                .tracking(0.4)
-                .foregroundStyle(theme.success)
-                .padding(.horizontal, 6).padding(.vertical, 2)
-                .background(Capsule().fill(theme.success.opacity(0.12)))
-                .overlay(Capsule().strokeBorder(theme.success.opacity(0.3), lineWidth: 1))
-        }
+        AppStatusPill(
+            text: engine.requiresApiKey ? "API KEY" : "BUILT-IN",
+            style: .tinted(engine.requiresApiKey ? theme.warning : theme.success)
+        )
     }
 }

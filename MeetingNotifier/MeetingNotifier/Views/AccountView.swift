@@ -13,7 +13,6 @@ struct AccountView: View {
     @ObservedObject private var appSettings = AppSettings.shared
     @Environment(\.theme) private var theme
 
-    @State private var friendlyNameDraft: String = ""
     @State private var calendars: [CalendarInfo] = []
     @State private var isLoadingCalendars = false
 
@@ -47,13 +46,25 @@ struct AccountView: View {
             }
         }
         .onAppear {
-            friendlyNameDraft = account.friendlyName ?? ""
             Task { await loadCalendars() }
         }
         .onChange(of: account.email) { _, _ in
-            friendlyNameDraft = account.friendlyName ?? ""
             Task { await loadCalendars() }
         }
+    }
+
+    /// Binding that writes straight through to the account's friendlyName
+    /// without an intermediate @State draft.
+    private var friendlyNameBinding: Binding<String> {
+        Binding(
+            get: { account.friendlyName ?? "" },
+            set: { newValue in
+                var updated = account
+                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                updated.friendlyName = trimmed.isEmpty ? nil : trimmed
+                appSettings.updateAccount(updated)
+            }
+        )
     }
 
     private func loadCalendars() async {
@@ -108,7 +119,7 @@ struct AccountView: View {
             }
             if let last = CalendarDataManager.shared.lastRefreshDate {
                 dot
-                Text("Synced \(shortTime(last))")
+                Text("Synced \(last.shortTimeString)")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(theme.tertiary)
             }
@@ -136,12 +147,6 @@ struct AccountView: View {
         }
     }
 
-    private func shortTime(_ date: Date) -> String {
-        let df = DateFormatter()
-        df.dateFormat = "H:mm"
-        return df.string(from: date)
-    }
-
     // MARK: - Identity card
 
     private var identityCard: some View {
@@ -151,15 +156,11 @@ struct AccountView: View {
                     Text("Display name")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(theme.muted)
-                    TextField("e.g. Work", text: $friendlyNameDraft, onCommit: persistFriendlyName)
+                    TextField("e.g. Work", text: friendlyNameBinding)
                         .textFieldStyle(.plain)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(theme.foreground)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(RoundedRectangle(cornerRadius: AppRadius.md).fill(theme.cardInset))
-                        .overlay(RoundedRectangle(cornerRadius: AppRadius.md).strokeBorder(theme.border, lineWidth: 1))
-                        .onChange(of: friendlyNameDraft) { _, _ in persistFriendlyName() }
+                        .appInsetField()
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -175,13 +176,6 @@ struct AccountView: View {
         }
     }
 
-    private func persistFriendlyName() {
-        var updated = account
-        let trimmed = friendlyNameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        updated.friendlyName = trimmed.isEmpty ? nil : trimmed
-        appSettings.updateAccount(updated)
-    }
-
     // MARK: - Calendars card
 
     private var calendarsCard: some View {
@@ -192,7 +186,7 @@ struct AccountView: View {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(theme.tertiary)
         }, content: {
-            VStack(alignment: .leading, spacing: 0) {
+            LazyVStack(alignment: .leading, spacing: 0) {
                 if calendars.isEmpty {
                     Text("No calendars available yet. Refresh to load them.")
                         .font(.system(size: 12))

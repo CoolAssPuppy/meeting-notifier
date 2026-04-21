@@ -62,12 +62,7 @@ struct PeekWindowView: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(theme.primaryForeground)
                     .frame(width: 20, height: 20)
-                    .background(
-                        Circle().fill(
-                            LinearGradient(colors: [theme.primary, theme.primaryDeep],
-                                           startPoint: .topLeading, endPoint: .bottomTrailing)
-                        )
-                    )
+                    .background(Circle().fill(theme.primaryGradient))
             }
             .buttonStyle(.plain)
             .help(meeting.hasVideoLink ? "Join meeting" : "Open meeting")
@@ -87,24 +82,16 @@ struct PeekWindowView: View {
 
     @ViewBuilder
     private func countdownPill(meeting: CalendarEvent, theme: ThemePalette) -> some View {
-        let color: Color = meeting.isHappening ? theme.destructive : theme.warning
-        let label: String = {
-            if meeting.isHappening { return "LIVE" }
-            let m = max(0, Int(meeting.startDate.timeIntervalSinceNow / 60))
-            if m < 60 { return "\(m) MIN" }
-            return "\(m / 60) H"
-        }()
-        HStack(spacing: 4) {
-            Image(systemName: meeting.isHappening ? "dot.radiowaves.left.and.right" : "clock")
-                .font(.system(size: 9, weight: .bold))
-            Text(label)
-                .font(.system(size: 9, weight: .bold))
-                .tracking(0.3)
+        if meeting.isHappening {
+            AppStatusPill(text: "LIVE",
+                          systemImage: "dot.radiowaves.left.and.right",
+                          style: .tinted(theme.destructive))
+        } else {
+            let minutes = meeting.minutesUntilStart ?? 0
+            let label = minutes < 60 ? "\(minutes) MIN" : "\(minutes / 60) H"
+            AppStatusPill(text: label,
+                          systemImage: "clock",
+                          style: .tinted(theme.warning))
         }
-        .foregroundStyle(color)
-        .padding(.horizontal, 7)
-        .padding(.vertical, 3)
-        .background(Capsule().fill(color.opacity(0.14)))
-        .overlay(Capsule().strokeBorder(color.opacity(0.35), lineWidth: 1))
     }
 }

@@ -38,6 +38,24 @@ enum TranscriptionEngineType: String, CaseIterable, Codable, Identifiable {
         case .deepgram: return "network"
         }
     }
+
+    /// Keychain account name used to store this engine's API key.
+    /// Empty string when the engine doesn't require one.
+    var keychainAccount: String {
+        switch self {
+        case .apple:    return ""
+        case .wispr:    return "wispr_api_key"
+        case .deepgram: return "deepgram_api_key"
+        }
+    }
+
+    var apiKeyPlaceholder: String {
+        switch self {
+        case .apple:    return ""
+        case .wispr:    return "wispr_..."
+        case .deepgram: return "••••••••"
+        }
+    }
 }
 
 // MARK: - Transcription state

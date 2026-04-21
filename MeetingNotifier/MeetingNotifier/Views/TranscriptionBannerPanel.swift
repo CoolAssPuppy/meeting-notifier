@@ -78,6 +78,14 @@ final class TranscriptionBannerPanel: NSPanel {
     private var hostingView: NSHostingView<TranscriptionBannerView>?
     let viewModel = BannerViewModel()
 
+    override func close() {
+        // Invalidate timers before teardown so they don't keep firing on the
+        // main RunLoop while the panel deallocates.
+        viewModel.stopPausePulse()
+        viewModel.stopElapsed()
+        super.close()
+    }
+
     override var canBecomeKey: Bool { true }
 
     init(onPause: @escaping () -> Void,

@@ -52,8 +52,7 @@ struct Sidebar: View {
     }
 
     private var appVersionLine: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        return "v\(v)"
+        "v\(Bundle.main.appVersionString)"
     }
 
     private var sectionLabel: some View {
@@ -171,14 +170,7 @@ private struct SidebarAccountRow: View {
     @ViewBuilder
     private var trailing: some View {
         if !account.isEnabled {
-            Text("OFF")
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(theme.tertiary)
-                .tracking(0.4)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(theme.cardInset))
-                .overlay(Capsule().strokeBorder(theme.border, lineWidth: 1))
+            AppStatusPill(text: "OFF", style: .neutral)
         } else if account.authStatus != .valid {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 11))
