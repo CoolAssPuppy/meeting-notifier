@@ -255,6 +255,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         DrawerState.shared.open(.settings)
     }
 
+    @objc func openMainWindow() {
+        showMainWindow()
+        DrawerState.shared.openDrawer = .none
+    }
+
     func openTranscriptionDrawer() {
         showMainWindow()
         DrawerState.shared.open(.transcription)

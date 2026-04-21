@@ -417,6 +417,9 @@ private struct PopoverFooter: View {
             }
             AppIconButton(systemName: "macwindow", help: "Open window",
                           isActive: AppDelegate.shared?.settingsWindow?.isVisible == true) {
+                AppDelegate.shared?.openMainWindow()
+            }
+            AppIconButton(systemName: "gearshape", help: "Settings") {
                 AppDelegate.shared?.openSettings()
             }
             AppIconButton(systemName: "waveform",
