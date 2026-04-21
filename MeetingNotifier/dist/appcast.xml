@@ -6,6 +6,32 @@
     <description>MeetingNotifier updates</description>
     <language>en</language>
     <item>
+      <title>Version 1.3.0</title>
+      <pubDate>Tue, 21 Apr 2026 11:03:10 +0000</pubDate>
+      <sparkle:version>5</sparkle:version>
+      <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul>
+          <li>Complete visual rewrite: one unified design driven by a new ten-theme system (Hoth, Risa, Weasley, Starbuck, Cylon, Vader, Kirk, Hermione, Nerds, System) selectable from the menu popover footer.</li>
+          <li>New Transcription drawer — a first-class surface alongside Settings. Recording, engine, output, summarization, and speaker controls all in one place.</li>
+          <li>Pause and resume live transcription from the floating banner. Red outline while recording, yellow pulsing outline when paused.</li>
+          <li>Friendly names for calendar accounts: set a display name per account in the main window sidebar.</li>
+          <li>Redesigned menu popover with live status, grouped Today / Tomorrow sections, countdown badges, and a compact footer toolbar.</li>
+          <li>Redesigned main window with a left sidebar of accounts and a detail pane for identity, calendars, notifications, and account management.</li>
+          <li>Calendar list is per-account and cached, so switching accounts in the sidebar is instant.</li>
+          <li>Peek window and transcription banner repainted to match the rest of the app.</li>
+          <li>Removed the old Simple vs Glass popover duality — there is now one design language across every surface.</li>
+        </ul>
+      ]]></description>
+      <enclosure
+        url="https://hlwjnusdotqtmtwrjidu.supabase.co/storage/v1/object/public/downloads/MeetingNotifier-1.3.0.dmg"
+        sparkle:edSignature="VHstnpTPJ6XWeCaFpbf/TIig3KbroCoJbl/I3j/CprimfQ2JXnTeVMgi1m8A3gP+LsyNVvpTUXz8s/B/ATHKCA=="
+        length="3241807"
+        type="application/x-apple-diskimage" />
+    </item>
+
+    <item>
       <title>Version 1.2.0</title>
       <pubDate>Mon, 20 Apr 2026 19:21:31 +0000</pubDate>
       <sparkle:version>4</sparkle:version>
