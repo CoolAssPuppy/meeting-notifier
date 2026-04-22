@@ -41,6 +41,7 @@ targets:
       path: MeetingNotifier/MeetingNotifier.entitlements
       properties:
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+        com.apple.security.device.audio-input: true
         keychain-access-groups:
           - $(AppIdentifierPrefix)com.strategicnerds.meetingnotifier
     settings:
