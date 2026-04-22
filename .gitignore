@@ -61,3 +61,6 @@ MeetingNotifier/dist/*.sparkle.txt
 MeetingNotifier/dist/*.xcarchive/
 MeetingNotifier/dist/export-*/
 MeetingNotifier/dist/debug/
+
+# Wrangler cache (created by npx wrangler during releases)
+MeetingNotifier/.wrangler/
