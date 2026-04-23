@@ -22,11 +22,11 @@ struct SettingsDrawer: View {
                     VStack(spacing: 14) {
                         generalCard
                         menuBarCard
-                        privacyCard
                     }.frame(maxWidth: .infinity)
 
                     VStack(spacing: 14) {
                         meetingLinkCard
+                        privacyCard
                         updatesCard
                         supportCard
                     }.frame(maxWidth: .infinity)
