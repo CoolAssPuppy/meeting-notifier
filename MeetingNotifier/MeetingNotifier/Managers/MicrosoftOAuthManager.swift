@@ -1,14 +1,25 @@
 import Foundation
 import AppKit
 import AppAuth
+import os
 
 @MainActor
 class MicrosoftOAuthManager {
     static let shared = MicrosoftOAuthManager()
 
     static let clientID = "1a831c66-9273-46ed-a38b-9ed5eb5e80d8"
-    static let clientSecret = MicrosoftOAuthSecret.secret
     static let redirectURL = "com.strategicnerds.meetingnotifier://oauthredirect"
+
+    /// Microsoft Entra (Azure AD) "public client" registrations must not use a client
+    /// secret — PKCE (enabled automatically by AppAuth) is the security boundary. A
+    /// value is read from the local MicrosoftOAuthSecret.swift only for legacy
+    /// "confidential client" configurations; it is nil for modern setups.
+    static var clientSecret: String? {
+        let raw = MicrosoftOAuthSecret.secret
+        if raw.isEmpty { return nil }
+        if raw.hasPrefix("YOUR_") || raw == "REPLACE_ME" { return nil }
+        return raw
+    }
 
     private var currentAuthorizationFlow: OIDExternalUserAgentSession?
 
@@ -88,88 +99,50 @@ class MicrosoftOAuthManager {
         forAccount account: CalendarAccount,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
-        guard let refreshToken = KeychainManager.shared.retrieveRefreshToken(forAccount: account.email) else {
-            completion(.failure(NSError(
-                domain: "MicrosoftOAuth",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "No refresh token found"]
-            )))
-            return
-        }
-
-        let configuration = OIDServiceConfiguration(
-            authorizationEndpoint: URL(string: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize")!,
-            tokenEndpoint: URL(string: "https://login.microsoftonline.com/common/oauth2/v2.0/token")!
+        OAuthRefreshSupport.refresh(
+            account: account,
+            provider: Self.providerConfig,
+            completion: completion
         )
+    }
 
-        let tokenRequest = OIDTokenRequest(
-            configuration: configuration,
-            grantType: OIDGrantTypeRefreshToken,
-            authorizationCode: nil,
-            redirectURL: nil,
-            clientID: Self.clientID,
-            clientSecret: nil,
-            scope: nil,
-            refreshToken: refreshToken,
-            codeVerifier: nil,
-            additionalParameters: nil
-        )
+    private static let providerConfig = OAuthRefreshSupport.ProviderConfig(
+        authorizationEndpoint: URL(string: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize")!,
+        tokenEndpoint: URL(string: "https://login.microsoftonline.com/common/oauth2/v2.0/token")!,
+        clientID: clientID,
+        clientSecret: clientSecret,
+        errorDomain: "MicrosoftOAuth"
+    )
 
-        OIDAuthorizationService.perform(tokenRequest) { response, error in
-            Task { @MainActor in
-                if let error = error {
-                    completion(.failure(error))
-                    return
-                }
+    /// Fetch the authenticated user's email from Microsoft Graph /me.
+    ///
+    /// Replaces parsing the unverified ID token payload. The access token is bound to
+    /// the correct identity by the provider; hitting /me over TLS delegates identity
+    /// extraction to Microsoft instead of trusting an unsigned JWT body locally.
+    func extractEmail(from authState: OIDAuthState) async -> String? {
+        guard let accessToken = authState.lastTokenResponse?.accessToken else { return nil }
+        guard let url = URL(string: "https://graph.microsoft.com/v1.0/me") else { return nil }
 
-                guard let accessToken = response?.accessToken else {
-                    completion(.failure(NSError(
-                        domain: "MicrosoftOAuth",
-                        code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: "No access token in response"]
-                    )))
-                    return
-                }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 15
 
-                _ = KeychainManager.shared.saveAccessToken(accessToken, forAccount: account.email)
-
-                if let newRefreshToken = response?.refreshToken {
-                    _ = KeychainManager.shared.saveRefreshToken(newRefreshToken, forAccount: account.email)
-                }
-
-                completion(.success(accessToken))
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                Logger.auth.error("Microsoft /me returned non-200")
+                return nil
             }
-        }
-    }
-
-    func extractEmail(from authState: OIDAuthState) -> String? {
-        guard let idToken = authState.lastTokenResponse?.idToken else { return nil }
-        guard let claims = decodeJWT(idToken) else { return nil }
-
-        return claims["preferred_username"] as? String
-            ?? claims["email"] as? String
-            ?? claims["upn"] as? String
-    }
-
-    private func decodeJWT(_ jwt: String) -> [String: Any]? {
-        let segments = jwt.components(separatedBy: ".")
-        guard segments.count > 1 else { return nil }
-
-        var base64String = segments[1]
-        let remainder = base64String.count % 4
-        if remainder > 0 {
-            base64String = base64String.padding(
-                toLength: base64String.count + 4 - remainder,
-                withPad: "=",
-                startingAt: 0
-            )
-        }
-
-        guard let data = Data(base64Encoded: base64String, options: .ignoreUnknownCharacters),
-              let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+            let payload = try JSONDecoder().decode(MicrosoftUserInfo.self, from: data)
+            return payload.mail ?? payload.userPrincipalName
+        } catch {
+            Logger.auth.error("Microsoft /me fetch failed: \(error.localizedDescription, privacy: .public)")
             return nil
         }
-
-        return json
     }
+}
+
+private struct MicrosoftUserInfo: Decodable {
+    let mail: String?
+    let userPrincipalName: String?
 }

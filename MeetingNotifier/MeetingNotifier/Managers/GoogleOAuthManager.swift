@@ -1,14 +1,30 @@
 import Foundation
 import AppKit
 import AppAuth
+import os
 
 @MainActor
 class GoogleOAuthManager {
     static let shared = GoogleOAuthManager()
 
     static let clientID = "629178373267-231fgipboj4pb20vhgi672lqm2917ha2.apps.googleusercontent.com"
-    static let clientSecret = GoogleOAuthSecret.secret
     static let redirectURL = "com.googleusercontent.apps.629178373267-231fgipboj4pb20vhgi672lqm2917ha2:/oauthredirect"
+
+    /// OAuth client secret, if the local GoogleOAuthSecret.swift supplies a real value.
+    ///
+    /// A native macOS app can never keep a client secret actually secret. The security
+    /// boundary for this install is PKCE (automatically enabled by AppAuth) plus the
+    /// custom-scheme redirect bound to this app. If your Google Cloud OAuth app is
+    /// configured as a "Desktop / installed" or "iOS" client, leave the secret field
+    /// empty — Google will accept PKCE-only requests. A value is only passed through
+    /// when the local secret file contains a non-placeholder string, for compatibility
+    /// with legacy OAuth app configurations that still require one.
+    static var clientSecret: String? {
+        let raw = GoogleOAuthSecret.secret
+        if raw.isEmpty { return nil }
+        if raw.hasPrefix("YOUR_") || raw == "REPLACE_ME" { return nil }
+        return raw
+    }
 
     private var currentAuthorizationFlow: OIDExternalUserAgentSession?
 
@@ -87,86 +103,51 @@ class GoogleOAuthManager {
         forAccount account: CalendarAccount,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
-        guard let refreshToken = KeychainManager.shared.retrieveRefreshToken(forAccount: account.email) else {
-            completion(.failure(NSError(
-                domain: "GoogleOAuth",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "No refresh token found"]
-            )))
-            return
-        }
-
-        let configuration = OIDServiceConfiguration(
-            authorizationEndpoint: URL(string: "https://accounts.google.com/o/oauth2/v2/auth")!,
-            tokenEndpoint: URL(string: "https://oauth2.googleapis.com/token")!
+        OAuthRefreshSupport.refresh(
+            account: account,
+            provider: Self.providerConfig,
+            completion: completion
         )
+    }
 
-        let tokenRequest = OIDTokenRequest(
-            configuration: configuration,
-            grantType: OIDGrantTypeRefreshToken,
-            authorizationCode: nil,
-            redirectURL: nil,
-            clientID: Self.clientID,
-            clientSecret: Self.clientSecret,
-            scope: nil,
-            refreshToken: refreshToken,
-            codeVerifier: nil,
-            additionalParameters: nil
-        )
+    private static let providerConfig = OAuthRefreshSupport.ProviderConfig(
+        authorizationEndpoint: URL(string: "https://accounts.google.com/o/oauth2/v2/auth")!,
+        tokenEndpoint: URL(string: "https://oauth2.googleapis.com/token")!,
+        clientID: clientID,
+        clientSecret: clientSecret,
+        errorDomain: "GoogleOAuth"
+    )
 
-        OIDAuthorizationService.perform(tokenRequest) { response, error in
-            Task { @MainActor in
-                if let error = error {
-                    completion(.failure(error))
-                    return
-                }
+    /// Fetch the authenticated user's email from Google's OpenID userinfo endpoint.
+    ///
+    /// This replaces parsing the unverified ID token payload. We never validated the
+    /// ID token signature/audience/issuer locally, so trusting the `email` claim from
+    /// its base64-decoded body meant trusting any caller who could hand us a shaped
+    /// string. Hitting userinfo over TLS with the newly-minted access token delegates
+    /// identity to Google directly.
+    func extractEmail(from authState: OIDAuthState) async -> String? {
+        guard let accessToken = authState.lastTokenResponse?.accessToken else { return nil }
+        guard let url = URL(string: "https://openidconnect.googleapis.com/v1/userinfo") else { return nil }
 
-                guard let accessToken = response?.accessToken else {
-                    completion(.failure(NSError(
-                        domain: "GoogleOAuth",
-                        code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: "No access token in response"]
-                    )))
-                    return
-                }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 15
 
-                _ = KeychainManager.shared.saveAccessToken(accessToken, forAccount: account.email)
-
-                if let newRefreshToken = response?.refreshToken {
-                    _ = KeychainManager.shared.saveRefreshToken(newRefreshToken, forAccount: account.email)
-                }
-
-                completion(.success(accessToken))
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                Logger.auth.error("Google userinfo returned non-200")
+                return nil
             }
-        }
-    }
-
-    func extractEmail(from authState: OIDAuthState) -> String? {
-        guard let idToken = authState.lastTokenResponse?.idToken else { return nil }
-        guard let claims = decodeJWT(idToken) else { return nil }
-
-        return claims["email"] as? String
-    }
-
-    private func decodeJWT(_ jwt: String) -> [String: Any]? {
-        let segments = jwt.components(separatedBy: ".")
-        guard segments.count > 1 else { return nil }
-
-        var base64String = segments[1]
-        let remainder = base64String.count % 4
-        if remainder > 0 {
-            base64String = base64String.padding(
-                toLength: base64String.count + 4 - remainder,
-                withPad: "=",
-                startingAt: 0
-            )
-        }
-
-        guard let data = Data(base64Encoded: base64String, options: .ignoreUnknownCharacters),
-              let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+            let payload = try JSONDecoder().decode(GoogleUserInfo.self, from: data)
+            return payload.email
+        } catch {
+            Logger.auth.error("Google userinfo fetch failed: \(error.localizedDescription, privacy: .public)")
             return nil
         }
-
-        return json
     }
+}
+
+private struct GoogleUserInfo: Decodable {
+    let email: String?
 }

@@ -13,7 +13,7 @@ class AuthManager {
             Task { @MainActor in
                 switch result {
                 case .success(let authState):
-                    guard let email = GoogleOAuthManager.shared.extractEmail(from: authState) else {
+                    guard let email = await GoogleOAuthManager.shared.extractEmail(from: authState) else {
                         completion(.failure(NSError(
                             domain: "AuthManager",
                             code: -1,
@@ -79,7 +79,7 @@ class AuthManager {
             Task { @MainActor in
                 switch result {
                 case .success(let authState):
-                    guard let email = MicrosoftOAuthManager.shared.extractEmail(from: authState) else {
+                    guard let email = await MicrosoftOAuthManager.shared.extractEmail(from: authState) else {
                         completion(.failure(NSError(
                             domain: "AuthManager",
                             code: -1,

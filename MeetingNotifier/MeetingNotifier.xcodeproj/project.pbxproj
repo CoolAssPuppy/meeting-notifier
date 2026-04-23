@@ -43,6 +43,7 @@
 		57FA94E02269D74BFEC4C1A7 /* AppIcon.icns.backup in Resources */ = {isa = PBXBuildFile; fileRef = 2E146653DF0DD594CF9E45CD /* AppIcon.icns.backup */; };
 		5B6D5CFFB796A64797529723 /* TranscriptDocumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1612900B2D43945D64CCB667 /* TranscriptDocumentTests.swift */; };
 		5C62125D8187ECF9CA6B3A5D /* CalendarDropdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43BCEFE8B5DD90C724D70AA9 /* CalendarDropdownView.swift */; };
+		5E4747146655C7374F3CAF0A /* OAuthRefreshSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC04A21F08297577ADB55B6 /* OAuthRefreshSupport.swift */; };
 		66D1ACB8A3249A96477A99C1 /* long-chimes.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 017F77775495E428F019E6DA /* long-chimes.aiff */; };
 		67438B5598F66418775E2BBA /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 1112CFED9032AB54B3A4ED09 /* README.md */; };
 		675C63DCFC4F4DA589809274 /* create_project.sh in Resources */ = {isa = PBXBuildFile; fileRef = DA7FEDDBF3BD6E0E8597EB07 /* create_project.sh */; };
@@ -174,6 +175,7 @@
 		AD899C544CCC4FBF71F6F194 /* microsoft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = microsoft.png; sourceTree = "<group>"; };
 		B7E28947141FFCB9E7F6B9F1 /* SubfolderResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubfolderResolver.swift; sourceTree = "<group>"; };
 		B8B4D23E9CB4828D25F2496E /* SubfolderResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubfolderResolverTests.swift; sourceTree = "<group>"; };
+		BAC04A21F08297577ADB55B6 /* OAuthRefreshSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthRefreshSupport.swift; sourceTree = "<group>"; };
 		C08DDB8764DEF553131ADA26 /* TranscriptionTestFactories.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionTestFactories.swift; sourceTree = "<group>"; };
 		C3816F76B19E8A2B9066233D /* TranscriptSegmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptSegmentTests.swift; sourceTree = "<group>"; };
 		C48882D55F93727928526061 /* TranscriptionBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionBannerView.swift; sourceTree = "<group>"; };
@@ -322,6 +324,7 @@
 				450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */,
 				CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */,
 				5326575BF5C8A6B7163F6C59 /* NotificationManager.swift */,
+				BAC04A21F08297577ADB55B6 /* OAuthRefreshSupport.swift */,
 				8589141DDE692BDE346474EA /* SystemAudioCapturer.swift */,
 				49411FFBC42047AF70ECDA36 /* SystemAudioEnergyTracker.swift */,
 				2B1D2E92430A8DABBD238EFF /* TranscriptionCoordinator.swift */,
@@ -571,6 +574,7 @@
 				0EFC651EB43D4B9D9BB58687 /* NotificationManager.swift in Sources */,
 				36F54450635365BF67EE7D82 /* NotificationNames.swift in Sources */,
 				2B74E69F17C19B1BD56A1A71 /* NotificationTracking.swift in Sources */,
+				5E4747146655C7374F3CAF0A /* OAuthRefreshSupport.swift in Sources */,
 				E464B575DB34414455AEE949 /* OpenAISummarizer.swift in Sources */,
 				2ACA9BB27BF2E12477834B46 /* PeekWindowPanel.swift in Sources */,
 				B8EDE83CF410B38B60BA5AF1 /* PeekWindowView.swift in Sources */,
