@@ -12,6 +12,7 @@
 		0B2CEB881BA89E604069EE78 /* SettingsDrawer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F2D07B35A00315CFE20F32 /* SettingsDrawer.swift */; };
 		0EFC651EB43D4B9D9BB58687 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5326575BF5C8A6B7163F6C59 /* NotificationManager.swift */; };
 		0F152D63D8E217C7C4D5ACF6 /* TranscriptionEngineTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040611A14F4597A4FB355CCB /* TranscriptionEngineTypeTests.swift */; };
+		F7B3A2D919E8C6B4A5C00001 /* TranscriptionCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B3A2D919E8C6B4A5C00002 /* TranscriptionCoordinatorTests.swift */; };
 		103D45956BAC1AEF57FB8B39 /* SpeechAnalyzerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475314D25149BE27157285CB /* SpeechAnalyzerEngine.swift */; };
 		1A6D051CC496406BEF85A228 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 02F09D38E7A39AE7CCFE9BEA /* AppIntents.framework */; };
 		1B5B2FA00653E24598C8FDCD /* MeetingNotifierApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */; };
@@ -117,6 +118,7 @@
 		02F09D38E7A39AE7CCFE9BEA /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 		031FA91B65CED41BF7F11170 /* DeepgramEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepgramEngine.swift; sourceTree = "<group>"; };
 		040611A14F4597A4FB355CCB /* TranscriptionEngineTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionEngineTypeTests.swift; sourceTree = "<group>"; };
+		F7B3A2D919E8C6B4A5C00002 /* TranscriptionCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionCoordinatorTests.swift; sourceTree = "<group>"; };
 		1112CFED9032AB54B3A4ED09 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		13BF0360CDF7986C60D9CF2C /* zoom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = zoom.png; sourceTree = "<group>"; };
 		1612900B2D43945D64CCB667 /* TranscriptDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptDocumentTests.swift; sourceTree = "<group>"; };
@@ -390,6 +392,7 @@
 				1612900B2D43945D64CCB667 /* TranscriptDocumentTests.swift */,
 				95A42B25C0C37FC78CC5E356 /* TranscriptFormatterTests.swift */,
 				040611A14F4597A4FB355CCB /* TranscriptionEngineTypeTests.swift */,
+				F7B3A2D919E8C6B4A5C00002 /* TranscriptionCoordinatorTests.swift */,
 				C3816F76B19E8A2B9066233D /* TranscriptSegmentTests.swift */,
 				A7E2491AB64A3A97E7850751 /* TestHelpers */,
 			);
@@ -544,6 +547,7 @@
 				7CAEFDCE34D0A7957E63CB27 /* TranscriptFormatterTests.swift in Sources */,
 				88AEBDFD4A0ECC98684340DF /* TranscriptSegmentTests.swift in Sources */,
 				0F152D63D8E217C7C4D5ACF6 /* TranscriptionEngineTypeTests.swift in Sources */,
+				F7B3A2D919E8C6B4A5C00001 /* TranscriptionCoordinatorTests.swift in Sources */,
 				4E027F7BE07174D5330B0076 /* TranscriptionTestFactories.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -35,7 +35,7 @@ final class TranscriptionCoordinator: ObservableObject {
     private var lastSegmentTimestamp: Date?
     private var inactivityTimer: Timer?
     private static let inactivityCheckInterval: TimeInterval = 10
-    private static let inactivityTimeout: TimeInterval = 30
+    private static let inactivityTimeout: TimeInterval = 90
 
     // Auto-save for crash recovery (Bug 3)
     private var autoSaveTimer: Timer?
@@ -230,6 +230,7 @@ final class TranscriptionCoordinator: ObservableObject {
         stopInactivityTimer()
         stopAutoSaveTimer()
         state = .paused
+        updateBanner(.paused)
         Logger.transcription.info("Transcription paused")
     }
 
@@ -270,6 +271,7 @@ final class TranscriptionCoordinator: ObservableObject {
             startInactivityTimer()
             startAutoSaveTimer()
             state = .recording
+            updateBanner(.recording)
             Logger.transcription.info("Transcription resumed")
         } catch {
             self.error = error.localizedDescription
@@ -586,15 +588,35 @@ final class TranscriptionCoordinator: ObservableObject {
         guard state == .recording,
               let lastTimestamp = lastSegmentTimestamp else { return }
 
-        let elapsed = Date().timeIntervalSince(lastTimestamp)
-        if elapsed >= Self.inactivityTimeout {
-            Logger.transcription.info(
-                "No segments for \(Int(elapsed))s, auto-stopping transcription"
-            )
-            Task {
-                await stopTranscription()
-            }
+        let now = Date()
+        let micActive = MeetingDetector.shared.isMicrophoneActive
+        guard Self.shouldAutoStopForInactivity(
+            lastSegmentTimestamp: lastTimestamp,
+            now: now,
+            isMicActive: micActive,
+            timeout: Self.inactivityTimeout
+        ) else { return }
+
+        let elapsed = now.timeIntervalSince(lastTimestamp)
+        Logger.transcription.info(
+            "No segments for \(Int(elapsed))s and mic inactive, auto-stopping transcription"
+        )
+        Task {
+            await stopTranscription()
         }
+    }
+
+    /// While the mic is still in use by some app the meeting is likely ongoing
+    /// and the user may simply be silent — hold off. Once the mic is released
+    /// and the grace window has elapsed, the session is safe to tear down.
+    nonisolated static func shouldAutoStopForInactivity(
+        lastSegmentTimestamp: Date,
+        now: Date,
+        isMicActive: Bool,
+        timeout: TimeInterval
+    ) -> Bool {
+        guard !isMicActive else { return false }
+        return now.timeIntervalSince(lastSegmentTimestamp) >= timeout
     }
 
     // MARK: - Auto-save for crash recovery
