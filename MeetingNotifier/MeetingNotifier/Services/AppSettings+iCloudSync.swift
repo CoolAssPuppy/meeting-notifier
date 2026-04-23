@@ -64,6 +64,18 @@ extension AppSettings {
     func syncAccountListToiCloud() {
         if isUpdatingFromiCloud { return }
 
+        // Honor user opt-in. When disabled, we not only skip writing but also
+        // clear any previously-stored iCloud copy so emails don't linger in the
+        // KV store after the user turns the feature off.
+        guard accountSyncEnabled else {
+            if iCloudStore.object(forKey: "syncedAccounts") != nil {
+                iCloudStore.removeObject(forKey: "syncedAccounts")
+                iCloudStore.synchronize()
+                Logger.sync.info("Account sync disabled — cleared stored iCloud account list")
+            }
+            return
+        }
+
         let syncedAccounts = accounts.map { account in
             SyncedAccountInfo(
                 email: account.email,
@@ -77,6 +89,11 @@ extension AppSettings {
             iCloudStore.synchronize()
             Logger.sync.debug("Synced \(syncedAccounts.count) accounts to iCloud")
         }
+    }
+
+    /// Hook called when the opt-in toggle flips. Re-syncs or purges as needed.
+    func applyAccountSyncPreferenceChange() {
+        syncAccountListToiCloud()
     }
 
     @objc nonisolated func iCloudStoreDidChange(_ notification: Notification) {
@@ -183,7 +200,8 @@ extension AppSettings {
         }
         if keys.contains("transcriptionEngine") {
             let raw = UserDefaults.standard.string(forKey: "transcriptionEngine") ?? TranscriptionEngineType.apple.rawValue
-            transcriptionEngine = TranscriptionEngineType(rawValue: raw) ?? .apple
+            let loaded = TranscriptionEngineType(rawValue: raw) ?? .apple
+            transcriptionEngine = loaded.isImplemented ? loaded : .apple
         }
         if keys.contains("transcriptionLocale") {
             transcriptionLocale = UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "en_US"
@@ -192,7 +210,7 @@ extension AppSettings {
             notesFolderPath = UserDefaults.standard.string(forKey: "notesFolderPath") ?? notesFolderPath
         }
         if keys.contains("fileNamingSchema") {
-            fileNamingSchema = UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{mm}{dd}-{title}"
+            fileNamingSchema = UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{MM}{dd}-{title}"
         }
         if keys.contains("frontMatterTemplate") {
             frontMatterTemplate = UserDefaults.standard.string(forKey: "frontMatterTemplate") ?? ""
@@ -211,8 +229,12 @@ extension AppSettings {
             loadCustomCalendarColors()
         }
         if keys.contains("syncedAccounts") {
-            Logger.sync.info("Account list changed in iCloud - reloading accounts")
-            loadAccounts()
+            if accountSyncEnabled {
+                Logger.sync.info("Account list changed in iCloud - reloading accounts")
+                loadAccounts()
+            } else {
+                Logger.sync.debug("Ignoring syncedAccounts iCloud change — account sync opt-in is off")
+            }
         }
     }
 }

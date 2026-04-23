@@ -318,12 +318,12 @@ final class TranscriptionCoordinator: ObservableObject {
         let didStartAccess = baseFolderURL.startAccessingSecurityScopedResource()
         defer { if didStartAccess { baseFolderURL.stopAccessingSecurityScopedResource() } }
 
-        let subfolder = SubfolderResolver.resolve(
+        let folderURL = SubfolderResolver.resolveFolderURL(
+            baseFolderURL: baseFolderURL,
             calendarName: document.calendarName,
             isEnabled: settings.calendarSubfoldersEnabled,
             mappings: settings.calendarSubfolderMappings
         )
-        let folderURL = subfolder.map { baseFolderURL.appendingPathComponent($0) } ?? baseFolderURL
 
         do {
             try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
@@ -398,6 +398,13 @@ final class TranscriptionCoordinator: ObservableObject {
     // MARK: - Engine factory
 
     private func createEngine(type: TranscriptionEngineType) -> TranscriptionEngine? {
+        // Refuse to instantiate engines that aren't fully implemented yet — their
+        // `start()` won't actually produce transcripts. AppSettings already coerces
+        // these on load, so hitting this path means something routed around that.
+        guard type.isImplemented else {
+            Logger.transcription.warning("Refusing to create non-implemented engine: \(type.rawValue, privacy: .public)")
+            return nil
+        }
         switch type {
         case .apple:
             let engine = SpeechAnalyzerEngine()

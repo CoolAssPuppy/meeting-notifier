@@ -22,6 +22,18 @@ class AppSettings: ObservableObject {
         }
     }
 
+    /// User-facing opt-in for mirroring the account list (emails + provider)
+    /// to the iCloud key-value store. Off by default — sensitive metadata
+    /// never leaves the device unless the user explicitly turns this on.
+    /// Persisted in UserDefaults only so the preference itself doesn't ride
+    /// the iCloud sync it controls.
+    @Published var accountSyncEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(accountSyncEnabled, forKey: "accountSyncEnabled")
+            applyAccountSyncPreferenceChange()
+        }
+    }
+
     @Published var notificationsEnabled: Bool {
         didSet { saveSetting(notificationsEnabled, forKey: "notificationsEnabled") }
     }
@@ -234,6 +246,10 @@ class AppSettings: ObservableObject {
             ?? UserDefaults.standard.object(forKey: "oneMinuteWarningEnabled") as? Bool ?? true
         self.notificationTracking = NotificationTracking()
 
+        // Read from UserDefaults only. The opt-in itself isn't synced, so the user
+        // has to take the action on each device. Defaults to off.
+        self.accountSyncEnabled = UserDefaults.standard.object(forKey: "accountSyncEnabled") as? Bool ?? false
+
         let meetAppRawValue = iCloudStore.string(forKey: "defaultMeetApp")
             ?? UserDefaults.standard.string(forKey: "defaultMeetApp") ?? MeetAppType.defaultBrowser.rawValue
         self.defaultMeetApp = MeetAppType(rawValue: meetAppRawValue) ?? .defaultBrowser
@@ -297,7 +313,10 @@ class AppSettings: ObservableObject {
 
         let engineRaw = iCloudStore.string(forKey: "transcriptionEngine")
             ?? UserDefaults.standard.string(forKey: "transcriptionEngine") ?? TranscriptionEngineType.apple.rawValue
-        self.transcriptionEngine = TranscriptionEngineType(rawValue: engineRaw) ?? .apple
+        let loadedEngine = TranscriptionEngineType(rawValue: engineRaw) ?? .apple
+        // Fall back to Apple if the stored engine is no longer user-selectable
+        // (e.g. a previously-exposed placeholder that's been retired).
+        self.transcriptionEngine = loadedEngine.isImplemented ? loadedEngine : .apple
 
         self.transcriptionLocale = iCloudStore.string(forKey: "transcriptionLocale")
             ?? UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "en_US"
@@ -349,7 +368,8 @@ class AppSettings: ObservableObject {
 
     func loadAccounts() {
         var syncedAccounts: [SyncedAccountInfo] = []
-        if let data = iCloudStore.data(forKey: "syncedAccounts"),
+        if accountSyncEnabled,
+           let data = iCloudStore.data(forKey: "syncedAccounts"),
            let decoded = try? JSONDecoder().decode([SyncedAccountInfo].self, from: data) {
             syncedAccounts = decoded
             Logger.sync.debug("Loaded \(syncedAccounts.count) accounts from iCloud")

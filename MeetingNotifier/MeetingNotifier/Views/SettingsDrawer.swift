@@ -22,6 +22,7 @@ struct SettingsDrawer: View {
                     VStack(spacing: 14) {
                         generalCard
                         menuBarCard
+                        privacyCard
                     }.frame(maxWidth: .infinity)
 
                     VStack(spacing: 14) {
@@ -125,6 +126,17 @@ struct SettingsDrawer: View {
                         }
                         .labelsHidden()
                     }
+                }
+            }
+        }
+    }
+
+    private var privacyCard: some View {
+        AppCard("Privacy") {
+            VStack(spacing: AppSpacing.md) {
+                AppSettingRow("Sync account list to iCloud",
+                              description: "Mirror connected account emails across your Macs") {
+                    Toggle("", isOn: $appSettings.accountSyncEnabled).toggleStyle(.switch).labelsHidden().tint(theme.primary)
                 }
             }
         }
