@@ -165,7 +165,7 @@ struct SettingsDrawer: View {
         }, content: {
             VStack(spacing: AppSpacing.md) {
                 AppSettingRow("Version",
-                              description: Bundle.main.appVersionWithBuild) {
+                              description: Bundle.main.appVersionString) {
                     AppSecondaryButton(title: "Check now") {
                         UpdaterManager.shared.checkForUpdates()
                     }
