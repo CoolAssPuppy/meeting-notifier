@@ -40,6 +40,12 @@ extension AppSettings {
     }
 
     func syncAllSettingsFromiCloudToUserDefaults() {
+        // Respect the user's settings-sync preference. Account list and calendar
+        // color sync are orthogonal and always on.
+        guard settingsSyncEnabled else {
+            Logger.sync.debug("Skipping startup iCloud-to-UserDefaults sync - settings sync is off")
+            return
+        }
         let settingsKeys = [
             "notificationsEnabled", "oneMinuteWarningEnabled", "defaultMeetApp",
             "menuBarDisplayMode", "onlyShowMeetingsWithAttendees", "muteSounds", "launchAtLogin",
@@ -79,17 +85,15 @@ extension AppSettings {
         }
     }
 
+    /// Keys that are not controlled by the user-facing settings sync toggle.
+    /// Account list and calendar-color sync are orthogonal features and keep
+    /// their pre-existing sync behavior regardless of settingsSyncEnabled.
+    static let nonSettingsSyncKeys: Set<String> = ["syncedAccounts", "customCalendarColors"]
+
     @objc nonisolated func iCloudStoreDidChange(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
               let keys = userInfo[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] else {
             return
-        }
-
-        let store = NSUbiquitousKeyValueStore.default
-        for key in keys {
-            if let value = store.object(forKey: key) {
-                UserDefaults.standard.set(value, forKey: key)
-            }
         }
 
         Task { @MainActor [weak self] in
@@ -98,11 +102,36 @@ extension AppSettings {
             self.isUpdatingFromiCloud = true
             defer { self.isUpdatingFromiCloud = false }
 
-            self.applyiCloudChanges(forKeys: keys)
+            let store = NSUbiquitousKeyValueStore.default
+            let allowSettings = self.settingsSyncEnabled
+
+            for key in keys {
+                guard allowSettings || Self.nonSettingsSyncKeys.contains(key) else { continue }
+                if let value = store.object(forKey: key) {
+                    UserDefaults.standard.set(value, forKey: key)
+                }
+            }
+
+            self.applyiCloudChanges(forKeys: keys, allowSettings: allowSettings)
         }
     }
 
-    private func applyiCloudChanges(forKeys keys: [String]) {
+    private func applyiCloudChanges(forKeys keys: [String], allowSettings: Bool) {
+        // Always-sync keys run unconditionally. Everything else is gated on the
+        // user's settings-sync opt-in.
+        if keys.contains("customCalendarColors") {
+            loadCustomCalendarColors()
+        }
+        if keys.contains("syncedAccounts") {
+            Logger.sync.info("Account list changed in iCloud - reloading accounts")
+            loadAccounts()
+        }
+
+        guard allowSettings else {
+            Logger.sync.debug("Ignoring settings-scoped iCloud changes - settings sync is off")
+            return
+        }
+
         if keys.contains("notificationsEnabled") {
             notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
         }
@@ -183,7 +212,8 @@ extension AppSettings {
         }
         if keys.contains("transcriptionEngine") {
             let raw = UserDefaults.standard.string(forKey: "transcriptionEngine") ?? TranscriptionEngineType.apple.rawValue
-            transcriptionEngine = TranscriptionEngineType(rawValue: raw) ?? .apple
+            let loaded = TranscriptionEngineType(rawValue: raw) ?? .apple
+            transcriptionEngine = loaded.isImplemented ? loaded : .apple
         }
         if keys.contains("transcriptionLocale") {
             transcriptionLocale = UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "en_US"
@@ -192,7 +222,7 @@ extension AppSettings {
             notesFolderPath = UserDefaults.standard.string(forKey: "notesFolderPath") ?? notesFolderPath
         }
         if keys.contains("fileNamingSchema") {
-            fileNamingSchema = UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{mm}{dd}-{title}"
+            fileNamingSchema = UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{MM}{dd}-{title}"
         }
         if keys.contains("frontMatterTemplate") {
             frontMatterTemplate = UserDefaults.standard.string(forKey: "frontMatterTemplate") ?? ""
@@ -206,13 +236,6 @@ extension AppSettings {
         if keys.contains("summarizationPlatform") {
             let raw = UserDefaults.standard.string(forKey: "summarizationPlatform") ?? SummarizationPlatform.openai.rawValue
             summarizationPlatform = SummarizationPlatform(rawValue: raw) ?? .openai
-        }
-        if keys.contains("customCalendarColors") {
-            loadCustomCalendarColors()
-        }
-        if keys.contains("syncedAccounts") {
-            Logger.sync.info("Account list changed in iCloud - reloading accounts")
-            loadAccounts()
         }
     }
 }

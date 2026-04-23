@@ -22,6 +22,18 @@ class AppSettings: ObservableObject {
         }
     }
 
+    /// User-facing opt-in for mirroring preferences (Settings drawer toggles,
+    /// transcription defaults, menu-bar layout, etc.) to the iCloud
+    /// key-value store. Defaults to true so existing users keep the
+    /// behavior they had before the toggle existed. Persisted in
+    /// UserDefaults only so the preference itself doesn't ride the sync it
+    /// controls.
+    @Published var settingsSyncEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(settingsSyncEnabled, forKey: "settingsSyncEnabled")
+        }
+    }
+
     @Published var notificationsEnabled: Bool {
         didSet { saveSetting(notificationsEnabled, forKey: "notificationsEnabled") }
     }
@@ -234,6 +246,11 @@ class AppSettings: ObservableObject {
             ?? UserDefaults.standard.object(forKey: "oneMinuteWarningEnabled") as? Bool ?? true
         self.notificationTracking = NotificationTracking()
 
+        // Read from UserDefaults only. The opt-in itself isn't synced, so the user
+        // has to take the action on each device. Defaults to true to preserve the
+        // legacy always-synced behavior.
+        self.settingsSyncEnabled = UserDefaults.standard.object(forKey: "settingsSyncEnabled") as? Bool ?? true
+
         let meetAppRawValue = iCloudStore.string(forKey: "defaultMeetApp")
             ?? UserDefaults.standard.string(forKey: "defaultMeetApp") ?? MeetAppType.defaultBrowser.rawValue
         self.defaultMeetApp = MeetAppType(rawValue: meetAppRawValue) ?? .defaultBrowser
@@ -297,7 +314,10 @@ class AppSettings: ObservableObject {
 
         let engineRaw = iCloudStore.string(forKey: "transcriptionEngine")
             ?? UserDefaults.standard.string(forKey: "transcriptionEngine") ?? TranscriptionEngineType.apple.rawValue
-        self.transcriptionEngine = TranscriptionEngineType(rawValue: engineRaw) ?? .apple
+        let loadedEngine = TranscriptionEngineType(rawValue: engineRaw) ?? .apple
+        // Fall back to Apple if the stored engine is no longer user-selectable
+        // (e.g. a previously-exposed placeholder that's been retired).
+        self.transcriptionEngine = loadedEngine.isImplemented ? loadedEngine : .apple
 
         self.transcriptionLocale = iCloudStore.string(forKey: "transcriptionLocale")
             ?? UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "en_US"
@@ -496,7 +516,9 @@ class AppSettings: ObservableObject {
     func saveSetting<T>(_ value: T, forKey key: String) {
         UserDefaults.standard.set(value, forKey: key)
 
-        if !isUpdatingFromiCloud {
+        // Skip the iCloud write when the user has opted out of settings sync.
+        // Local UserDefaults is always the source of truth for this device.
+        if !isUpdatingFromiCloud && settingsSyncEnabled {
             iCloudStore.set(value, forKey: key)
             iCloudStore.synchronize()
         }

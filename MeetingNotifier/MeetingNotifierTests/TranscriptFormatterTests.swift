@@ -187,6 +187,32 @@ final class TranscriptFormatterTests: XCTestCase {
         XCTAssertFalse(filename.contains("!"))
     }
 
+    func testGenerateFilenameSubstitutesUppercaseMonthToken() {
+        // 1_700_000_000 → 2023-11-14 (UTC). Month = "11".
+        let doc = TranscriptionTestFactories.makeDocument(
+            meetingTitle: "Sprint",
+            startDate: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+        let filename = formatter.generateFilename(document: doc, schema: "{yyyy}-{MM}-{dd}-{title}")
+
+        XCTAssertTrue(filename.contains("-11-"), "month token {MM} should expand to 11 for 2023-11")
+        XCTAssertFalse(filename.contains("{MM}"), "token should be fully replaced")
+    }
+
+    func testGenerateFilenameSubstitutesLowercaseMonthTokenAsMonthForLegacySchemas() {
+        // Users who saved "{yyyy}{mm}{dd}-{title}" from the old buggy default
+        // must keep getting sensible month-based filenames rather than a
+        // literal "{mm}" in their filenames.
+        let doc = TranscriptionTestFactories.makeDocument(
+            meetingTitle: "Sprint",
+            startDate: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+        let filename = formatter.generateFilename(document: doc, schema: "{yyyy}{mm}{dd}-{title}")
+
+        XCTAssertFalse(filename.contains("{mm}"), "legacy {mm} should be substituted, not left as a literal")
+        XCTAssertTrue(filename.contains("11"), "{mm} should expand to a month value")
+    }
+
     // MARK: - File deduplication
 
     func testDeduplicatedFileURLReturnsOriginalWhenNoConflict() {

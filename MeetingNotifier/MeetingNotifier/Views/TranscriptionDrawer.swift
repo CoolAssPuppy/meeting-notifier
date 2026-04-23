@@ -114,7 +114,7 @@ struct TranscriptionDrawer: View {
     private var engineCard: some View {
         AppCard("Engine") {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
-                ForEach(TranscriptionEngineType.allCases) { engine in
+                ForEach(TranscriptionEngineType.selectableCases) { engine in
                     EngineOptionRow(
                         engine: engine,
                         isSelected: appSettings.transcriptionEngine == engine,

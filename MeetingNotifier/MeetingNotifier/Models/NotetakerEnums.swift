@@ -31,6 +31,21 @@ enum TranscriptionEngineType: String, CaseIterable, Codable, Identifiable {
         }
     }
 
+    /// Whether this engine has a working transcription implementation.
+    /// Engines marked `false` are reserved for future releases and must
+    /// not be presented as selectable in the UI.
+    var isImplemented: Bool {
+        switch self {
+        case .apple, .deepgram: return true
+        case .wispr:            return false
+        }
+    }
+
+    /// Engine cases that should appear in user-facing pickers.
+    static var selectableCases: [TranscriptionEngineType] {
+        allCases.filter { $0.isImplemented }
+    }
+
     var icon: String {
         switch self {
         case .apple: return "apple.logo"
