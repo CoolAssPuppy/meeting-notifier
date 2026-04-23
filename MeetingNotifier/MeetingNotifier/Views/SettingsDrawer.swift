@@ -134,9 +134,9 @@ struct SettingsDrawer: View {
     private var privacyCard: some View {
         AppCard("Privacy") {
             VStack(spacing: AppSpacing.md) {
-                AppSettingRow("Sync account list to iCloud",
-                              description: "Mirror connected account emails across your Macs") {
-                    Toggle("", isOn: $appSettings.accountSyncEnabled).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                AppSettingRow("Sync settings to iCloud",
+                              description: "Mirror your preferences across your Macs") {
+                    Toggle("", isOn: $appSettings.settingsSyncEnabled).toggleStyle(.switch).labelsHidden().tint(theme.primary)
                 }
             }
         }

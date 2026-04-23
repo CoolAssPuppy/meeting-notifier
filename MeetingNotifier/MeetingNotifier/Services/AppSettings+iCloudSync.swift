@@ -40,6 +40,12 @@ extension AppSettings {
     }
 
     func syncAllSettingsFromiCloudToUserDefaults() {
+        // Respect the user's settings-sync preference. Account list and calendar
+        // color sync are orthogonal and always on.
+        guard settingsSyncEnabled else {
+            Logger.sync.debug("Skipping startup iCloud-to-UserDefaults sync - settings sync is off")
+            return
+        }
         let settingsKeys = [
             "notificationsEnabled", "oneMinuteWarningEnabled", "defaultMeetApp",
             "menuBarDisplayMode", "onlyShowMeetingsWithAttendees", "muteSounds", "launchAtLogin",
@@ -64,18 +70,6 @@ extension AppSettings {
     func syncAccountListToiCloud() {
         if isUpdatingFromiCloud { return }
 
-        // Honor user opt-in. When disabled, we not only skip writing but also
-        // clear any previously-stored iCloud copy so emails don't linger in the
-        // KV store after the user turns the feature off.
-        guard accountSyncEnabled else {
-            if iCloudStore.object(forKey: "syncedAccounts") != nil {
-                iCloudStore.removeObject(forKey: "syncedAccounts")
-                iCloudStore.synchronize()
-                Logger.sync.info("Account sync disabled — cleared stored iCloud account list")
-            }
-            return
-        }
-
         let syncedAccounts = accounts.map { account in
             SyncedAccountInfo(
                 email: account.email,
@@ -91,22 +85,15 @@ extension AppSettings {
         }
     }
 
-    /// Hook called when the opt-in toggle flips. Re-syncs or purges as needed.
-    func applyAccountSyncPreferenceChange() {
-        syncAccountListToiCloud()
-    }
+    /// Keys that are not controlled by the user-facing settings sync toggle.
+    /// Account list and calendar-color sync are orthogonal features and keep
+    /// their pre-existing sync behavior regardless of settingsSyncEnabled.
+    static let nonSettingsSyncKeys: Set<String> = ["syncedAccounts", "customCalendarColors"]
 
     @objc nonisolated func iCloudStoreDidChange(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
               let keys = userInfo[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] else {
             return
-        }
-
-        let store = NSUbiquitousKeyValueStore.default
-        for key in keys {
-            if let value = store.object(forKey: key) {
-                UserDefaults.standard.set(value, forKey: key)
-            }
         }
 
         Task { @MainActor [weak self] in
@@ -115,11 +102,36 @@ extension AppSettings {
             self.isUpdatingFromiCloud = true
             defer { self.isUpdatingFromiCloud = false }
 
-            self.applyiCloudChanges(forKeys: keys)
+            let store = NSUbiquitousKeyValueStore.default
+            let allowSettings = self.settingsSyncEnabled
+
+            for key in keys {
+                guard allowSettings || Self.nonSettingsSyncKeys.contains(key) else { continue }
+                if let value = store.object(forKey: key) {
+                    UserDefaults.standard.set(value, forKey: key)
+                }
+            }
+
+            self.applyiCloudChanges(forKeys: keys, allowSettings: allowSettings)
         }
     }
 
-    private func applyiCloudChanges(forKeys keys: [String]) {
+    private func applyiCloudChanges(forKeys keys: [String], allowSettings: Bool) {
+        // Always-sync keys run unconditionally. Everything else is gated on the
+        // user's settings-sync opt-in.
+        if keys.contains("customCalendarColors") {
+            loadCustomCalendarColors()
+        }
+        if keys.contains("syncedAccounts") {
+            Logger.sync.info("Account list changed in iCloud - reloading accounts")
+            loadAccounts()
+        }
+
+        guard allowSettings else {
+            Logger.sync.debug("Ignoring settings-scoped iCloud changes - settings sync is off")
+            return
+        }
+
         if keys.contains("notificationsEnabled") {
             notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
         }
@@ -224,17 +236,6 @@ extension AppSettings {
         if keys.contains("summarizationPlatform") {
             let raw = UserDefaults.standard.string(forKey: "summarizationPlatform") ?? SummarizationPlatform.openai.rawValue
             summarizationPlatform = SummarizationPlatform(rawValue: raw) ?? .openai
-        }
-        if keys.contains("customCalendarColors") {
-            loadCustomCalendarColors()
-        }
-        if keys.contains("syncedAccounts") {
-            if accountSyncEnabled {
-                Logger.sync.info("Account list changed in iCloud - reloading accounts")
-                loadAccounts()
-            } else {
-                Logger.sync.debug("Ignoring syncedAccounts iCloud change — account sync opt-in is off")
-            }
         }
     }
 }

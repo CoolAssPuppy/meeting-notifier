@@ -22,15 +22,15 @@ class AppSettings: ObservableObject {
         }
     }
 
-    /// User-facing opt-in for mirroring the account list (emails + provider)
-    /// to the iCloud key-value store. Off by default — sensitive metadata
-    /// never leaves the device unless the user explicitly turns this on.
-    /// Persisted in UserDefaults only so the preference itself doesn't ride
-    /// the iCloud sync it controls.
-    @Published var accountSyncEnabled: Bool {
+    /// User-facing opt-in for mirroring preferences (Settings drawer toggles,
+    /// transcription defaults, menu-bar layout, etc.) to the iCloud
+    /// key-value store. Defaults to true so existing users keep the
+    /// behavior they had before the toggle existed. Persisted in
+    /// UserDefaults only so the preference itself doesn't ride the sync it
+    /// controls.
+    @Published var settingsSyncEnabled: Bool {
         didSet {
-            UserDefaults.standard.set(accountSyncEnabled, forKey: "accountSyncEnabled")
-            applyAccountSyncPreferenceChange()
+            UserDefaults.standard.set(settingsSyncEnabled, forKey: "settingsSyncEnabled")
         }
     }
 
@@ -247,8 +247,9 @@ class AppSettings: ObservableObject {
         self.notificationTracking = NotificationTracking()
 
         // Read from UserDefaults only. The opt-in itself isn't synced, so the user
-        // has to take the action on each device. Defaults to off.
-        self.accountSyncEnabled = UserDefaults.standard.object(forKey: "accountSyncEnabled") as? Bool ?? false
+        // has to take the action on each device. Defaults to true to preserve the
+        // legacy always-synced behavior.
+        self.settingsSyncEnabled = UserDefaults.standard.object(forKey: "settingsSyncEnabled") as? Bool ?? true
 
         let meetAppRawValue = iCloudStore.string(forKey: "defaultMeetApp")
             ?? UserDefaults.standard.string(forKey: "defaultMeetApp") ?? MeetAppType.defaultBrowser.rawValue
@@ -368,8 +369,7 @@ class AppSettings: ObservableObject {
 
     func loadAccounts() {
         var syncedAccounts: [SyncedAccountInfo] = []
-        if accountSyncEnabled,
-           let data = iCloudStore.data(forKey: "syncedAccounts"),
+        if let data = iCloudStore.data(forKey: "syncedAccounts"),
            let decoded = try? JSONDecoder().decode([SyncedAccountInfo].self, from: data) {
             syncedAccounts = decoded
             Logger.sync.debug("Loaded \(syncedAccounts.count) accounts from iCloud")
@@ -516,7 +516,9 @@ class AppSettings: ObservableObject {
     func saveSetting<T>(_ value: T, forKey key: String) {
         UserDefaults.standard.set(value, forKey: key)
 
-        if !isUpdatingFromiCloud {
+        // Skip the iCloud write when the user has opted out of settings sync.
+        // Local UserDefaults is always the source of truth for this device.
+        if !isUpdatingFromiCloud && settingsSyncEnabled {
             iCloudStore.set(value, forKey: key)
             iCloudStore.synchronize()
         }
