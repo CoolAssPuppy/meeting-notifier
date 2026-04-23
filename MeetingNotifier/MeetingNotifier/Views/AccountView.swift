@@ -250,7 +250,7 @@ struct AccountView: View {
         AppCard("Account management") {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
                 AppSettingRow("Sync this account",
-                              description: "Fetch new events every 5 minutes") {
+                              description: "Settings available on all your machines") {
                     Toggle("", isOn: bindingForEnabled).toggleStyle(.switch).labelsHidden().tint(theme.primary)
                 }
                 AppRowDivider()
