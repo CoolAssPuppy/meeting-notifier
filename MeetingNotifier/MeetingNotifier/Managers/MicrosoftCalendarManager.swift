@@ -81,7 +81,10 @@ class MicrosoftCalendarManager {
         let startString = dateFormatter.string(from: startDate)
         let endString = dateFormatter.string(from: endDate)
 
-        guard var components = URLComponents(string: "https://graph.microsoft.com/v1.0/me/calendars/\(calendarId)/events") else {
+        guard let encodedCalendarId = calendarId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
+            throw CalendarError.apiError("Invalid calendar ID")
+        }
+        guard var components = URLComponents(string: "https://graph.microsoft.com/v1.0/me/calendars/\(encodedCalendarId)/events") else {
             throw CalendarError.apiError("Invalid calendar ID")
         }
 

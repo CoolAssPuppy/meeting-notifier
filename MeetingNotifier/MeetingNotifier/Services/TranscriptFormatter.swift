@@ -49,6 +49,10 @@ struct TranscriptFormatter {
         return schema
             .replacingOccurrences(of: "{yyyy}", with: yyyy)
             .replacingOccurrences(of: "{MM}", with: mm)
+            // Tolerate the legacy lowercase month token that an earlier build could
+            // have persisted into saved schemas (it never meant minutes in a filename
+            // context — filenames don't expose {mm}).
+            .replacingOccurrences(of: "{mm}", with: mm)
             .replacingOccurrences(of: "{dd}", with: dd)
             .replacingOccurrences(of: "{title}", with: sanitizedTitle)
             + ".md"
