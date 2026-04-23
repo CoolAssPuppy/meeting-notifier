@@ -170,7 +170,7 @@ final class AISummarizer {
         Never invent information that is not in the transcript. If the transcript is too short or unclear to summarize, say so honestly in the summary and return an empty action_items array.
         """
 
-    private static func buildPrompt(transcript: String, meetingTitle: String) -> String {
+    static func buildPrompt(transcript: String, meetingTitle: String) -> String {
         // Delimit the transcript so the model can reliably distinguish meeting content
         // from its own instructions. The delimiter is unlikely to occur in natural text
         // and is also framed by the system prompt above.
@@ -183,11 +183,11 @@ final class AISummarizer {
         """
     }
 
-    private static let maxSummaryLength = 10_000
-    private static let maxActionItemLength = 500
-    private static let maxActionItems = 100
+    static let maxSummaryLength = 10_000
+    static let maxActionItemLength = 500
+    static let maxActionItems = 100
 
-    private static func parseJSON(_ content: String) throws -> MeetingSummary {
+    static func parseJSON(_ content: String) throws -> MeetingSummary {
         var cleaned = content.trimmingCharacters(in: .whitespacesAndNewlines)
         if cleaned.hasPrefix("```json") {
             cleaned = String(cleaned.dropFirst(7))
@@ -231,7 +231,7 @@ final class AISummarizer {
     /// runs of whitespace, and cap to the given length. Defends against model
     /// output that tries to smuggle terminal control sequences or excessive
     /// length into rendered Markdown.
-    private static func sanitizeText(_ raw: String, maxLength: Int) -> String {
+    static func sanitizeText(_ raw: String, maxLength: Int) -> String {
         let allowed = raw.unicodeScalars.filter { scalar in
             if scalar == "\n" || scalar == "\t" { return true }
             if scalar.value < 0x20 { return false }
@@ -245,7 +245,7 @@ final class AISummarizer {
         return String(stripped.prefix(maxLength))
     }
 
-    private static func post(url: String, headers: [String: String], body: [String: Any]) async throws -> Data {
+    static func post(url: String, headers: [String: String], body: [String: Any]) async throws -> Data {
         let jsonData = try JSONSerialization.data(withJSONObject: body)
 
         guard let requestURL = URL(string: url) else {

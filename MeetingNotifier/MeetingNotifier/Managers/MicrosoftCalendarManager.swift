@@ -81,10 +81,7 @@ class MicrosoftCalendarManager {
         let startString = dateFormatter.string(from: startDate)
         let endString = dateFormatter.string(from: endDate)
 
-        guard let encodedCalendarId = calendarId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
-            throw CalendarError.apiError("Invalid calendar ID")
-        }
-        guard var components = URLComponents(string: "https://graph.microsoft.com/v1.0/me/calendars/\(encodedCalendarId)/events") else {
+        guard var components = try Self.makeEventsURLComponents(calendarId: calendarId) else {
             throw CalendarError.apiError("Invalid calendar ID")
         }
 
@@ -261,4 +258,21 @@ class MicrosoftCalendarManager {
         return colors[color] ?? "#0078D4"
     }
 
+    /// Percent-encodes `calendarId` and composes the Graph events-collection URL.
+    /// Returns `nil` if the URL string can't be formed. `nonisolated` because it's
+    /// purely a string-manipulation helper.
+    ///
+    /// Note: `.urlPathAllowed` on its own is *not* safe for a single path
+    /// segment — it permits `/`, which means a calendarId containing a slash
+    /// would split the URL path and reach the wrong resource on Graph. We
+    /// remove `/` from the allowed set so it is percent-encoded along with the
+    /// other non-segment characters.
+    nonisolated static func makeEventsURLComponents(calendarId: String) throws -> URLComponents? {
+        var allowed = CharacterSet.urlPathAllowed
+        allowed.remove("/")
+        guard let encoded = calendarId.addingPercentEncoding(withAllowedCharacters: allowed) else {
+            throw CalendarError.apiError("Invalid calendar ID")
+        }
+        return URLComponents(string: "https://graph.microsoft.com/v1.0/me/calendars/\(encoded)/events")
+    }
 }
