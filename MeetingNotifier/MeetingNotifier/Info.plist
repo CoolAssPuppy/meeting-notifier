@@ -15,9 +15,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.3.6</string>
+	<string>1.3.7</string>
 	<key>CFBundleVersion</key>
-	<string>12</string>
+	<string>13</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
 	<key>LSMinimumSystemVersion</key>
@@ -39,7 +39,7 @@
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>MeetingNotifier uses speech recognition to transcribe your meetings into notes.</string>
 	<key>POSTHOG_API_KEY</key>
-	<string>phc_ycu9Cvxgo6SfkEXau7PSjTMKkNodioqeHEH5rjagLEPU</string>
+	<string>phc_ekpeEsK9bWymasbwFW69vHHrQpLakGEpVXQ760uhVQL</string>
 	<key>POSTHOG_HOST</key>
 	<string>https://us.i.posthog.com</string>
 	<key>SUEnableAutomaticChecks</key>
