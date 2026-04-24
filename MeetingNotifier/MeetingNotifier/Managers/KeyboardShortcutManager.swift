@@ -102,6 +102,8 @@ class KeyboardShortcutManager: ObservableObject {
     }
 
     private func joinNextMeeting() {
+        Telemetry.capture("shortcut.used", properties: ["action": "join_next"])
+
         let events = CalendarDataManager.shared.events
         let now = Date()
 
@@ -126,11 +128,13 @@ class KeyboardShortcutManager: ObservableObject {
     }
 
     private func openDropdown() {
+        Telemetry.capture("shortcut.used", properties: ["action": "open_menu"])
         // Post notification to trigger dropdown
         NotificationCenter.default.post(name: .toggleDropdown, object: nil)
     }
 
     private func refreshMeetings() {
+        Telemetry.capture("shortcut.used", properties: ["action": "refresh"])
         Task {
             await CalendarDataManager.shared.refreshEvents()
             showNotification(

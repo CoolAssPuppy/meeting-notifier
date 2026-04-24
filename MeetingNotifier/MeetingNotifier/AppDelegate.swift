@@ -21,6 +21,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        Telemetry.setup()
+
         TranscriptionCoordinator.recoverTranscriptIfNeeded()
 
         setupMenuBar()
@@ -28,6 +30,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupNativeMenu()
         startMenuBarUpdates()
         NSApp.setActivationPolicy(.accessory)
+
+        Telemetry.capture("app.launched")
+        reportUpdateInstalledIfNeeded()
 
         _ = NotificationManager.shared
         _ = KeyboardShortcutManager.shared
@@ -60,6 +65,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         TranscriptionCoordinator.shared.emergencySave()
+    }
+
+    /// Fires `update.installed` when the short-version changes between
+    /// launches. Silent on first ever launch. See Linear Bar's equivalent
+    /// for rationale.
+    private func reportUpdateInstalledIfNeeded() {
+        let key = "com.strategicnerds.meetingnotifier.telemetry.lastLaunchedVersion"
+        let defaults = UserDefaults.standard
+        let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        let previous = defaults.string(forKey: key)
+        defaults.set(current, forKey: key)
+        guard let previous, !previous.isEmpty, previous != current else { return }
+        Telemetry.capture("update.installed", properties: ["from": previous, "to": current])
     }
 
     // MARK: - Setup
@@ -143,6 +161,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         startMonitoringForClicksOutsidePopover()
+        Telemetry.capture("menu.opened")
     }
 
     func closePopover() {
@@ -208,7 +227,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func addGoogleAccount() {
         AuthManager.shared.addGoogleAccount { result in
             Task { @MainActor in
-                if case .failure(let error) = result {
+                switch result {
+                case .success:
+                    Telemetry.capture("account.added", properties: ["provider": "google"])
+                case .failure(let error):
+                    Telemetry.capture("account.signin_failed", properties: ["provider": "google"])
                     let alert = NSAlert()
                     alert.messageText = "Failed to Add Account"
                     alert.informativeText = error.localizedDescription
@@ -222,7 +245,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func addMicrosoftAccount() {
         AuthManager.shared.addMicrosoftAccount { result in
             Task { @MainActor in
-                if case .failure(let error) = result {
+                switch result {
+                case .success:
+                    Telemetry.capture("account.added", properties: ["provider": "microsoft"])
+                case .failure(let error):
+                    Telemetry.capture("account.signin_failed", properties: ["provider": "microsoft"])
                     let alert = NSAlert()
                     alert.messageText = "Failed to Add Account"
                     alert.informativeText = error.localizedDescription

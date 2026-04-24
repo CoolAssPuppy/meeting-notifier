@@ -127,6 +127,7 @@ class NotificationManager: NSObject, ObservableObject {
         do {
             try await UNUserNotificationCenter.current().add(request)
             markNotificationAsSent(eventId: event.id, type: .oneMinuteWarning)
+            Telemetry.capture("notification.shown", properties: ["type": "1min"])
         } catch {
             Logger.notifications.error("Error scheduling one minute warning: \(error)")
         }
@@ -243,6 +244,10 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         let userInfo = response.notification.request.content.userInfo
+
+        Task { @MainActor in
+            Telemetry.capture("notification.clicked")
+        }
 
         // Handle both the "Join Meeting" action and default notification tap
         if response.actionIdentifier == "JOIN_MEETING" || response.actionIdentifier == UNNotificationDefaultActionIdentifier {

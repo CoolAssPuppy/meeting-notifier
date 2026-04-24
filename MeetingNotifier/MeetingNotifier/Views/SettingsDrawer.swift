@@ -11,6 +11,7 @@ struct SettingsDrawer: View {
     let onClose: () -> Void
 
     @ObservedObject private var appSettings = AppSettings.shared
+    @State private var telemetryOptIn: Bool = Telemetry.isOptedIn
     @Environment(\.theme) private var theme
 
     var body: some View {
@@ -84,6 +85,17 @@ struct SettingsDrawer: View {
                 AppSettingRow("Mute sounds",
                               description: "Silence notification chimes") {
                     Toggle("", isOn: $appSettings.muteSounds).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                }
+                AppRowDivider()
+                AppSettingRow("Send anonymous usage data",
+                              description: "Help improve Meeting Notifier.") {
+                    Toggle("", isOn: Binding(
+                        get: { telemetryOptIn },
+                        set: { newValue in
+                            telemetryOptIn = newValue
+                            Telemetry.setOptedIn(newValue)
+                        }
+                    )).toggleStyle(.switch).labelsHidden().tint(theme.primary)
                 }
             }
         }

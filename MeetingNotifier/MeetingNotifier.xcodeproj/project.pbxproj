@@ -10,6 +10,7 @@
 		02F14ED899D60656A0148DEA /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C973A67D89458DD083B57122 /* Logger.swift */; };
 		082D83340C0CB8EC6E2BF674 /* TranscriptSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C5C033BBD4E2CDC73AB8BE /* TranscriptSegment.swift */; };
 		0B2CEB881BA89E604069EE78 /* SettingsDrawer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F2D07B35A00315CFE20F32 /* SettingsDrawer.swift */; };
+		0CB52A97759E8744115DCC42 /* Telemetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E2EB416FE247CF900688CD /* Telemetry.swift */; };
 		0EFC651EB43D4B9D9BB58687 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5326575BF5C8A6B7163F6C59 /* NotificationManager.swift */; };
 		0F152D63D8E217C7C4D5ACF6 /* TranscriptionEngineTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040611A14F4597A4FB355CCB /* TranscriptionEngineTypeTests.swift */; };
 		103D45956BAC1AEF57FB8B39 /* SpeechAnalyzerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475314D25149BE27157285CB /* SpeechAnalyzerEngine.swift */; };
@@ -32,6 +33,7 @@
 		3B2A830A62DD2B1B4CB0C19E /* TranscriptFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D9DA8E82CA17B9EA4C10CA /* TranscriptFormatter.swift */; };
 		3CFF191707A6873AB78AE022 /* DeepgramEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031FA91B65CED41BF7F11170 /* DeepgramEngine.swift */; };
 		43A0AF9C785B3D5D3BE9E018 /* SystemAudioEnergyTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49411FFBC42047AF70ECDA36 /* SystemAudioEnergyTracker.swift */; };
+		45D7479D5F67FE95D7C9068E /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = BA5BC1E0E99976711E5B64B5 /* PostHog */; };
 		46348A2F57F37A46468CA6E2 /* AppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = B71D4203DD432764F0184D4C /* AppAuth */; };
 		49A784AB9FB732B73E748321 /* SystemAudioCapturer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8589141DDE692BDE346474EA /* SystemAudioCapturer.swift */; };
 		4CA823206BA08E8C0FE3B013 /* GoogleOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8CE3151B90368012D5C7D67 /* GoogleOAuthManager.swift */; };
@@ -121,6 +123,7 @@
 		1112CFED9032AB54B3A4ED09 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		13BF0360CDF7986C60D9CF2C /* zoom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = zoom.png; sourceTree = "<group>"; };
 		1612900B2D43945D64CCB667 /* TranscriptDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptDocumentTests.swift; sourceTree = "<group>"; };
+		19E2EB416FE247CF900688CD /* Telemetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Telemetry.swift; sourceTree = "<group>"; };
 		1A07EBED89754C9EBBFBE7DE /* AppDelegate+PeekWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+PeekWindow.swift"; sourceTree = "<group>"; };
 		1D9C3C893129A7573A00289F /* NotetakerEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotetakerEnums.swift; sourceTree = "<group>"; };
 		1F287A0EEAA4F3F0255EEE0E /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidebar.swift; sourceTree = "<group>"; };
@@ -219,6 +222,7 @@
 			files = (
 				46348A2F57F37A46468CA6E2 /* AppAuth in Frameworks */,
 				C5E5A949C7356A265E36DE50 /* Sparkle in Frameworks */,
+				45D7479D5F67FE95D7C9068E /* PostHog in Frameworks */,
 				1A6D051CC496406BEF85A228 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -264,6 +268,7 @@
 				A33CE2B45992191E993DBE13 /* OpenAISummarizer.swift */,
 				EDE86981C5EB71FA2CEF65F7 /* StoreKitManager.swift */,
 				B7E28947141FFCB9E7F6B9F1 /* SubfolderResolver.swift */,
+				19E2EB416FE247CF900688CD /* Telemetry.swift */,
 				39D9DA8E82CA17B9EA4C10CA /* TranscriptFormatter.swift */,
 				A00795A09A483B48CABA97AC /* UpdaterManager.swift */,
 				C59C3716DAD76D88D869537A /* URLOpener.swift */,
@@ -461,6 +466,7 @@
 			packageProductDependencies = (
 				B71D4203DD432764F0184D4C /* AppAuth */,
 				9A7EAD06A43A7A5C2FBE6D94 /* Sparkle */,
+				BA5BC1E0E99976711E5B64B5 /* PostHog */,
 			);
 			productName = MeetingNotifier;
 			productReference = 2D57E6F2929088ECE386AE64 /* MeetingNotifier.app */;
@@ -496,6 +502,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				1B5ED245660DF698EB59539A /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
+				523C6E89D2350B749A63CE37 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 				29546A14F8A19352360328A5 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -607,6 +614,7 @@
 				99E69EC1F494C3391CE9B754 /* SubfolderResolver.swift in Sources */,
 				49A784AB9FB732B73E748321 /* SystemAudioCapturer.swift in Sources */,
 				43A0AF9C785B3D5D3BE9E018 /* SystemAudioEnergyTracker.swift in Sources */,
+				0CB52A97759E8744115DCC42 /* Telemetry.swift in Sources */,
 				B6473CA53DD63EFBCD8A9A66 /* Theme.swift in Sources */,
 				2AC3E996EB85E02442D0BED4 /* ThemeStore.swift in Sources */,
 				F3E7562B45866CE45B03CF99 /* TranscriptDocument.swift in Sources */,
@@ -898,6 +906,14 @@
 				minimumVersion = 2.6.0;
 			};
 		};
+		523C6E89D2350B749A63CE37 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -910,6 +926,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1B5ED245660DF698EB59539A /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
 			productName = AppAuth;
+		};
+		BA5BC1E0E99976711E5B64B5 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 523C6E89D2350B749A63CE37 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

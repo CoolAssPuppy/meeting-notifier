@@ -336,6 +336,21 @@ private extension AppDelegate {
         }
 
         AppSettings.shared.openURL(url, accountEmail: event.accountEmail)
+        Telemetry.capture("meeting.join_clicked", properties: [
+            "provider": Self.meetingPlatformTag(for: conferenceLink)
+        ])
+    }
+
+    /// Classifies a conference URL into a short provider tag suitable for a
+    /// telemetry property. Falls back to `other` on unknown hosts so no
+    /// user-identifying URL leaks into events.
+    private static func meetingPlatformTag(for urlString: String) -> String {
+        let lower = urlString.lowercased()
+        if lower.contains("zoom.us") || lower.contains("zoom.com")        { return "zoom" }
+        if lower.contains("meet.google.com")                              { return "meet" }
+        if lower.contains("teams.microsoft.com") || lower.contains("teams.live.com") { return "teams" }
+        if lower.contains("webex.com")                                    { return "webex" }
+        return "other"
     }
 
     @objc func openEventInCalendar(_ sender: NSMenuItem) {

@@ -15,9 +15,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.3.5</string>
+	<string>1.3.6</string>
 	<key>CFBundleVersion</key>
-	<string>10</string>
+	<string>11</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
 	<key>LSMinimumSystemVersion</key>
@@ -38,11 +38,17 @@
 	<string>MeetingNotifier captures system audio to transcribe what other meeting participants say.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>MeetingNotifier uses speech recognition to transcribe your meetings into notes.</string>
+	<key>POSTHOG_API_KEY</key>
+	<string>phc_ycu9Cvxgo6SfkEXau7PSjTMKkNodioqeHEH5rjagLEPU</string>
+	<key>POSTHOG_HOST</key>
+	<string>https://us.i.posthog.com</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
 	<string>https://coolasspuppy.com/meeting-notifier-updates</string>
 	<key>SUPublicEDKey</key>
 	<string>V0ppFFCAZx+/Q+9ndF8BdFPpDdUPagRw4Bcp8rLu9Go=</string>
+	<key>TELEMETRY_SOURCE</key>
+	<string>meeting_notifier_macos</string>
 </dict>
 </plist>
