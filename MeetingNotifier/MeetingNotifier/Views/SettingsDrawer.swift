@@ -30,6 +30,7 @@ struct SettingsDrawer: View {
                         privacyCard
                         updatesCard
                         supportCard
+                        contactCard
                     }.frame(maxWidth: .infinity)
                 }
                 .padding(.horizontal, 24)
@@ -184,18 +185,43 @@ struct SettingsDrawer: View {
     }
 
     private var updatesCard: some View {
-        AppCard("Updates", trailing: {
-            AppStatusPill(text: "UP TO DATE", style: .tinted(theme.success))
-        }, content: {
+        AppCard("Updates") {
             VStack(spacing: AppSpacing.md) {
-                AppSettingRow("Version",
-                              description: Bundle.main.appVersionString) {
-                    AppSecondaryButton(title: "Check now") {
-                        UpdaterManager.shared.checkForUpdates()
-                    }
+                AppSettingRow("Automatically check for updates", description: nil) {
+                    Toggle("", isOn: Binding(
+                        get: { UpdaterManager.shared.automaticallyChecksForUpdates },
+                        set: { UpdaterManager.shared.automaticallyChecksForUpdates = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(theme.primary)
                 }
+
+                AppRowDivider()
+
+                AppSettingRow("Current version", description: nil) {
+                    Text(Bundle.main.appVersionString)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(theme.foreground)
+                }
+
+                AppRowDivider()
+
+                Button { UpdaterManager.shared.checkForUpdates() } label: {
+                    Text("Check for updates…")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(theme.foreground)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                                .strokeBorder(theme.borderStrong, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
             }
-        })
+        }
     }
 
     private var supportCard: some View {
@@ -214,6 +240,40 @@ struct SettingsDrawer: View {
                 }
             }
         }
+    }
+
+    private var contactCard: some View {
+        AppCard("Contact") {
+            VStack(alignment: .leading, spacing: 10) {
+                contactRow(icon: "ladybug.fill",
+                           title: "bugs@strategicnerds.dev",
+                           url: "mailto:bugs@strategicnerds.dev")
+                contactRow(icon: "chevron.left.forwardslash.chevron.right",
+                           title: "coolasspuppy/meeting-notifier",
+                           url: "https://github.com/coolasspuppy/meeting-notifier")
+                contactRow(icon: "cup.and.saucer.fill",
+                           title: "Buy me coffee",
+                           url: "https://venmo.com/u/coolasspuppy")
+                contactRow(icon: "book.closed.fill",
+                           title: "Buy my book",
+                           url: "https://www.strategicnerds.com/picksandshovels")
+            }
+        }
+    }
+
+    private func contactRow(icon: String, title: String, url: String) -> some View {
+        Link(destination: URL(string: url)!) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+                    .foregroundStyle(theme.muted)
+                    .frame(width: 16, alignment: .center)
+                Text(title)
+                    .font(.system(size: 12))
+                    .foregroundStyle(theme.primary)
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 
