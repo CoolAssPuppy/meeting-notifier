@@ -232,8 +232,8 @@ struct SettingsDrawer: View {
                             .font(.system(size: 12))
                             .foregroundStyle(theme.muted)
                     ),
-                    title: "bugs@strategicnerds.dev",
-                    url: "mailto:bugs@strategicnerds.dev"
+                    title: "bugs@strategicnerds.com",
+                    url: "mailto:bugs@strategicnerds.com"
                 )
                 contactRow(
                     iconView: AnyView(
