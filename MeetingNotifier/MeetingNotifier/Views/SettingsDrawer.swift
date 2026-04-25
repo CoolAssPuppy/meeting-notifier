@@ -29,7 +29,6 @@ struct SettingsDrawer: View {
                         meetingLinkCard
                         privacyCard
                         updatesCard
-                        supportCard
                         contactCard
                     }.frame(maxWidth: .infinity)
                 }
@@ -224,49 +223,56 @@ struct SettingsDrawer: View {
         }
     }
 
-    private var supportCard: some View {
-        AppCard("Support") {
-            VStack(alignment: .leading, spacing: AppSpacing.md) {
-                Text("If Meeting Notifier keeps you on time, a small tip keeps me coding.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(theme.foregroundSoft)
-                HStack(spacing: AppSpacing.md) {
-                    AppPrimaryButton(title: "Buy me a coffee", systemImage: "cup.and.saucer.fill") {
-                        NSWorkspace.shared.open(URL(string: "https://www.buymeacoffee.com/coolasspuppy")!)
-                    }
-                    AppSecondaryButton(title: "GitHub", systemImage: "star") {
-                        NSWorkspace.shared.open(URL(string: "https://github.com/coolasspuppy/meeting-notifier")!)
-                    }
-                }
-            }
-        }
-    }
-
     private var contactCard: some View {
         AppCard("Contact") {
             VStack(alignment: .leading, spacing: 10) {
-                contactRow(icon: "ladybug.fill",
-                           title: "bugs@strategicnerds.dev",
-                           url: "mailto:bugs@strategicnerds.dev")
-                contactRow(icon: "chevron.left.forwardslash.chevron.right",
-                           title: "coolasspuppy/meeting-notifier",
-                           url: "https://github.com/coolasspuppy/meeting-notifier")
-                contactRow(icon: "cup.and.saucer.fill",
-                           title: "Buy me coffee",
-                           url: "https://venmo.com/u/coolasspuppy")
-                contactRow(icon: "book.closed.fill",
-                           title: "Buy my book",
-                           url: "https://www.strategicnerds.com/picksandshovels")
+                contactRow(
+                    iconView: AnyView(
+                        Image(systemName: "ladybug.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(theme.muted)
+                    ),
+                    title: "bugs@strategicnerds.dev",
+                    url: "mailto:bugs@strategicnerds.dev"
+                )
+                contactRow(
+                    iconView: AnyView(
+                        Image("GitHubMark")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 13, height: 13)
+                            .foregroundStyle(theme.muted)
+                    ),
+                    title: "coolasspuppy/meeting-notifier",
+                    url: "https://github.com/coolasspuppy/meeting-notifier"
+                )
+                contactRow(
+                    iconView: AnyView(
+                        Image(systemName: "cup.and.saucer.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(theme.muted)
+                    ),
+                    title: "Buy me coffee",
+                    url: "https://venmo.com/u/coolasspuppy"
+                )
+                contactRow(
+                    iconView: AnyView(
+                        Image(systemName: "book.closed.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(theme.muted)
+                    ),
+                    title: "Buy my book",
+                    url: "https://www.strategicnerds.com/picksandshovels"
+                )
             }
         }
     }
 
-    private func contactRow(icon: String, title: String, url: String) -> some View {
+    private func contactRow(iconView: AnyView, title: String, url: String) -> some View {
         Link(destination: URL(string: url)!) {
             HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 12))
-                    .foregroundStyle(theme.muted)
+                iconView
                     .frame(width: 16, alignment: .center)
                 Text(title)
                     .font(.system(size: 12))
