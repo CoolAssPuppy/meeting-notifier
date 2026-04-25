@@ -6,6 +6,24 @@
     <description>MeetingNotifier updates</description>
     <language>en</language>
     <item>
+      <title>Version 1.3.10</title>
+      <pubDate>Sat, 25 Apr 2026 21:16:05 +0000</pubDate>
+      <sparkle:version>16</sparkle:version>
+      <sparkle:shortVersionString>1.3.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul>
+          <li>Bug fixes.</li>
+        </ul>
+      ]]></description>
+      <enclosure
+        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.10.dmg"
+        sparkle:edSignature="dBgFNgWKvBGQ+iWzP+ebAgRzNygfsJ0DtD3EMSjGKyPtH9iZjsFdEvEgU+CTMLsDETUv862d9tOvQilDZ+MaCQ=="
+        length="4232087"
+        type="application/x-apple-diskimage" />
+    </item>
+
+    <item>
       <title>Version 1.3.9</title>
       <pubDate>Sat, 25 Apr 2026 20:33:38 +0000</pubDate>
       <sparkle:version>15</sparkle:version>
