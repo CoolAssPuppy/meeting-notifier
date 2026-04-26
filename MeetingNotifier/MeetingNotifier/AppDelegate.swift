@@ -48,13 +48,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         handleUITestingArguments()
         #endif
 
-        NSAppleEventManager.shared().setEventHandler(
-            self,
-            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
-            forEventClass: AEEventClass(kInternetEventClass),
-            andEventID: AEEventID(kAEGetURL)
-        )
-
         NotificationCenter.default.addObserver(self, selector: #selector(handleAddAccountRequest), name: .addAccountRequested, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSettingsRequest), name: .settingsRequested, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(toggleDropdown), name: .toggleDropdown, object: nil)
@@ -123,17 +116,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func handleAccountsDidUpdate() {
         Task { @MainActor in
             updateMenuBarText()
-        }
-    }
-
-    @objc func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
-        guard let urlString = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue,
-              let url = URL(string: urlString) else {
-            return
-        }
-
-        Task { @MainActor in
-            _ = AuthManager.shared.handleURLCallback(url)
         }
     }
 

@@ -66,15 +66,6 @@ class MicrosoftOAuthManager {
         )
     }
 
-    func resumeAuthFlow(url: URL) -> Bool {
-        guard let flow = currentAuthorizationFlow else { return false }
-        let resumed = flow.resumeExternalUserAgentFlow(with: url)
-        if resumed {
-            currentAuthorizationFlow = nil
-        }
-        return resumed
-    }
-
     func refreshToken(
         forAccount account: CalendarAccount,
         completion: @escaping (Result<String, Error>) -> Void

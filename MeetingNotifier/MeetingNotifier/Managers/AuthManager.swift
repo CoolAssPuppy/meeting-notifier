@@ -118,23 +118,6 @@ class AuthManager {
         }
     }
 
-    func handleURLCallback(_ url: URL) -> Bool {
-        // Match by URL scheme rather than full-string prefix. Both providers
-        // use a unique custom scheme registered in Info.plist's URL types,
-        // so a scheme match is the structurally correct dispatch.
-        guard let scheme = url.scheme?.lowercased() else { return false }
-
-        if let googleScheme = URL(string: GoogleOAuthManager.redirectURL)?.scheme?.lowercased(),
-           scheme == googleScheme {
-            return GoogleOAuthManager.shared.resumeAuthFlow(url: url)
-        }
-        if let microsoftScheme = URL(string: MicrosoftOAuthManager.redirectURL)?.scheme?.lowercased(),
-           scheme == microsoftScheme {
-            return MicrosoftOAuthManager.shared.resumeAuthFlow(url: url)
-        }
-
-        return false
-    }
 }
 
 private func authError(_ message: String) -> NSError {
