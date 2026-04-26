@@ -594,8 +594,7 @@ private struct MiniCalendarDrawer: View {
     }
 
     private var weekdaySymbols: [String] {
-        var calendar = Calendar.current
-        calendar.firstWeekday = 1 // Sunday
+        let calendar = Calendar.current
         let symbols = calendar.veryShortStandaloneWeekdaySymbols
         let shift = calendar.firstWeekday - 1
         return Array(symbols[shift...] + symbols[..<shift])
@@ -609,8 +608,7 @@ private struct MiniCalendarDrawer: View {
     }
 
     private func monthCells(for month: Date) -> [DayCellModel] {
-        var calendar = Calendar.current
-        calendar.firstWeekday = 1
+        let calendar = Calendar.current
 
         guard let monthRange = calendar.range(of: .day, in: .month, for: month),
               let firstOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: month)) else {
