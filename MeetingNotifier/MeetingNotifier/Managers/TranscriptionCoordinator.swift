@@ -442,24 +442,9 @@ final class TranscriptionCoordinator: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 let settings = AppSettings.shared
-
                 Logger.transcription.info("Mic activated. State: \(self.state.rawValue), enabled: \(settings.notetakerEnabled), auto-offer: \(settings.autoOfferTranscription)")
-
-                guard self.state == .idle,
-                      !self.suppressAutoStart,
-                      settings.notetakerEnabled,
-                      settings.autoOfferTranscription else {
-                    return
-                }
-
-                // Find best matching meeting (or none)
-                let meeting = self.findBestMeeting()
-                if let meeting {
-                    Logger.transcription.info("Auto-starting transcription for: \(meeting.title)")
-                } else {
-                    Logger.transcription.info("Auto-starting transcription (no calendar match)")
-                }
-                await self.startTranscription(for: meeting)
+                // The notification IS the activation, so micActive is true.
+                await self.handleAutoOfferTrigger(isMicActive: true)
             }
         }
 
@@ -495,49 +480,37 @@ final class TranscriptionCoordinator: ObservableObject {
     }
 
     private func checkAutoOffer() {
-        let settings = AppSettings.shared
         let micActive = MeetingDetector.shared.isMicrophoneActive
-
+        let settings = AppSettings.shared
         Logger.transcription.debug("AutoOffer check: state=\(self.state.rawValue) enabled=\(settings.notetakerEnabled) autoOffer=\(settings.autoOfferTranscription) micActive=\(micActive)")
-
-        guard state == .idle,
-              !suppressAutoStart,
-              settings.notetakerEnabled,
-              settings.autoOfferTranscription,
-              micActive else {
-            return
-        }
-
-        let meeting = findBestMeeting()
-        Logger.transcription.info("AutoOffer starting transcription. Meeting: \(meeting?.title ?? "none")")
-
-        Task {
-            await startTranscription(for: meeting)
-        }
+        Task { await handleAutoOfferTrigger(isMicActive: micActive) }
     }
 
     // MARK: - Meeting matching
 
-    /// Find the best calendar event for auto-transcription.
-    /// Matches meetings happening now or starting within 5 minutes.
-    /// If double-booked, uses the user's double-booking preference.
-    private func findBestMeeting() -> CalendarEvent? {
-        let now = Date()
-        let candidates = CalendarDataManager.shared.events.filter { event in
-            event.startDate <= now.addingTimeInterval(300) && event.endDate > now
-        }
+    /// Single entry point for auto-offer triggers from both the
+    /// `.microphoneDidActivate` notification and the safety-net polling
+    /// timer. Decision logic lives in `AutoOfferDecider`.
+    private func handleAutoOfferTrigger(isMicActive: Bool) async {
+        let settings = AppSettings.shared
+        let decision = AutoOfferDecider.decide(
+            state: state,
+            suppressAutoStart: suppressAutoStart,
+            notetakerEnabled: settings.notetakerEnabled,
+            autoOfferEnabled: settings.autoOfferTranscription,
+            isMicActive: isMicActive,
+            candidates: CalendarDataManager.shared.events,
+            doubleBookingPreference: settings.doubleBookingPreference
+        )
 
-        guard !candidates.isEmpty else { return nil }
-        if candidates.count == 1 { return candidates.first }
+        guard case .start(let meeting) = decision else { return }
 
-        // Double-booked: use the user's preference
-        Logger.transcription.info("Double-booked: \(candidates.count) meetings, using preference: \(AppSettings.shared.doubleBookingPreference.rawValue)")
-        switch AppSettings.shared.doubleBookingPreference {
-        case .fewerAttendees:
-            return candidates.sorted { $0.attendeeCount < $1.attendeeCount }.first
-        case .moreAttendees:
-            return candidates.sorted { $0.attendeeCount > $1.attendeeCount }.first
+        if let meeting {
+            Logger.transcription.info("Auto-starting transcription for: \(meeting.title)")
+        } else {
+            Logger.transcription.info("Auto-starting transcription (no calendar match)")
         }
+        await startTranscription(for: meeting)
     }
 
     // MARK: - Banner helpers
