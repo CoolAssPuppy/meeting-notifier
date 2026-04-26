@@ -54,24 +54,29 @@ class LocationManager: NSObject, ObservableObject {
         isCalculating = true
         defer { isCalculating = false }
 
+        // Without a current location we can't compute travel time. Bail and
+        // wait for `locationManager(_:didUpdateLocations:)` to fire — the next
+        // calculate call will succeed once `currentLocation` populates.
+        guard let sourceLocation = currentLocation else {
+            Logger.location.debug("Skipping travel time for \(event.id, privacy: .public) — current location not yet available")
+            return nil
+        }
+
         do {
-            // Geocode the destination
             guard let destination = try await geocodeDestination(address: location) else {
                 return nil
             }
-            let destinationLocation = CLLocation(latitude: destination.coordinate.latitude, longitude: destination.coordinate.longitude)
+            let destinationLocation = CLLocation(
+                latitude: destination.coordinate.latitude,
+                longitude: destination.coordinate.longitude
+            )
 
-            // Get current location or use default (user's approximate location)
-            let sourceLocation = currentLocation ?? CLLocation(latitude: 37.7749, longitude: -122.4194)
-
-            // Calculate travel time
             let travelInfo = try await calculateRoute(
                 from: sourceLocation,
                 to: destinationLocation,
                 mode: AppSettings.shared.defaultTravelMode
             )
 
-            // Cache the result
             let info = TravelTimeInfo(
                 eventId: event.id,
                 travelTimeMinutes: travelInfo.travelTimeMinutes,
@@ -216,18 +221,14 @@ extension LocationManager: CLLocationManagerDelegate {
 
 // MARK: - Supporting Types
 
-struct TravelTimeInfo: Codable {
+struct TravelTimeInfo {
     let eventId: String
     let travelTimeMinutes: Int
     let distance: Double
     let formattedAddress: String
-    private let coordinateData: CodableCoordinate
+    let coordinate: CLLocationCoordinate2D
     let calculatedAt: Date
     let leaveByTime: Date
-
-    var coordinate: CLLocationCoordinate2D {
-        coordinateData.clCoordinate
-    }
 
     var shouldLeaveNow: Bool {
         Date() >= leaveByTime
@@ -248,36 +249,11 @@ struct TravelTimeInfo: Codable {
             return "Leave in \(hours)h \(mins)m"
         }
     }
-
-    init(eventId: String, travelTimeMinutes: Int, distance: Double, formattedAddress: String, coordinate: CLLocationCoordinate2D, calculatedAt: Date, leaveByTime: Date) {
-        self.eventId = eventId
-        self.travelTimeMinutes = travelTimeMinutes
-        self.distance = distance
-        self.formattedAddress = formattedAddress
-        self.coordinateData = CodableCoordinate(coordinate)
-        self.calculatedAt = calculatedAt
-        self.leaveByTime = leaveByTime
-    }
 }
 
 private struct GeocodedDestination: Sendable {
     let coordinate: CLLocationCoordinate2D
     let formattedAddress: String
-}
-
-// Wrapper to make CLLocationCoordinate2D Codable without extending imported type
-struct CodableCoordinate: Codable {
-    let latitude: CLLocationDegrees
-    let longitude: CLLocationDegrees
-
-    var clCoordinate: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-    }
-
-    init(_ coordinate: CLLocationCoordinate2D) {
-        self.latitude = coordinate.latitude
-        self.longitude = coordinate.longitude
-    }
 }
 
 extension CLPlacemark {

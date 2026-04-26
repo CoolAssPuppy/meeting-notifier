@@ -13,7 +13,6 @@ import os
 @MainActor
 final class AudioCaptureManager: ObservableObject {
     @Published private(set) var isCapturing = false
-    @Published private(set) var micLevel: Float = 0
 
     private var micEngine: AVAudioEngine?
 
@@ -24,6 +23,8 @@ final class AudioCaptureManager: ObservableObject {
     /// Start capturing mic audio.
     /// The `bufferHandler` is called on the real-time audio render thread.
     /// It receives the original AVAudioPCMBuffer -- no copies, no actor hops.
+    /// As a side effect, every Nth buffer also writes a normalized RMS level
+    /// to `MicLevelBridge.current` so the UI can render a live waveform.
     func startMicCapture(bufferHandler: @escaping @Sendable (AVAudioPCMBuffer) -> Void) throws {
         guard !isCapturing else {
             Logger.audio.warning("startMicCapture() called while capture is already running")
@@ -41,16 +42,18 @@ final class AudioCaptureManager: ObservableObject {
             throw AudioCaptureError.invalidFormat
         }
 
-        // State lives outside the actor so the audio thread can freely mutate it.
+        // Local counter on the audio thread — no actor hops, no allocations.
         let levelState = AudioLevelState()
 
         Logger.audio.info("Installing mic tap (sampleRate: \(format.sampleRate)Hz, channels: \(format.channelCount))")
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
             bufferHandler(buffer)
 
-            levelState.count += 1
+            // Compute RMS roughly every 4th buffer (~10 Hz at default
+            // 1024-frame buffers / 48 kHz) — frequent enough to feel reactive,
+            // sparse enough to be free.
+            levelState.count &+= 1
             guard levelState.count % 4 == 0 else { return }
-
             MicLevelBridge.current = AudioCaptureManager.computeRMS(buffer)
         }
 
@@ -71,13 +74,15 @@ final class AudioCaptureManager: ObservableObject {
         micEngine?.stop()
         micEngine = nil
         isCapturing = false
-        micLevel = 0
         MicLevelBridge.current = 0
         Logger.audio.info("Mic capture stopped")
     }
 
     // MARK: - RMS computation
 
+    /// Normalized RMS of the first channel, scaled so quiet conversation
+    /// reads ~0.4 and loud speech saturates at 1.0. The 8x scalar was tuned
+    /// empirically against built-in MacBook mics.
     nonisolated static func computeRMS(_ buffer: AVAudioPCMBuffer) -> Float {
         guard let channelData = buffer.floatChannelData else { return 0 }
         let frameLength = Int(buffer.frameLength)
@@ -104,14 +109,18 @@ final class AudioCaptureManager: ObservableObject {
     }
 }
 
-// MARK: - Audio level state (lives on the audio thread, not main actor)
+// MARK: - Audio thread state
 
+/// Counter that lives entirely on the audio thread so the tap can throttle
+/// level computation without crossing into actor-isolated code.
 private final class AudioLevelState: @unchecked Sendable {
     var count: Int = 0
 }
 
-// Shared mic level that the audio thread writes and the UI reads.
-// Float reads/writes are atomic on ARM64, so no lock needed.
+/// Shared mic level. The audio thread writes here on every Nth buffer; the
+/// UI reads it from a SwiftUI `TimelineView` re-render. Float reads/writes
+/// are atomic on ARM64, so no lock is needed and we deliberately avoid
+/// Combine/Task/GCD on the audio path.
 enum MicLevelBridge {
     nonisolated(unsafe) static var current: Float = 0
 }

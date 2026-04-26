@@ -59,7 +59,10 @@ enum Telemetry {
     static func setup() {
         guard
             let apiKey = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_API_KEY") as? String,
-            !apiKey.isEmpty
+            !apiKey.isEmpty,
+            // Reject the unsubstituted XcodeGen/Xcode build setting placeholder
+            // ("$(POSTHOG_API_KEY)") that survives when the env var is unset.
+            !apiKey.hasPrefix("$(")
         else {
             return
         }

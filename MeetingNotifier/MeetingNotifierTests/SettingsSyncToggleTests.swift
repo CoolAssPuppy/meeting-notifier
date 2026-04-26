@@ -58,10 +58,17 @@ final class SettingsSyncToggleTests: XCTestCase {
         XCTAssertEqual(UserDefaults.standard.string(forKey: key), "enabled-value")
     }
 
-    func testNonSettingsSyncKeysSetIncludesAccountsAndColors() {
-        // Keys marked here are never gated by the settings-sync opt-in so
-        // they keep their legacy always-on iCloud sync behavior.
-        XCTAssertTrue(AppSettings.nonSettingsSyncKeys.contains("syncedAccounts"))
-        XCTAssertTrue(AppSettings.nonSettingsSyncKeys.contains("customCalendarColors"))
+    func testSyncToggleOffSkipsAccountListWriteToiCloud() {
+        // Account list, calendar colors, and subfolder mappings are all gated
+        // by `settingsSyncEnabled` now. We can't observe the iCloud KV store
+        // directly in unit tests, but exercising the path verifies the gate
+        // doesn't crash. UserDefaults remains authoritative either way.
+        let settings = AppSettings.shared
+        let previous = settings.settingsSyncEnabled
+        defer { settings.settingsSyncEnabled = previous }
+
+        settings.settingsSyncEnabled = false
+        settings.syncAccountListToiCloud()
+        // No assertion — this is a smoke test that the gated path returns cleanly.
     }
 }

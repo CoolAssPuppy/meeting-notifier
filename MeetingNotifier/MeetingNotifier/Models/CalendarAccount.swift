@@ -5,6 +5,13 @@ enum CalendarProvider: String, Codable {
     case google
     case microsoft
 
+    var displayName: String {
+        switch self {
+        case .google:    return "Google"
+        case .microsoft: return "Microsoft"
+        }
+    }
+
     var iconName: String {
         switch self {
         case .google:
@@ -46,14 +53,7 @@ struct CalendarAccount: Codable, Identifiable, Hashable {
         return trimmed.isEmpty ? email : trimmed
     }
 
-    var providerName: String {
-        switch provider {
-        case .google:
-            return "Google"
-        case .microsoft:
-            return "Microsoft"
-        }
-    }
+    var providerName: String { provider.displayName }
 }
 
 extension CalendarAccount {

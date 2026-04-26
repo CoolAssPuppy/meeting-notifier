@@ -249,27 +249,22 @@ private extension AppDelegate {
 
         submenu.addItem(NSMenuItem.separator())
 
-        // Calendar name - informational, styled as enabled
-        let calendarItem = NSMenuItem(
+        // Informational rows: no action (purely descriptive). isEnabled=false
+        // styles them as inert; we still set image+title.
+        submenu.addItem(infoMenuItem(
             title: event.calendarName,
-            action: #selector(noAction(_:)),
-            keyEquivalent: ""
-        )
-        calendarItem.image = NSImage(systemSymbolName: "tray.full", accessibilityDescription: "Calendar")
-        submenu.addItem(calendarItem)
+            symbolName: "tray.full",
+            symbolDescription: "Calendar"
+        ))
 
-        // Attendee count - only if more than 1 attendee
         if event.attendeeCount > 1 {
-            let attendeeItem = NSMenuItem(
+            submenu.addItem(infoMenuItem(
                 title: String(format: NSLocalizedString("%d People", comment: "Number of attendees"), event.attendeeCount),
-                action: #selector(noAction(_:)),
-                keyEquivalent: ""
-            )
-            attendeeItem.image = NSImage(systemSymbolName: "person.2", accessibilityDescription: "Attendees")
-            submenu.addItem(attendeeItem)
+                symbolName: "person.2",
+                symbolDescription: "Attendees"
+            ))
         }
 
-        // Travel time - only for events with physical locations and cached travel data
         if event.hasPhysicalLocation,
            let travelInfo = LocationManager.shared.travelTimeCache[event.id] {
             let timeFormatter = DateFormatter()
@@ -283,16 +278,11 @@ private extension AppDelegate {
                 title = String(format: NSLocalizedString("Leave at %@ to arrive in time", comment: "Travel time with departure time"), leaveByString)
             }
 
-            let travelItem = NSMenuItem(
+            submenu.addItem(infoMenuItem(
                 title: title,
-                action: #selector(noAction(_:)),
-                keyEquivalent: ""
-            )
-            travelItem.image = NSImage(
-                systemSymbolName: AppSettings.shared.defaultTravelMode.icon,
-                accessibilityDescription: "Travel time"
-            )
-            submenu.addItem(travelItem)
+                symbolName: AppSettings.shared.defaultTravelMode.icon,
+                symbolDescription: "Travel time"
+            ))
         }
 
         menuItem.submenu = submenu
@@ -388,7 +378,12 @@ private extension AppDelegate {
         }
     }
 
-    @objc func noAction(_ sender: NSMenuItem) {
-        // Intentionally empty - provides clickable appearance without action
+    /// Build a non-actionable submenu row (calendar name, attendee count, etc.).
+    /// `isEnabled = false` styles it as informational and prevents click feedback.
+    func infoMenuItem(title: String, symbolName: String, symbolDescription: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        item.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: symbolDescription)
+        return item
     }
 }

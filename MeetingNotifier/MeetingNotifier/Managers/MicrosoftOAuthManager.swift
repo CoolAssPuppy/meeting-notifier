@@ -27,8 +27,8 @@ class MicrosoftOAuthManager {
 
     func authorize(completion: @escaping (Result<OIDAuthState, Error>) -> Void) {
         let configuration = OIDServiceConfiguration(
-            authorizationEndpoint: URL(string: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize")!,
-            tokenEndpoint: URL(string: "https://login.microsoftonline.com/common/oauth2/v2.0/token")!
+            authorizationEndpoint: URL.required("https://login.microsoftonline.com/common/oauth2/v2.0/authorize"),
+            tokenEndpoint: URL.required("https://login.microsoftonline.com/common/oauth2/v2.0/token")
         )
 
         let request = OIDAuthorizationRequest(
@@ -42,48 +42,28 @@ class MicrosoftOAuthManager {
                 "offline_access",
                 "https://graph.microsoft.com/Calendars.Read"
             ],
-            redirectURL: URL(string: Self.redirectURL)!,
+            redirectURL: URL.required(Self.redirectURL),
             responseType: OIDResponseTypeCode,
             additionalParameters: ["prompt": "select_account"]
         )
 
-        if #available(macOS 10.15, *) {
-            let window = NSApplication.shared.windows.first ?? NSWindow()
-            currentAuthorizationFlow = OIDAuthState.authState(
-                byPresenting: request,
-                presenting: window,
-                callback: { [weak self] state, error in
-                    self?.currentAuthorizationFlow = nil
-                    if let state = state {
-                        completion(.success(state))
-                    } else {
-                        completion(.failure(error ?? NSError(
-                            domain: "MicrosoftOAuth",
-                            code: -1,
-                            userInfo: [NSLocalizedDescriptionKey: "Microsoft OAuth failed"]
-                        )))
-                    }
+        let window = NSApplication.shared.windows.first ?? NSWindow()
+        currentAuthorizationFlow = OIDAuthState.authState(
+            byPresenting: request,
+            presenting: window,
+            callback: { [weak self] state, error in
+                self?.currentAuthorizationFlow = nil
+                if let state = state {
+                    completion(.success(state))
+                } else {
+                    completion(.failure(error ?? NSError(
+                        domain: "MicrosoftOAuth",
+                        code: -1,
+                        userInfo: [NSLocalizedDescriptionKey: "Microsoft OAuth failed"]
+                    )))
                 }
-            )
-        } else {
-            #if compiler(<6.0)
-            currentAuthorizationFlow = OIDAuthState.authState(
-                byPresenting: request,
-                callback: { [weak self] state, error in
-                    self?.currentAuthorizationFlow = nil
-                    if let state = state {
-                        completion(.success(state))
-                    } else {
-                        completion(.failure(error ?? NSError(
-                            domain: "MicrosoftOAuth",
-                            code: -1,
-                            userInfo: [NSLocalizedDescriptionKey: "Microsoft OAuth failed"]
-                        )))
-                    }
-                }
-            )
-            #endif
-        }
+            }
+        )
     }
 
     func resumeAuthFlow(url: URL) -> Bool {
@@ -107,8 +87,8 @@ class MicrosoftOAuthManager {
     }
 
     private static let providerConfig = OAuthRefreshSupport.ProviderConfig(
-        authorizationEndpoint: URL(string: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize")!,
-        tokenEndpoint: URL(string: "https://login.microsoftonline.com/common/oauth2/v2.0/token")!,
+        authorizationEndpoint: URL.required("https://login.microsoftonline.com/common/oauth2/v2.0/authorize"),
+        tokenEndpoint: URL.required("https://login.microsoftonline.com/common/oauth2/v2.0/token"),
         clientID: clientID,
         clientSecret: clientSecret,
         errorDomain: "MicrosoftOAuth"
@@ -121,7 +101,7 @@ class MicrosoftOAuthManager {
     /// extraction to Microsoft instead of trusting an unsigned JWT body locally.
     func extractEmail(from authState: OIDAuthState) async -> String? {
         guard let accessToken = authState.lastTokenResponse?.accessToken else { return nil }
-        guard let url = URL(string: "https://graph.microsoft.com/v1.0/me") else { return nil }
+        let url = URL.required("https://graph.microsoft.com/v1.0/me")
 
         var request = URLRequest(url: url)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")

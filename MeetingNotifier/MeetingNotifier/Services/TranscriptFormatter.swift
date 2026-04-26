@@ -87,7 +87,7 @@ struct TranscriptFormatter {
         if let summary {
             lines.append(summary.summary)
         } else {
-            lines.append("*Summary unavailable. Configure an OpenAI API key in Settings > Notes to enable meeting summaries.*")
+            lines.append("*Summary unavailable. Open the Transcription drawer to set a summarization API key.*")
         }
 
         return lines.joined(separator: "\n")

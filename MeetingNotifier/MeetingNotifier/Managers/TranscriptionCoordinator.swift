@@ -20,7 +20,6 @@ final class TranscriptionCoordinator: ObservableObject {
     @Published private(set) var currentDocument: TranscriptDocument?
     @Published private(set) var error: String?
     @Published private(set) var isDiarizationActive = false
-    @Published private(set) var micLevel: Float = 0
 
     private let audioCaptureManager = AudioCaptureManager()
     private let systemAudioCapturer = SystemAudioCapturer()
@@ -28,7 +27,6 @@ final class TranscriptionCoordinator: ObservableObject {
     private let systemAudioEnergyTracker = SystemAudioEnergyTracker()
     private var micEngine: TranscriptionEngine?
     private var systemEngine: TranscriptionEngine?
-    private var cancellables = Set<AnyCancellable>()
     private var autoOfferTimer: Timer?
 
     // Inactivity detection (Bug 1)
@@ -46,19 +44,9 @@ final class TranscriptionCoordinator: ObservableObject {
     // or explicit user-initiated start.
     private var suppressAutoStart = false
 
-    static var recoveryFileURL: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return appSupport
-            .appendingPathComponent("MeetingNotifier/recovery", isDirectory: true)
-            .appendingPathComponent("active-transcript.json")
-    }
-
     private init() {
         setupNotificationObservers()
         startAutoOfferPolling()
-        audioCaptureManager.$micLevel
-            .receive(on: RunLoop.main)
-            .assign(to: &$micLevel)
     }
 
     // MARK: - Public API
@@ -194,7 +182,6 @@ final class TranscriptionCoordinator: ObservableObject {
         micEngine = nil
         systemEngine = nil
         isDiarizationActive = false
-        micLevel = 0
 
         // Finalize document
         currentDocument?.endDate = Date()
@@ -640,73 +627,52 @@ final class TranscriptionCoordinator: ObservableObject {
 
     private func writeRecoveryFile() {
         guard let document = currentDocument else { return }
-        do {
-            let data = try JSONEncoder().encode(document)
-            let url = Self.recoveryFileURL
-            let directory = url.deletingLastPathComponent()
-            try FileManager.default.createDirectory(
-                at: directory,
-                withIntermediateDirectories: true,
-                attributes: [.posixPermissions: 0o700]
-            )
-            try data.write(to: url, options: [.atomic, .completeFileProtection])
-            try? FileManager.default.setAttributes(
-                [.posixPermissions: 0o600],
-                ofItemAtPath: url.path
-            )
-        } catch {
-            Logger.transcription.warning("Recovery file write failed: \(error.localizedDescription)")
-        }
+        TranscriptRecoveryStore.write(document)
     }
 
     private func removeRecoveryFile() {
-        try? FileManager.default.removeItem(at: Self.recoveryFileURL)
+        TranscriptRecoveryStore.clear()
     }
 
     /// Called on app launch to recover a transcript from a prior crash.
     /// Saves the recovered document as markdown without AI summarization.
+    @MainActor
     static func recoverTranscriptIfNeeded() {
-        let url = recoveryFileURL
-        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        guard var document = TranscriptRecoveryStore.read() else { return }
+        if document.endDate == nil {
+            document.endDate = document.segments.last?.timestamp ?? document.startDate
+        }
+
+        let settings = AppSettings.shared
+        let formatter = TranscriptFormatter(
+            speakerNameMe: settings.speakerDisplayName,
+            speakerNameOthers: settings.othersDisplayName
+        )
+        let markdown = formatter.formatMarkdown(document: document, summary: nil)
+        let filename = formatter.generateFilename(document: document, schema: settings.fileNamingSchema)
+
+        let baseFolderURL = settings.resolveNotesFolderURL()
+            ?? URL(fileURLWithPath: settings.notesFolderPath)
+        let didStartAccess = baseFolderURL.startAccessingSecurityScopedResource()
+        defer { if didStartAccess { baseFolderURL.stopAccessingSecurityScopedResource() } }
+
+        let subfolder = SubfolderResolver.resolve(
+            calendarName: document.calendarName,
+            isEnabled: settings.calendarSubfoldersEnabled,
+            mappings: settings.calendarSubfolderMappings
+        )
+        let folderURL = subfolder.map { baseFolderURL.appendingPathComponent($0) } ?? baseFolderURL
 
         do {
-            let data = try Data(contentsOf: url)
-            var document = try JSONDecoder().decode(TranscriptDocument.self, from: data)
-            if document.endDate == nil {
-                document.endDate = document.segments.last?.timestamp ?? document.startDate
-            }
-
-            let settings = AppSettings.shared
-            let formatter = TranscriptFormatter(
-                speakerNameMe: settings.speakerDisplayName,
-                speakerNameOthers: settings.othersDisplayName
-            )
-            let markdown = formatter.formatMarkdown(document: document, summary: nil)
-            let filename = formatter.generateFilename(document: document, schema: settings.fileNamingSchema)
-
-            let baseFolderURL = settings.resolveNotesFolderURL()
-                ?? URL(fileURLWithPath: settings.notesFolderPath)
-            let didStartAccess = baseFolderURL.startAccessingSecurityScopedResource()
-            defer { if didStartAccess { baseFolderURL.stopAccessingSecurityScopedResource() } }
-
-            let subfolder = SubfolderResolver.resolve(
-                calendarName: document.calendarName,
-                isEnabled: settings.calendarSubfoldersEnabled,
-                mappings: settings.calendarSubfolderMappings
-            )
-            let folderURL = subfolder.map { baseFolderURL.appendingPathComponent($0) } ?? baseFolderURL
-
             try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
             let candidateURL = folderURL.appendingPathComponent(filename)
             let fileURL = TranscriptFormatter.deduplicatedFileURL(for: candidateURL)
             try markdown.write(to: fileURL, atomically: true, encoding: .utf8)
-
             Logger.transcription.info("Recovered transcript saved to: \(fileURL.path)")
-            try FileManager.default.removeItem(at: url)
         } catch {
-            Logger.transcription.error("Transcript recovery failed: \(error.localizedDescription)")
-            try? FileManager.default.removeItem(at: url)
+            Logger.transcription.error("Transcript recovery write failed: \(error.localizedDescription, privacy: .public)")
         }
+        TranscriptRecoveryStore.clear()
     }
 
     /// Best-effort save of current document, called from applicationWillTerminate.

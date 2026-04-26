@@ -40,7 +40,11 @@ targets:
         SUFeedURL: "https://coolasspuppy.com/meeting-notifier-updates"
         SUPublicEDKey: "V0ppFFCAZx+/Q+9ndF8BdFPpDdUPagRw4Bcp8rLu9Go="
         SUEnableAutomaticChecks: true
-        POSTHOG_API_KEY: "phc_ekpeEsK9bWymasbwFW69vHHrQpLakGEpVXQ760uhVQL"
+        # PostHog telemetry. The api_key is intentionally read from an env var so
+        # forks and dev builds don't write into the prod project. Set it in your
+        # shell or in MeetingNotifier/.env before running `xcodegen generate`.
+        # Telemetry.setup() silently disables capture when the key is missing.
+        POSTHOG_API_KEY: "$(POSTHOG_API_KEY)"
         POSTHOG_HOST: "https://us.i.posthog.com"
         TELEMETRY_SOURCE: "meeting_notifier_macos"
     entitlements:

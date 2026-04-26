@@ -1,274 +1,188 @@
 # MeetingNotifier
 
-A native macOS menu bar app that keeps you on top of your calendar meetings with smart notifications and quick access to join video calls.
+A native macOS menu bar app that keeps you on top of your calendar meetings, transcribes them on-device, and saves clean markdown notes you can keep forever.
 
-![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
-![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
+![macOS](https://img.shields.io/badge/macOS-26.0+-blue)
+![Swift](https://img.shields.io/badge/Swift-6.0-orange)
 ![License](https://img.shields.io/badge/license-Custom-green)
 
 ## Features
 
-- **Multi-Account Support**: Connect multiple Google and Microsoft accounts
-- **Smart Menu Bar**: Shows upcoming meetings with customizable display options
-- **Quick Join**: One-click access to Zoom, Google Meet, Teams, and WebEx calls
-- **Keyboard Shortcuts**:
-  - `⌘⇧M` - Join next meeting
-  - `⌘⇧O` - Open dropdown menu
-  - `⌘⇧R` - Refresh meetings
-- **Intelligent Notifications**: Customizable meeting reminders with 1-minute warnings
-- **Travel Time Alerts**: Notifications when it's time to leave for physical meetings
-- **Double-Booking Detection**: Smart handling of overlapping meetings
-- **iCloud Sync**: Settings sync across your devices
-- **Native macOS**: Built with SwiftUI, follows Apple HIG
+- **Multi-account calendars**: Connect any number of Google and Microsoft accounts.
+- **Smart menu bar**: Next meeting, countdown, count badge, peek window — pick what you see.
+- **One-click join**: Zoom, Google Meet, Microsoft Teams, Webex.
+- **Keyboard shortcuts**:
+  - `⌘⇧M` join next meeting
+  - `⌘⇧O` toggle the popover
+  - `⌘⇧R` refresh meetings
+- **Notifications**: Customizable per-event reminders plus a 1-minute warning. Time-sensitive interruption level so they reach you on Focus.
+- **Travel time alerts**: For meetings with a physical address, calculates driving / walking / transit time from your location and reminds you when to leave.
+- **Double-booking handling**: Pick "fewer attendees" or "more attendees" as the tiebreaker; the menu bar follows your preference.
+- **On-device transcription**: Apple SpeechAnalyzer for free / no API key, or Deepgram if you supply a key. System audio is captured via ScreenCaptureKit so remote participants are transcribed too.
+- **AI meeting summaries**: Bring your own OpenAI / Anthropic / Gemini key. Output is a markdown note with a summary and action items, saved to a folder you choose.
+- **Sparkle auto-update**: Signed updates over EdDSA — no App Store required.
+- **iCloud settings sync**: Optional. Off by default for privacy-conscious users; tokens never leave your device either way.
+- **Ten themes**: Light and dark palettes including Hoth, Risa, Cylon, Vader, Hermione, and a Strategic Nerds brand theme.
 
-## Quick Start
+## Quick start
 
-### 1. Clone the repository
+### Requirements
 
-```bash
-git clone https://github.com/coolasspuppy/meeting-notifier.git
-cd meeting-notifier
-```
+- macOS 26.0 (Tahoe) or later
+- Xcode 26 or later (Swift 6.0 toolchain)
+- A Google or Microsoft account for OAuth
+- Optional: an OpenAI / Anthropic / Gemini API key for meeting summaries
+- Optional: a Deepgram API key if you prefer that over Apple's on-device engine
 
-### 2. Get OAuth credentials
-
-#### Google Calendar
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Create a new project or select an existing one
-3. Enable **Google Calendar API**
-4. Create **OAuth 2.0 Client ID** credentials:
-   - Application type: **Desktop app**
-   - Name: MeetingNotifier (or your preferred name)
-5. Copy your **Client ID** and **Client Secret**
-
-#### Microsoft Calendar
-
-1. Go to [Azure Portal - App Registrations](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps)
-2. Click **New registration**
-3. Fill in the details:
-   - **Name**: MeetingNotifier
-   - **Supported account types**: Accounts in any organizational directory and personal Microsoft accounts
-   - **Redirect URI**: Select **Public client/native** and enter `msauth.com.strategicnerds.meetingnotifier://auth`
-4. After creation, go to **API permissions** and add:
-   - `Calendars.Read`
-   - `User.Read`
-5. Copy your **Application (client) ID** and create a **Client Secret** under Certificates & secrets
-
-### 3. Configure credentials
-
-1. Copy the template files:
-   ```bash
-   cd MeetingNotifier/MeetingNotifier/Managers
-   cp GoogleOAuthSecret.swift.template GoogleOAuthSecret.swift
-   cp MicrosoftOAuthSecret.swift.template MicrosoftOAuthSecret.swift
-   ```
-
-2. Edit the files with your credentials:
-   ```swift
-   // GoogleOAuthSecret.swift
-   static let secret = "YOUR_GOOGLE_CLIENT_SECRET"
-
-   // MicrosoftOAuthSecret.swift
-   static let secret = "YOUR_MICROSOFT_CLIENT_SECRET"
-   ```
-
-3. Update the Client IDs in the managers:
-   ```swift
-   // GoogleOAuthManager.swift (line 9)
-   static let clientID = "YOUR_GOOGLE_CLIENT_ID"
-
-   // MicrosoftOAuthManager.swift (line 9)
-   static let clientID = "YOUR_MICROSOFT_CLIENT_ID"
-   ```
-
-4. These files are gitignored, so your secrets are safe
-
-### 4. Build and run
-
-1. Open `MeetingNotifier.xcodeproj` in Xcode
-2. Select your development team in **Signing & Capabilities**
-3. Press **Cmd+R** to build and run
-4. Click the menu bar icon and add your calendar accounts
-
-## Development
-
-### Prerequisites
-
-- macOS 14.0 (Sonoma) or later
-- Xcode 15.0 or later
-- Swift 5.9 or later
-- Google/Microsoft developer accounts for OAuth
-
-### Building
+### Build from source
 
 ```bash
-# Clone and open
 git clone https://github.com/coolasspuppy/meeting-notifier.git
 cd meeting-notifier/MeetingNotifier
+xcodegen generate     # regenerates MeetingNotifier.xcodeproj from project.yml
 open MeetingNotifier.xcodeproj
-
-# Or build from command line
-xcodebuild -scheme MeetingNotifier -configuration Debug build
 ```
 
-### Running Tests
+In Xcode, set your development team in **Signing & Capabilities**, then `⌘R`. The app appears as a menu-bar icon (no Dock icon — `LSUIElement: true`).
+
+The project uses [XcodeGen](https://github.com/yonaskolb/XcodeGen) — install with `brew install xcodegen`. The Xcode project is regenerated from `MeetingNotifier/project.yml` rather than checked in by hand.
+
+### OAuth setup
+
+#### Google
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Create or select a project, enable **Google Calendar API**.
+3. Create an **OAuth 2.0 Client ID** of type **Desktop app**.
+4. Update `MeetingNotifier/MeetingNotifier/Managers/GoogleOAuthManager.swift:9` with your client ID. Desktop OAuth apps don't require a client secret — `GoogleOAuthSecret.swift` can be left empty (PKCE handles auth security).
+
+#### Microsoft
+
+1. Open [Azure Portal — App Registrations](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps).
+2. **New registration** → name it MeetingNotifier, supported types = "Accounts in any organizational directory and personal Microsoft accounts".
+3. Redirect URI: select **Public client/native** with `msauth.com.strategicnerds.meetingnotifier://auth`.
+4. Add API permissions: `Calendars.Read`, `User.Read`.
+5. Update `MicrosoftOAuthManager.swift:9` with your application (client) ID. Public clients use PKCE — no client secret needed.
+
+If you do have legacy "confidential client" OAuth apps that still require a secret, copy the templates and fill them in:
 
 ```bash
-xcodebuild -scheme MeetingNotifier -destination 'platform=macOS' test
+cd MeetingNotifier/MeetingNotifier/Managers
+cp GoogleOAuthSecret.swift.template GoogleOAuthSecret.swift
+cp MicrosoftOAuthSecret.swift.template MicrosoftOAuthSecret.swift
 ```
 
-## Project Structure
+These files are gitignored.
 
+### Optional: PostHog telemetry
+
+Anonymous usage events (account added, meeting joined, app launched) are captured via PostHog. Capture is opt-out and silently disabled when no API key is present. To wire your own project:
+
+```bash
+export POSTHOG_API_KEY=phc_yourKeyHere
+xcodegen generate
 ```
-MeetingNotifier/
-├── MeetingNotifier/
-│   ├── Services/
-│   │   ├── AppSettings.swift           # Settings & iCloud sync
-│   │   └── KeychainManager.swift       # OAuth token storage
-│   ├── Managers/
-│   │   ├── AuthManager.swift           # Authentication
-│   │   ├── GoogleCalendarManager.swift
-│   │   ├── MicrosoftCalendarManager.swift
-│   │   ├── CalendarDataManager.swift
-│   │   ├── NotificationManager.swift
-│   │   └── KeyboardShortcutManager.swift
-│   ├── Views/
-│   │   ├── CalendarDropdownView.swift
-│   │   ├── SettingsView.swift
-│   │   └── ...
-│   └── Models/
-│       ├── CalendarAccount.swift
-│       ├── CalendarEvent.swift
-│       └── ...
-└── fastlane/                           # TestFlight deployment
-```
+
+The key is read from your shell environment at `xcodegen` time. There is **no key checked in** — forks and dev builds default to silent telemetry.
 
 ## Architecture
 
-MeetingNotifier follows MVVM architecture with clean separation of concerns:
+MeetingNotifier is a SwiftUI-on-AppKit menu bar app. Notable choices:
 
-### Key Components
+- **Hardened Runtime is on; App Sandbox is off.** The app polls CoreAudio for mic activity, captures system audio via ScreenCaptureKit, and writes to a user-chosen notes folder via security-scoped bookmarks. App Store sandbox enforcement isn't compatible with system-audio capture for transcription, so distribution is via Developer ID + Sparkle instead.
+- **Tokens stay on this device.** OAuth access and refresh tokens live in the macOS Keychain and never sync. AI provider API keys (OpenAI / Anthropic / Gemini / Deepgram) sync via iCloud Keychain so you only need to enter them once across your Macs.
+- **Settings sync is opt-in.** Off → device-local. On → preferences mirror across your Macs via NSUbiquitousKeyValueStore (no tokens, no transcript content).
+- **Transcription is local-first.** Apple's SpeechAnalyzer runs on-device. If you opt into Deepgram, audio leaves the machine over TLS to their endpoint; otherwise, no audio ever leaves.
+- **Mic-active detection is event-driven.** CoreAudio property listeners fire the moment any input device starts running, so transcription auto-starts immediately when you join a meeting (with a 5s safety-net poll as a fallback).
 
-**CalendarDataManager**: Centralized manager for fetching events from multiple calendar providers. Handles caching, refresh logic, and event aggregation.
+### Where things live
 
-**GoogleCalendarManager / MicrosoftCalendarManager**: Provider-specific API clients for fetching calendar events. Handle OAuth refresh, pagination, and error handling.
-
-**AuthManager**: Coordinates OAuth flows for both Google and Microsoft. Manages authentication state and token refresh.
-
-**KeychainManager**: Stores OAuth tokens securely in macOS Keychain. Tokens never touch disk or iCloud.
-
-**AppSettings**: User preferences with iCloud Key-Value Store sync. Handles notification settings, display preferences, and multi-device synchronization.
-
-**NotificationManager**: Manages meeting reminders, 1-minute warnings, and travel time alerts using UserNotifications framework.
-
-## Usage
-
-### Adding Calendar Accounts
-
-1. Click the MeetingNotifier icon in your menu bar
-2. Click **+ Add Account** in the footer
-3. Select Google or Microsoft
-4. Sign in through the OAuth flow
-5. Grant calendar access permissions
-6. Your meetings will appear automatically
-
-### Managing Meetings
-
-- Click any meeting card with a video link to join the call
-- Use keyboard shortcuts for quick access:
-  - `⌘⇧M` - Join next meeting instantly
-  - `⌘⇧O` - Toggle dropdown
-  - `⌘⇧R` - Refresh calendar data
-
-### Settings
-
-Access settings via the gear icon:
-
-1. **Accounts**: Manage connected calendars, re-authenticate accounts
-2. **Calendars**: Select which calendars to display from each account
-3. **Setup**:
-   - Notification preferences
-   - Menu bar display options
-   - Meeting link preferences (choose browser/app)
-   - Travel time alerts
-   - Launch at login
-
-## Security & Privacy
-
-- **OAuth tokens**: Stored in macOS Keychain (never in code or iCloud)
-- **App Sandbox**: Runs sandboxed with minimal permissions
-- **No analytics**: Zero tracking or data collection
-- **No third parties**: Only communicates with Google/Microsoft APIs
-- **iCloud**: Only settings sync (not credentials)
-- **Open source**: Complete transparency - review the code yourself
-
-### Multi-Device Behavior
-
-When you install the app on a new device:
-1. Account configurations sync from iCloud
-2. App detects missing local OAuth tokens
-3. Account is marked as `needsAuth`
-4. You'll see a prompt to "Sign in on this device"
-5. After signing in, calendar data syncs normally
-
-This ensures OAuth tokens never leave your device while keeping your account setup synchronized.
-
-## Troubleshooting
-
-**Authentication fails**: Check that redirect URIs match exactly in Google/Microsoft developer consoles. For Google, ensure redirect URI includes your bundle identifier.
-
-**No meetings showing**: Verify authentication in Settings → Accounts. Check that calendars are selected in Settings → Calendars.
-
-**Notifications not working**: Check System Settings → Notifications → MeetingNotifier. Ensure notifications are enabled in app Settings → Setup.
-
-**Build errors**: Ensure you've configured both `GoogleOAuthSecret.swift` and `MicrosoftOAuthSecret.swift` with valid credentials.
-
-## TestFlight Distribution
-
-The app uses Fastlane for TestFlight builds:
-
-```bash
-cd MeetingNotifier/fastlane
-fastlane release
 ```
+MeetingNotifier/
+├── project.yml                          # XcodeGen source of truth
+└── MeetingNotifier/
+    ├── AppDelegate*.swift               # Menu bar, popover, native menu, drawers
+    ├── Managers/
+    │   ├── AuthManager.swift            # OAuth orchestration
+    │   ├── GoogleOAuthManager.swift
+    │   ├── MicrosoftOAuthManager.swift
+    │   ├── OAuthRefreshSupport.swift    # Shared refresh-token flow
+    │   ├── GoogleCalendarManager.swift  # Calendar API client (Codable)
+    │   ├── MicrosoftCalendarManager.swift
+    │   ├── CalendarDataManager.swift    # Aggregator + 5-min refresh + travel-time fanout
+    │   ├── NotificationManager.swift    # UNUserNotifications + 1-minute warning
+    │   ├── LocationManager.swift        # MKDirections-backed travel time
+    │   ├── KeyboardShortcutManager.swift
+    │   ├── MeetingDetector.swift        # CoreAudio property listeners → mic-activity events
+    │   ├── AudioCaptureManager.swift    # AVAudioEngine mic tap + RMS for waveform
+    │   ├── SystemAudioCapturer.swift    # ScreenCaptureKit "Others" stream
+    │   ├── SystemAudioEnergyTracker.swift
+    │   └── TranscriptionCoordinator.swift  # Session lifecycle + auto-offer
+    ├── Models/
+    │   ├── CalendarAccount.swift
+    │   ├── CalendarEvent.swift
+    │   ├── CalendarInfo.swift
+    │   ├── CalendarAPIResponses.swift   # Codable response shapes for both providers
+    │   ├── CalendarError.swift
+    │   ├── EventWindow.swift            # 5pm-cutoff window for "today / today + tomorrow"
+    │   ├── SettingsEnums.swift
+    │   ├── NotetakerEnums.swift
+    │   ├── ThemeStore.swift             # 10 palettes
+    │   └── TranscriptDocument.swift
+    ├── Services/
+    │   ├── AppSettings.swift            # User prefs + iCloud KV sync
+    │   ├── AppSettings+iCloudSync.swift
+    │   ├── KeychainManager.swift
+    │   ├── CalendarManagerSupport.swift # fetchAuthorizedJSON<T> helper
+    │   ├── AISummarizer.swift           # OpenAI / Anthropic / Gemini
+    │   ├── TranscriptFormatter.swift    # Markdown frontmatter + body
+    │   ├── TranscriptRecoveryStore.swift
+    │   ├── SubfolderResolver.swift
+    │   ├── Telemetry.swift              # PostHog facade
+    │   ├── UpdaterManager.swift         # Sparkle wrapper
+    │   ├── URLOpener.swift
+    │   ├── URL+Required.swift
+    │   ├── MeetingLinkParser.swift
+    │   ├── Logger.swift
+    │   └── Formatters.swift
+    └── Views/                           # SwiftUI: popover, drawers, banner, settings
+```
+
+## Privacy
+
+- **OAuth tokens**: macOS Keychain only, never iCloud, never disk.
+- **AI API keys**: iCloud Keychain so they sync across your Macs (you control via System Settings → Apple ID → iCloud → Passwords & Keychain).
+- **Transcripts**: written to the folder you choose. Nothing is uploaded for AI summarization unless you've configured a provider key, and even then only the transcript text + meeting title goes out.
+- **Telemetry**: anonymous, opt-out, no PII (no emails, no URLs, no transcript content). Disabled entirely when no API key is built in.
+- **iCloud sync**: gated by a single user-facing toggle. Off = nothing leaves the device.
+
+## Auto-update
+
+Sparkle handles updates. The release process publishes a signed DMG to `https://coolasspuppy.com/meeting-notifier-updates`; the app checks daily and prompts the user with release notes before installing. Public EdDSA verification key is baked into `project.yml`.
+
+## Distribution
+
+The published builds are signed with a Developer ID certificate, notarized by Apple, and distributed via the Sparkle feed (not the App Store). The current version + build number live in `project.yml` (`CFBundleShortVersionString`, `CFBundleVersion`).
 
 ## Contributing
 
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Test thoroughly on macOS 14.0+
-4. Submit a PR with clear description of changes
-5. Follow existing code style and architecture patterns
+PRs welcome. A few rules:
 
-For major changes, please open an issue first to discuss what you'd like to change.
+1. The project is regenerated from `project.yml` — don't hand-edit `MeetingNotifier.xcodeproj`. Run `xcodegen generate` before committing.
+2. Keep tests passing: `xcodebuild -scheme MeetingNotifier -destination 'platform=macOS' test`.
+3. Don't introduce new force-unwraps for URLs; use `URL.required(_:)` for hardcoded literals.
+4. New settings should follow the `readBool / readEnum / applyBool / applyEnum` helper pattern in `AppSettings`. The point is that adding a setting is a one-line edit per call site, not five.
 
 ## License
 
-Custom Open Source License - see [LICENSE](LICENSE) file for details.
-
-**TL;DR**: You can fork and customize for personal use, but you cannot distribute through the App Store without permission. This protects the official MeetingNotifier while keeping the code open for learning and personal projects.
+Custom Open Source License — see [LICENSE](LICENSE). You can fork and customize for personal use, but redistribution through the App Store requires permission. This protects the official MeetingNotifier while keeping the code open for learning.
 
 ## Credits
 
-Built with:
-- Swift & SwiftUI
-- [Google Calendar API](https://developers.google.com/calendar)
-- [Microsoft Graph API](https://docs.microsoft.com/en-us/graph/api/resources/calendar)
-- macOS Keychain Services
-- iCloud Key-Value Store
-- [AppAuth-iOS](https://github.com/openid/AppAuth-iOS) for OAuth flows
+Built with Swift, SwiftUI, AppKit, [AppAuth-iOS](https://github.com/openid/AppAuth-iOS), [Sparkle](https://sparkle-project.org/), and [PostHog](https://posthog.com/).
 
-Made with love by Strategic Nerds, Inc.
-
-## Support
-
-- Open an [issue](https://github.com/coolasspuppy/meeting-notifier/issues) for bugs or feature requests
-- Check existing issues before creating new ones
-- Provide reproduction steps for bugs
-- Include macOS version and app version in bug reports
+Made by Strategic Nerds, Inc.
 
 ---
 
-**Copyright © 2025 Strategic Nerds, Inc. All rights reserved.**
+**Copyright © 2026 Strategic Nerds, Inc. All rights reserved.**

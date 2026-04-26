@@ -126,6 +126,45 @@ class AppSettings: ObservableObject {
 
     nonisolated private static let legacyFrontMatterDefault = "tags: [meeting]\nspeakers: [{speakers}]\nattendees: {attendees}\nduration: {duration}\nengine: {engine}"
 
+    // MARK: - Init readers
+    //
+    // The four helpers below replace ~30 instances of the
+    // `iCloudStore.object(forKey:) ?? UserDefaults.standard.object(forKey:) ?? default`
+    // boilerplate that used to live in `init`. Adding a new setting now
+    // means picking the right helper instead of typing the whole chain.
+
+    private static let iCloud = NSUbiquitousKeyValueStore.default
+    private static let userDefaults = UserDefaults.standard
+
+    private static func readBool(_ key: String, default defaultValue: Bool) -> Bool {
+        readOptionalBool(key) ?? defaultValue
+    }
+
+    private static func readOptionalBool(_ key: String) -> Bool? {
+        (iCloud.object(forKey: key) as? Bool) ?? (userDefaults.object(forKey: key) as? Bool)
+    }
+
+    private static func readInt(_ key: String, default defaultValue: Int) -> Int {
+        (iCloud.object(forKey: key) as? Int) ?? (userDefaults.object(forKey: key) as? Int) ?? defaultValue
+    }
+
+    private static func readString(_ key: String, default defaultValue: String) -> String {
+        readOptionalString(key) ?? defaultValue
+    }
+
+    private static func readOptionalString(_ key: String) -> String? {
+        iCloud.string(forKey: key) ?? userDefaults.string(forKey: key)
+    }
+
+    private static func readOptionalData(_ key: String) -> Data? {
+        iCloud.data(forKey: key) ?? userDefaults.data(forKey: key)
+    }
+
+    private static func readEnum<T: RawRepresentable>(_ key: String, default defaultValue: T) -> T where T.RawValue == String {
+        guard let raw = readOptionalString(key), let value = T(rawValue: raw) else { return defaultValue }
+        return value
+    }
+
     // MARK: - Notetaker settings
 
     @Published var transcriptionIndicatorMode: TranscriptionIndicatorMode {
@@ -240,105 +279,75 @@ class AppSettings: ObservableObject {
 
         iCloudStore.synchronize()
 
-        self.notificationsEnabled = iCloudStore.object(forKey: "notificationsEnabled") as? Bool
-            ?? UserDefaults.standard.object(forKey: "notificationsEnabled") as? Bool ?? true
-        self.oneMinuteWarningEnabled = iCloudStore.object(forKey: "oneMinuteWarningEnabled") as? Bool
-            ?? UserDefaults.standard.object(forKey: "oneMinuteWarningEnabled") as? Bool ?? true
-        self.notificationTracking = NotificationTracking()
-
-        // Read from UserDefaults only. The opt-in itself isn't synced, so the user
-        // has to take the action on each device. Defaults to true to preserve the
-        // legacy always-synced behavior.
+        // The opt-in itself isn't synced, so the user has to take the action
+        // on each device. Defaults to true to preserve the legacy
+        // always-synced behavior.
         self.settingsSyncEnabled = UserDefaults.standard.object(forKey: "settingsSyncEnabled") as? Bool ?? true
 
-        let meetAppRawValue = iCloudStore.string(forKey: "defaultMeetApp")
-            ?? UserDefaults.standard.string(forKey: "defaultMeetApp") ?? MeetAppType.defaultBrowser.rawValue
-        self.defaultMeetApp = MeetAppType(rawValue: meetAppRawValue) ?? .defaultBrowser
+        // Bools — read iCloud first, then UserDefaults, then default.
+        self.notificationsEnabled         = Self.readBool("notificationsEnabled",       default: true)
+        self.oneMinuteWarningEnabled      = Self.readBool("oneMinuteWarningEnabled",    default: true)
+        self.onlyShowMeetingsWithAttendees = Self.readBool("onlyShowMeetingsWithAttendees", default: false)
+        self.muteSounds                   = Self.readBool("muteSounds",                 default: false)
+        self.launchAtLogin                = Self.readBool("launchAtLogin",              default: false)
+        self.menuBarShowIcon              = Self.readBool("menuBarShowIcon",            default: true)
+        self.menuBarShowTitle             = Self.readBool("menuBarShowTitle",           default: true)
+        self.menuBarShowTime              = Self.readBool("menuBarShowTime",            default: false)
+        self.menuBarShowCountdown         = Self.readBool("menuBarShowCountdown",       default: false)
+        self.showAllDayInMenuBar          = Self.readBool("showAllDayInMenuBar",        default: false)
+        self.showMeetingCountBadge        = Self.readBool("showMeetingCountBadge",      default: true)
+        self.showTravelTimeAlerts         = Self.readBool("showTravelTimeAlerts",       default: true)
+        self.notetakerEnabled             = Self.readBool("notetakerEnabled",           default: true)
+        self.autoOfferTranscription       = Self.readBool("autoOfferTranscription",     default: true)
+        self.calendarSubfoldersEnabled    = Self.readBool("calendarSubfoldersEnabled",  default: false)
 
-        if let displayModeRaw = iCloudStore.string(forKey: "menuBarDisplayMode") ?? UserDefaults.standard.string(forKey: "menuBarDisplayMode") {
-            self.menuBarDisplayMode = MenuBarDisplayMode(rawValue: displayModeRaw) ?? .none
-        } else if let legacyShowInMenuBar = iCloudStore.object(forKey: "showInMenuBar") as? Bool ?? UserDefaults.standard.object(forKey: "showInMenuBar") as? Bool {
-            self.menuBarDisplayMode = legacyShowInMenuBar ? .inMenuBar : .none
+        // Ints
+        self.menuBarThresholdMinutes      = Self.readInt("menuBarThresholdMinutes",     default: 15)
+
+        // Strings (free-form text, no enum decode)
+        self.transcriptionLocale          = Self.readString("transcriptionLocale",      default: "en_US")
+        self.fileNamingSchema             = Self.readString("fileNamingSchema",         default: "{yyyy}{MM}{dd}-{title}")
+        self.speakerDisplayName           = Self.readString("speakerDisplayName",       default: "Me")
+        self.othersDisplayName            = Self.readString("othersDisplayName",        default: "Others")
+
+        // Enums (RawRepresentable<String>) with safe fallback to default case.
+        self.defaultMeetApp                = Self.readEnum("defaultMeetApp",            default: .defaultBrowser)
+        self.defaultTravelMode             = Self.readEnum("defaultTravelMode",         default: .driving)
+        self.preferredMapProvider          = Self.readEnum("preferredMapProvider",      default: .apple)
+        self.doubleBookingPreference       = Self.readEnum("doubleBookingPreference",   default: .fewerAttendees)
+        self.transcriptionIndicatorMode    = Self.readEnum("transcriptionIndicatorMode", default: .menuBarDropdown)
+        self.summarizationPlatform         = Self.readEnum("summarizationPlatform",     default: .openai)
+
+        // menuBarDisplayMode: legacy `showInMenuBar` Bool needs to migrate
+        // forward into the newer enum-based key.
+        if let raw = Self.readOptionalString("menuBarDisplayMode") {
+            self.menuBarDisplayMode = MenuBarDisplayMode(rawValue: raw) ?? .none
+        } else if let legacy = Self.readOptionalBool("showInMenuBar") {
+            self.menuBarDisplayMode = legacy ? .inMenuBar : .none
         } else {
             self.menuBarDisplayMode = .none
         }
 
-        self.onlyShowMeetingsWithAttendees = iCloudStore.object(forKey: "onlyShowMeetingsWithAttendees") as? Bool
-            ?? UserDefaults.standard.object(forKey: "onlyShowMeetingsWithAttendees") as? Bool ?? false
-        self.muteSounds = iCloudStore.object(forKey: "muteSounds") as? Bool
-            ?? UserDefaults.standard.object(forKey: "muteSounds") as? Bool ?? false
-        self.launchAtLogin = iCloudStore.object(forKey: "launchAtLogin") as? Bool
-            ?? UserDefaults.standard.object(forKey: "launchAtLogin") as? Bool ?? false
-
-        self.menuBarShowIcon = iCloudStore.object(forKey: "menuBarShowIcon") as? Bool
-            ?? UserDefaults.standard.object(forKey: "menuBarShowIcon") as? Bool ?? true
-        self.menuBarShowTitle = iCloudStore.object(forKey: "menuBarShowTitle") as? Bool
-            ?? UserDefaults.standard.object(forKey: "menuBarShowTitle") as? Bool ?? true
-        self.menuBarShowTime = iCloudStore.object(forKey: "menuBarShowTime") as? Bool
-            ?? UserDefaults.standard.object(forKey: "menuBarShowTime") as? Bool ?? false
-        self.menuBarShowCountdown = iCloudStore.object(forKey: "menuBarShowCountdown") as? Bool
-            ?? UserDefaults.standard.object(forKey: "menuBarShowCountdown") as? Bool ?? false
-
-        self.menuBarThresholdMinutes = iCloudStore.object(forKey: "menuBarThresholdMinutes") as? Int
-            ?? UserDefaults.standard.object(forKey: "menuBarThresholdMinutes") as? Int ?? 15
-        self.showAllDayInMenuBar = iCloudStore.object(forKey: "showAllDayInMenuBar") as? Bool
-            ?? UserDefaults.standard.object(forKey: "showAllDayInMenuBar") as? Bool ?? false
-        self.showMeetingCountBadge = iCloudStore.object(forKey: "showMeetingCountBadge") as? Bool
-            ?? UserDefaults.standard.object(forKey: "showMeetingCountBadge") as? Bool ?? true
-        self.showTravelTimeAlerts = iCloudStore.object(forKey: "showTravelTimeAlerts") as? Bool
-            ?? UserDefaults.standard.object(forKey: "showTravelTimeAlerts") as? Bool ?? true
-
-        let travelModeRaw = iCloudStore.string(forKey: "defaultTravelMode")
-            ?? UserDefaults.standard.string(forKey: "defaultTravelMode") ?? TravelMode.driving.rawValue
-        self.defaultTravelMode = TravelMode(rawValue: travelModeRaw) ?? .driving
-
-        let mapProviderRaw = iCloudStore.string(forKey: "preferredMapProvider")
-            ?? UserDefaults.standard.string(forKey: "preferredMapProvider") ?? MapProvider.apple.rawValue
-        self.preferredMapProvider = MapProvider(rawValue: mapProviderRaw) ?? .apple
-
-        let doubleBookingRaw = iCloudStore.string(forKey: "doubleBookingPreference")
-            ?? UserDefaults.standard.string(forKey: "doubleBookingPreference") ?? DoubleBookingPreference.fewerAttendees.rawValue
-        self.doubleBookingPreference = DoubleBookingPreference(rawValue: doubleBookingRaw) ?? .fewerAttendees
-
-        self.customCalendarColors = [:]
-
-        // Notetaker settings
-        let indicatorRaw = iCloudStore.string(forKey: "transcriptionIndicatorMode")
-            ?? UserDefaults.standard.string(forKey: "transcriptionIndicatorMode") ?? TranscriptionIndicatorMode.menuBarDropdown.rawValue
-        self.transcriptionIndicatorMode = TranscriptionIndicatorMode(rawValue: indicatorRaw) ?? .menuBarDropdown
-
-        self.notetakerEnabled = iCloudStore.object(forKey: "notetakerEnabled") as? Bool
-            ?? UserDefaults.standard.object(forKey: "notetakerEnabled") as? Bool ?? true
-        self.autoOfferTranscription = iCloudStore.object(forKey: "autoOfferTranscription") as? Bool
-            ?? UserDefaults.standard.object(forKey: "autoOfferTranscription") as? Bool ?? true
-
-        let engineRaw = iCloudStore.string(forKey: "transcriptionEngine")
-            ?? UserDefaults.standard.string(forKey: "transcriptionEngine") ?? TranscriptionEngineType.apple.rawValue
-        let loadedEngine = TranscriptionEngineType(rawValue: engineRaw) ?? .apple
-        // Fall back to Apple if the stored engine is no longer user-selectable
-        // (e.g. a previously-exposed placeholder that's been retired).
+        // transcriptionEngine: coerce non-implemented engines (placeholders
+        // that were briefly user-selectable) back to Apple on load.
+        let loadedEngine: TranscriptionEngineType = Self.readEnum("transcriptionEngine", default: .apple)
         self.transcriptionEngine = loadedEngine.isImplemented ? loadedEngine : .apple
 
-        self.transcriptionLocale = iCloudStore.string(forKey: "transcriptionLocale")
-            ?? UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "en_US"
-
-        self.calendarSubfoldersEnabled = iCloudStore.object(forKey: "calendarSubfoldersEnabled") as? Bool
-            ?? UserDefaults.standard.object(forKey: "calendarSubfoldersEnabled") as? Bool ?? false
-        if let mappingsData = iCloudStore.data(forKey: "calendarSubfolderMappings")
-            ?? UserDefaults.standard.data(forKey: "calendarSubfolderMappings"),
+        // Subfolder mappings — encoded as Data, not a primitive.
+        if let mappingsData = Self.readOptionalData("calendarSubfolderMappings"),
            let decoded = try? JSONDecoder().decode([String: String].self, from: mappingsData) {
             self.calendarSubfolderMappings = decoded
         } else {
             self.calendarSubfolderMappings = [:]
         }
 
+        // Notes folder path — default depends on FileManager so it's separate
+        // from the simple-string helper.
         let defaultNotesPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.path ?? "~/Documents"
-        self.notesFolderPath = iCloudStore.string(forKey: "notesFolderPath")
-            ?? UserDefaults.standard.string(forKey: "notesFolderPath") ?? defaultNotesPath + "/MeetingNotes"
-        self.fileNamingSchema = iCloudStore.string(forKey: "fileNamingSchema")
-            ?? UserDefaults.standard.string(forKey: "fileNamingSchema") ?? "{yyyy}{MM}{dd}-{title}"
-        let storedFrontMatter = iCloudStore.string(forKey: "frontMatterTemplate")
-            ?? UserDefaults.standard.string(forKey: "frontMatterTemplate")
+        self.notesFolderPath = Self.readString("notesFolderPath", default: defaultNotesPath + "/MeetingNotes")
+
+        // Front-matter template — has a one-shot v1→v2 default migration.
+        let storedFrontMatter = Self.readOptionalString("frontMatterTemplate")
         let hasMigrated = UserDefaults.standard.bool(forKey: "frontMatterTemplateMigratedV2")
         if !hasMigrated, let stored = storedFrontMatter, stored == Self.legacyFrontMatterDefault {
             self.frontMatterTemplate = Self.defaultFrontMatterTemplate
@@ -346,14 +355,10 @@ class AppSettings: ObservableObject {
         } else {
             self.frontMatterTemplate = storedFrontMatter ?? Self.defaultFrontMatterTemplate
         }
-        self.speakerDisplayName = iCloudStore.string(forKey: "speakerDisplayName")
-            ?? UserDefaults.standard.string(forKey: "speakerDisplayName") ?? "Me"
-        self.othersDisplayName = iCloudStore.string(forKey: "othersDisplayName")
-            ?? UserDefaults.standard.string(forKey: "othersDisplayName") ?? "Others"
 
-        let platformRaw = iCloudStore.string(forKey: "summarizationPlatform")
-            ?? UserDefaults.standard.string(forKey: "summarizationPlatform") ?? SummarizationPlatform.openai.rawValue
-        self.summarizationPlatform = SummarizationPlatform(rawValue: platformRaw) ?? .openai
+        // Defaults for properties that don't read at init.
+        self.notificationTracking = NotificationTracking()
+        self.customCalendarColors = [:]
 
         loadAccounts()
         loadNotificationTracking()
@@ -475,13 +480,14 @@ class AppSettings: ObservableObject {
     }
 
     private func saveCustomCalendarColors() {
-        if let encoded = try? JSONEncoder().encode(customCalendarColors) {
-            UserDefaults.standard.set(encoded, forKey: "customCalendarColors")
+        guard let encoded = try? JSONEncoder().encode(customCalendarColors) else { return }
+        UserDefaults.standard.set(encoded, forKey: "customCalendarColors")
 
-            if !isUpdatingFromiCloud {
-                iCloudStore.set(encoded, forKey: "customCalendarColors")
-                iCloudStore.synchronize()
-            }
+        // Respect the user's settings-sync opt-in. Calendar colors are a user
+        // preference and shouldn't ride iCloud unless they've consented.
+        if !isUpdatingFromiCloud && settingsSyncEnabled {
+            iCloudStore.set(encoded, forKey: "customCalendarColors")
+            iCloudStore.synchronize()
         }
     }
 
@@ -504,12 +510,11 @@ class AppSettings: ObservableObject {
     }
 
     private func saveSubfolderMappings() {
-        if let encoded = try? JSONEncoder().encode(calendarSubfolderMappings) {
-            UserDefaults.standard.set(encoded, forKey: "calendarSubfolderMappings")
-            if !isUpdatingFromiCloud {
-                iCloudStore.set(encoded, forKey: "calendarSubfolderMappings")
-                iCloudStore.synchronize()
-            }
+        guard let encoded = try? JSONEncoder().encode(calendarSubfolderMappings) else { return }
+        UserDefaults.standard.set(encoded, forKey: "calendarSubfolderMappings")
+        if !isUpdatingFromiCloud && settingsSyncEnabled {
+            iCloudStore.set(encoded, forKey: "calendarSubfolderMappings")
+            iCloudStore.synchronize()
         }
     }
 

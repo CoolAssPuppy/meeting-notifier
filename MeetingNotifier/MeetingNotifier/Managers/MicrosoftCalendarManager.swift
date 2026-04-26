@@ -7,62 +7,23 @@ class MicrosoftCalendarManager {
 
     private init() {}
 
-    func fetchCalendarList(forAccount account: CalendarAccount, retryCount: Int = 0) async throws -> [CalendarInfo] {
-        let accessToken = try await CalendarManagerSupport.getValidToken(forAccount: account)
+    func fetchCalendarList(forAccount account: CalendarAccount) async throws -> [CalendarInfo] {
+        let url = URL.required("https://graph.microsoft.com/v1.0/me/calendars")
+        let response: MicrosoftCalendarListResponse = try await CalendarManagerSupport.fetchAuthorizedJSON(
+            url: url,
+            account: account,
+            decode: MicrosoftCalendarListResponse.self,
+            operation: "fetch calendar list"
+        )
 
-        let url = URL(string: "https://graph.microsoft.com/v1.0/me/calendars")!
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw CalendarError.apiError("Invalid response")
-        }
-
-        // Handle 401 Unauthorized - token expired
-        if httpResponse.statusCode == 401 && retryCount == 0 {
-            Logger.auth.warning("Access token expired for \(account.email, privacy: .private), refreshing...")
-            // Clear cached token to force refresh
-            _ = KeychainManager.shared.deleteAccessToken(forAccount: account.email)
-
-            // Retry once with refreshed token
-            return try await fetchCalendarList(forAccount: account, retryCount: 1)
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            // Mark account as having auth issues if retry also failed
-            if httpResponse.statusCode == 401 {
-                CalendarManagerSupport.markAccountAuthFailed(account, status: .expired)
-            }
-            throw CalendarError.apiError("Failed to fetch calendar list (HTTP \(httpResponse.statusCode))")
-        }
-
-        // Success - mark account as valid
-        CalendarManagerSupport.markAccountAuthValid(account)
-
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let value = json["value"] as? [[String: Any]] else {
-            throw CalendarError.parseError("Invalid calendar list response")
-        }
-
-        return value.compactMap { item in
-            guard let id = item["id"] as? String,
-                  let name = item["name"] as? String else {
-                return nil
-            }
-
-            let color = item["color"] as? String ?? "auto"
-            let colorHex = microsoftColorToHex(color)
-            let isDefaultCalendar = item["isDefaultCalendar"] as? Bool ?? false
-
-            return CalendarInfo(
-                id: id,
-                name: name,
-                colorHex: colorHex,
+        return (response.value ?? []).map { item in
+            CalendarInfo(
+                id: item.id,
+                name: item.name,
+                colorHex: microsoftColorToHex(item.color ?? "auto"),
                 provider: .microsoft,
                 accountEmail: account.email,
-                isPrimary: isDefaultCalendar
+                isPrimary: item.isDefaultCalendar ?? false
             )
         }
     }
@@ -72,11 +33,8 @@ class MicrosoftCalendarManager {
         calendarInfo: CalendarInfo,
         account: CalendarAccount,
         startDate: Date,
-        endDate: Date,
-        retryCount: Int = 0
+        endDate: Date
     ) async throws -> [CalendarEvent] {
-        let accessToken = try await CalendarManagerSupport.getValidToken(forAccount: account)
-
         let dateFormatter = ISO8601DateFormatter()
         let startString = dateFormatter.string(from: startDate)
         let endString = dateFormatter.string(from: endDate)
@@ -95,68 +53,31 @@ class MicrosoftCalendarManager {
             throw CalendarError.apiError("Failed to construct URL")
         }
 
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        let response: MicrosoftEventsResponse = try await CalendarManagerSupport.fetchAuthorizedJSON(
+            url: url,
+            account: account,
+            decode: MicrosoftEventsResponse.self,
+            operation: "fetch events"
+        )
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw CalendarError.apiError("Invalid response")
-        }
-
-        // Handle 401 Unauthorized - token expired
-        if httpResponse.statusCode == 401 && retryCount == 0 {
-            Logger.auth.warning("Access token expired for \(account.email, privacy: .private), refreshing...")
-            // Clear cached token to force refresh
-            _ = KeychainManager.shared.deleteAccessToken(forAccount: account.email)
-
-            // Retry once with refreshed token
-            return try await fetchEvents(
-                forCalendar: calendarId,
-                calendarInfo: calendarInfo,
-                account: account,
-                startDate: startDate,
-                endDate: endDate,
-                retryCount: 1
-            )
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            // Mark account as having auth issues if retry also failed
-            if httpResponse.statusCode == 401 {
-                CalendarManagerSupport.markAccountAuthFailed(account, status: .expired)
-            }
-            throw CalendarError.apiError("Failed to fetch events (HTTP \(httpResponse.statusCode))")
-        }
-
-        // Success - mark account as valid
-        CalendarManagerSupport.markAccountAuthValid(account)
-
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let value = json["value"] as? [[String: Any]] else {
-            return []
-        }
-
-        // Use the calendarInfo passed in (which includes custom colors)
-        return value.compactMap { item in
-            parseMicrosoftEvent(item, calendarId: calendarId, calendarInfo: calendarInfo)
+        return (response.value ?? []).compactMap { event in
+            parseMicrosoftEvent(event, calendarId: calendarId, calendarInfo: calendarInfo)
         }
     }
 
     private func parseMicrosoftEvent(
-        _ item: [String: Any],
+        _ event: MicrosoftCalendarEvent,
         calendarId: String,
         calendarInfo: CalendarInfo
     ) -> CalendarEvent? {
-        guard let eventId = item["id"] as? String,
-              let subject = item["subject"] as? String,
-              let start = item["start"] as? [String: Any],
-              let end = item["end"] as? [String: Any] else {
+        guard let subject = event.subject,
+              let start = event.start,
+              let end = event.end else {
             return nil
         }
 
-        let startDateString = start["dateTime"] as? String ?? ""
-        let endDateString = end["dateTime"] as? String ?? ""
+        let startDateString = start.dateTime ?? ""
+        let endDateString = end.dateTime ?? ""
 
         let dateFormatter = ISO8601DateFormatter()
         guard let startDate = dateFormatter.date(from: startDateString),
@@ -164,81 +85,67 @@ class MicrosoftCalendarManager {
             return nil
         }
 
-        let locationDict = item["location"] as? [String: Any]
-        let location = locationDict?["displayName"] as? String
+        let location = event.location?.displayName
 
-        let bodyPreview = item["bodyPreview"] as? String
+        let conferenceLink = extractConferenceLink(
+            joinUrl: event.onlineMeeting?.joinUrl,
+            bodyPreview: event.bodyPreview,
+            location: location
+        )
 
-        let conferenceLink = extractConferenceLink(from: item, bodyPreview: bodyPreview, location: location)
+        let reminders = parseReminders(
+            isReminderOn: event.isReminderOn,
+            minutes: event.reminderMinutesBeforeStart
+        )
 
-        let reminders = parseReminders(from: item)
-
-        let attendees = item["attendees"] as? [[String: Any]] ?? []
-        let attendeeCount = attendees.count
+        let attendees = event.attendees ?? []
+        let attendeeNames = attendees.compactMap { attendee -> String? in
+            if let name = attendee.emailAddress?.name, !name.isEmpty { return name }
+            return attendee.emailAddress?.address
+        }
 
         return CalendarEvent(
-            id: eventId,
+            id: event.id,
             title: subject,
             startDate: startDate,
             endDate: endDate,
             location: location,
-            description: bodyPreview,
+            description: event.bodyPreview,
             conferenceLink: conferenceLink,
             calendarId: calendarId,
             calendarName: calendarInfo.name,
             calendarColorHex: calendarInfo.colorHex,
             provider: .microsoft,
             reminders: reminders,
-            attendeeCount: attendeeCount,
+            attendeeCount: attendees.count,
+            attendeeNames: attendeeNames,
             accountEmail: calendarInfo.accountEmail
         )
     }
 
     private func extractConferenceLink(
-        from item: [String: Any],
+        joinUrl: String?,
         bodyPreview: String?,
         location: String?
     ) -> String? {
-        if let onlineMeeting = item["onlineMeeting"] as? [String: Any],
-           let joinUrl = onlineMeeting["joinUrl"] as? String,
-           MeetingLinkParser.isValidMeetingLink(joinUrl) {
+        if let joinUrl, MeetingLinkParser.isValidMeetingLink(joinUrl) {
             return joinUrl
         }
 
-        if let bodyPreview = bodyPreview,
-           let link = MeetingLinkParser.findMeetingLink(in: bodyPreview) {
+        if let bodyPreview, let link = MeetingLinkParser.findMeetingLink(in: bodyPreview) {
             return link
         }
 
-        if let location = location,
-           let link = MeetingLinkParser.findMeetingLink(in: location) {
+        if let location, let link = MeetingLinkParser.findMeetingLink(in: location) {
             return link
         }
 
         return nil
     }
 
-    private func parseReminders(from item: [String: Any]) -> [EventReminder] {
-        guard let isReminderOn = item["isReminderOn"] as? Bool, isReminderOn,
-              let minutesBefore = item["reminderMinutesBeforeStart"] as? Int else {
-            return []
-        }
-
-        return [EventReminder(minutesBefore: minutesBefore)]
-    }
-
-    private func getCalendarInfo(calendarId: String, account: CalendarAccount) async throws -> CalendarInfo {
-        let calendars = try await fetchCalendarList(forAccount: account)
-        guard let calendar = calendars.first(where: { $0.id == calendarId }) else {
-            return CalendarInfo(
-                id: calendarId,
-                name: "Calendar",
-                colorHex: "#0078D4",
-                provider: .microsoft,
-                accountEmail: account.email
-            )
-        }
-        return calendar
+    private func parseReminders(isReminderOn: Bool?, minutes: Int?) -> [EventReminder] {
+        guard isReminderOn == true, let minutes else { return [] }
+        return [EventReminder(minutesBefore: minutes)]
     }
 
     private func microsoftColorToHex(_ color: String) -> String {

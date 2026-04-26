@@ -20,12 +20,19 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
     // Travel time properties
     var travelTimeMinutes: Int?
     var leaveByTime: Date?
+
+    /// Heuristic: looks address-shaped enough to hand to MapKit. Locale-blind —
+    /// the previous version matched only English-named street types and broke
+    /// silently for users in non-English locales. We now accept anything that
+    /// either contains a comma (the universal address separator) or has a digit
+    /// (street numbers, postcodes). MKLocalSearch downstream filters non-matches.
     var hasPhysicalLocation: Bool {
-        guard let loc = location, !loc.isEmpty else { return false }
-        // Check if location looks like an address (not just a room name)
-        return loc.contains(",") || loc.lowercased().contains("street") ||
-               loc.lowercased().contains("avenue") || loc.lowercased().contains("road") ||
-               loc.lowercased().contains("drive") || loc.lowercased().contains("boulevard")
+        guard let loc = location else { return false }
+        let trimmed = loc.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        if trimmed.contains(",") { return true }
+        if trimmed.unicodeScalars.contains(where: { CharacterSet.decimalDigits.contains($0) }) { return true }
+        return false
     }
 
     var isHappening: Bool {
@@ -63,13 +70,8 @@ struct CalendarEvent: Identifiable, Hashable, Codable {
         }
     }
 
+    /// Locale-aware short time string ("3:30 PM" in en_US, "15:30" in de_DE).
     var formattedTime: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: startDate)
-    }
-
-    var systemFormattedTime: String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         formatter.locale = Locale.current

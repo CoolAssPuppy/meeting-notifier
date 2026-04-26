@@ -92,8 +92,8 @@ struct AccountView: View {
                 }
                 AppIconButton(systemName: "arrow.up.right.square", help: "Open provider") {
                     let url = account.provider == .google
-                        ? URL(string: "https://calendar.google.com")!
-                        : URL(string: "https://outlook.office.com/calendar")!
+                        ? URL.required("https://calendar.google.com")
+                        : URL.required("https://outlook.office.com/calendar")
                     NSWorkspace.shared.open(url)
                 }
             }

@@ -270,7 +270,7 @@ struct SettingsDrawer: View {
     }
 
     private func contactRow(iconView: AnyView, title: String, url: String) -> some View {
-        Link(destination: URL(string: url)!) {
+        Link(destination: URL.required(url)) {
             HStack(spacing: 8) {
                 iconView
                     .frame(width: 16, alignment: .center)

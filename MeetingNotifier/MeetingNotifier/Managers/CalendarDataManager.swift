@@ -13,6 +13,7 @@ class CalendarDataManager: ObservableObject {
 
     private var refreshTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
+    private var pendingRefreshTask: Task<Void, Never>?
 
     private init() {
         // Don't auto-refresh if running UI tests
@@ -44,13 +45,24 @@ class CalendarDataManager: ObservableObject {
     }
 
     private func observeAccountChanges() {
+        // Debounce so a flurry of toggles (5 calendars in 2 seconds) collapses
+        // into a single refresh instead of 5 overlapping API calls.
         AppSettings.shared.$accounts
+            .debounce(for: .milliseconds(400), scheduler: RunLoop.main)
             .sink { [weak self] _ in
-                Task { @MainActor in
-                    await self?.refreshEvents()
-                }
+                self?.scheduleDebouncedRefresh()
             }
             .store(in: &cancellables)
+    }
+
+    /// Cancel any in-flight refresh and start a fresh one. Used by the
+    /// account-change observer; the 5-minute periodic timer doesn't need this
+    /// because its cadence is already coarse.
+    private func scheduleDebouncedRefresh() {
+        pendingRefreshTask?.cancel()
+        pendingRefreshTask = Task { @MainActor [weak self] in
+            await self?.refreshEvents()
+        }
     }
 
     func refreshEvents() async {
@@ -77,34 +89,8 @@ class CalendarDataManager: ObservableObject {
                 }
             }
 
-            let now = Date()
-            let calendar = Calendar.current
-            let endOfToday = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: now) ?? now
-
-            let hour = calendar.component(.hour, from: now)
-            let shouldIncludeTomorrow = hour >= 17
-
-            let filteredEvents = allEvents.filter { event in
-                // Include events that are currently happening (started but not ended)
-                if event.isHappening {
-                    return true
-                }
-
-                // Include events starting later today
-                if event.startDate >= now && event.startDate <= endOfToday {
-                    return true
-                }
-
-                if shouldIncludeTomorrow {
-                    let startOfTomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
-                    let endOfTomorrow = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: startOfTomorrow) ?? now
-                    return event.startDate >= startOfTomorrow && event.startDate <= endOfTomorrow
-                }
-
-                return false
-            }
-
-            events = filteredEvents.sorted { $0.startDate < $1.startDate }
+            let window = EventWindow.current()
+            events = window.filter(allEvents).sorted { $0.startDate < $1.startDate }
             lastRefreshDate = Date()
 
             precalculateTravelTimes()
@@ -164,21 +150,7 @@ class CalendarDataManager: ObservableObject {
     }
 
     private func fetchEventsForCalendar(_ calendarInfo: CalendarInfo, account: CalendarAccount) async throws -> [CalendarEvent] {
-        let now = Date()
-        let calendar = Calendar.current
-
-        let endOfToday = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: now) ?? now
-
-        let hour = calendar.component(.hour, from: now)
-        let shouldIncludeTomorrow = hour >= 17
-
-        let endDate: Date
-        if shouldIncludeTomorrow {
-            let startOfTomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
-            endDate = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: startOfTomorrow) ?? now
-        } else {
-            endDate = endOfToday
-        }
+        let window = EventWindow.current()
 
         switch account.provider {
         case .google:
@@ -186,16 +158,16 @@ class CalendarDataManager: ObservableObject {
                 forCalendar: calendarInfo.id,
                 calendarInfo: calendarInfo,
                 account: account,
-                startDate: now,
-                endDate: endDate
+                startDate: window.start,
+                endDate: window.end
             )
         case .microsoft:
             return try await MicrosoftCalendarManager.shared.fetchEvents(
                 forCalendar: calendarInfo.id,
                 calendarInfo: calendarInfo,
                 account: account,
-                startDate: now,
-                endDate: endDate
+                startDate: window.start,
+                endDate: window.end
             )
         }
     }
@@ -237,9 +209,24 @@ class CalendarDataManager: ObservableObject {
         let eventsWithLocation = events.filter { $0.hasPhysicalLocation }
         guard !eventsWithLocation.isEmpty else { return }
 
-        for event in eventsWithLocation {
-            Task {
-                _ = await LocationManager.shared.calculateTravelTime(for: event)
+        // Cap concurrency at 3 so a calendar full of address-shaped events
+        // doesn't fan out 10+ simultaneous MKLocalSearch + MKDirections calls.
+        // MapKit will throttle anyway, but the spike is uglier than this.
+        Task {
+            await withTaskGroup(of: Void.self) { group in
+                let maxConcurrent = 3
+                var inFlight = 0
+
+                for event in eventsWithLocation {
+                    if inFlight >= maxConcurrent {
+                        await group.next()
+                        inFlight -= 1
+                    }
+                    group.addTask {
+                        _ = await LocationManager.shared.calculateTravelTime(for: event)
+                    }
+                    inFlight += 1
+                }
             }
         }
     }

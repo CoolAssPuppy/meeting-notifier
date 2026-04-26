@@ -32,8 +32,8 @@ class GoogleOAuthManager {
 
     func authorize(completion: @escaping (Result<OIDAuthState, Error>) -> Void) {
         let configuration = OIDServiceConfiguration(
-            authorizationEndpoint: URL(string: "https://accounts.google.com/o/oauth2/v2/auth")!,
-            tokenEndpoint: URL(string: "https://oauth2.googleapis.com/token")!
+            authorizationEndpoint: URL.required("https://accounts.google.com/o/oauth2/v2/auth"),
+            tokenEndpoint: URL.required("https://oauth2.googleapis.com/token")
         )
 
         let request = OIDAuthorizationRequest(
@@ -46,48 +46,28 @@ class GoogleOAuthManager {
                 "email",
                 "https://www.googleapis.com/auth/calendar.readonly"
             ],
-            redirectURL: URL(string: Self.redirectURL)!,
+            redirectURL: URL.required(Self.redirectURL),
             responseType: OIDResponseTypeCode,
             additionalParameters: ["prompt": "select_account"]
         )
 
-        if #available(macOS 10.15, *) {
-            let window = NSApplication.shared.windows.first ?? NSWindow()
-            currentAuthorizationFlow = OIDAuthState.authState(
-                byPresenting: request,
-                presenting: window,
-                callback: { [weak self] state, error in
-                    self?.currentAuthorizationFlow = nil
-                    if let state = state {
-                        completion(.success(state))
-                    } else {
-                        completion(.failure(error ?? NSError(
-                            domain: "GoogleOAuth",
-                            code: -1,
-                            userInfo: [NSLocalizedDescriptionKey: "Google OAuth failed"]
-                        )))
-                    }
+        let window = NSApplication.shared.windows.first ?? NSWindow()
+        currentAuthorizationFlow = OIDAuthState.authState(
+            byPresenting: request,
+            presenting: window,
+            callback: { [weak self] state, error in
+                self?.currentAuthorizationFlow = nil
+                if let state = state {
+                    completion(.success(state))
+                } else {
+                    completion(.failure(error ?? NSError(
+                        domain: "GoogleOAuth",
+                        code: -1,
+                        userInfo: [NSLocalizedDescriptionKey: "Google OAuth failed"]
+                    )))
                 }
-            )
-        } else {
-            #if compiler(<6.0)
-            currentAuthorizationFlow = OIDAuthState.authState(
-                byPresenting: request,
-                callback: { [weak self] state, error in
-                    self?.currentAuthorizationFlow = nil
-                    if let state = state {
-                        completion(.success(state))
-                    } else {
-                        completion(.failure(error ?? NSError(
-                            domain: "GoogleOAuth",
-                            code: -1,
-                            userInfo: [NSLocalizedDescriptionKey: "Google OAuth failed"]
-                        )))
-                    }
-                }
-            )
-            #endif
-        }
+            }
+        )
     }
 
     func resumeAuthFlow(url: URL) -> Bool {
@@ -111,8 +91,8 @@ class GoogleOAuthManager {
     }
 
     private static let providerConfig = OAuthRefreshSupport.ProviderConfig(
-        authorizationEndpoint: URL(string: "https://accounts.google.com/o/oauth2/v2/auth")!,
-        tokenEndpoint: URL(string: "https://oauth2.googleapis.com/token")!,
+        authorizationEndpoint: URL.required("https://accounts.google.com/o/oauth2/v2/auth"),
+        tokenEndpoint: URL.required("https://oauth2.googleapis.com/token"),
         clientID: clientID,
         clientSecret: clientSecret,
         errorDomain: "GoogleOAuth"
@@ -127,7 +107,7 @@ class GoogleOAuthManager {
     /// identity to Google directly.
     func extractEmail(from authState: OIDAuthState) async -> String? {
         guard let accessToken = authState.lastTokenResponse?.accessToken else { return nil }
-        guard let url = URL(string: "https://openidconnect.googleapis.com/v1/userinfo") else { return nil }
+        let url = URL.required("https://openidconnect.googleapis.com/v1/userinfo")
 
         var request = URLRequest(url: url)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")

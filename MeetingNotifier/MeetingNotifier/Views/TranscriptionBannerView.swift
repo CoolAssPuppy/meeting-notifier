@@ -80,7 +80,10 @@ struct TranscriptionBannerView: View {
     private func leadingIndicator(theme: ThemePalette) -> some View {
         switch viewModel.state {
         case .recording:
-            recordingDot(color: theme.destructive)
+            HStack(spacing: 6) {
+                recordingDot(color: theme.destructive)
+                MicLevelBars(color: theme.destructive)
+            }
         case .paused:
             pausedDot(color: theme.warning)
         case .analyzing:

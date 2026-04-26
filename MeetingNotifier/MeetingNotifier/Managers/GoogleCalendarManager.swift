@@ -7,69 +7,30 @@ class GoogleCalendarManager {
 
     private init() {}
 
-    func fetchCalendarList(forAccount account: CalendarAccount, retryCount: Int = 0) async throws -> [CalendarInfo] {
-        let accessToken = try await CalendarManagerSupport.getValidToken(forAccount: account)
+    func fetchCalendarList(forAccount account: CalendarAccount) async throws -> [CalendarInfo] {
+        let url = URL.required("https://www.googleapis.com/calendar/v3/users/me/calendarList")
+        let response: GoogleCalendarListResponse = try await CalendarManagerSupport.fetchAuthorizedJSON(
+            url: url,
+            account: account,
+            decode: GoogleCalendarListResponse.self,
+            operation: "fetch calendar list"
+        )
 
-        let url = URL(string: "https://www.googleapis.com/calendar/v3/users/me/calendarList")!
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw CalendarError.apiError("Invalid response")
-        }
-
-        // Handle 401 Unauthorized - token expired
-        if httpResponse.statusCode == 401 && retryCount == 0 {
-            Logger.auth.warning("Access token expired for \(account.email, privacy: .private), refreshing...")
-            // Clear cached token to force refresh
-            _ = KeychainManager.shared.deleteAccessToken(forAccount: account.email)
-
-            // Retry once with refreshed token
-            return try await fetchCalendarList(forAccount: account, retryCount: 1)
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            // Mark account as having auth issues if retry also failed
-            if httpResponse.statusCode == 401 {
-                CalendarManagerSupport.markAccountAuthFailed(account, status: .expired)
-            }
-            throw CalendarError.apiError("Failed to fetch calendar list (HTTP \(httpResponse.statusCode))")
-        }
-
-        // Success - mark account as valid
-        CalendarManagerSupport.markAccountAuthValid(account)
-
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let items = json["items"] as? [[String: Any]] else {
-            throw CalendarError.parseError("Invalid calendar list response")
-        }
-
-        return items.compactMap { item in
-            guard let id = item["id"] as? String,
-                  let summary = item["summary"] as? String else {
-                return nil
-            }
-
-            // Prefer backgroundColor (actual color) over colorId (preset palette)
+        return (response.items ?? []).map { item in
             let colorHex: String
-            if let backgroundColor = item["backgroundColor"] as? String {
+            if let backgroundColor = item.backgroundColor {
                 colorHex = backgroundColor
             } else {
-                let colorId = item["colorId"] as? String ?? "1"
-                colorHex = googleColorIdToHex(colorId)
+                colorHex = googleColorIdToHex(item.colorId ?? "1")
             }
 
-            let isPrimary = item["primary"] as? Bool ?? false
-
             return CalendarInfo(
-                id: id,
-                name: summary,
+                id: item.id,
+                name: item.summary,
                 colorHex: colorHex,
                 provider: .google,
                 accountEmail: account.email,
-                isPrimary: isPrimary
+                isPrimary: item.primary ?? false
             )
         }
     }
@@ -79,11 +40,8 @@ class GoogleCalendarManager {
         calendarInfo: CalendarInfo,
         account: CalendarAccount,
         startDate: Date,
-        endDate: Date,
-        retryCount: Int = 0
+        endDate: Date
     ) async throws -> [CalendarEvent] {
-        let accessToken = try await CalendarManagerSupport.getValidToken(forAccount: account)
-
         let dateFormatter = ISO8601DateFormatter()
         let timeMin = dateFormatter.string(from: startDate)
         let timeMax = dateFormatter.string(from: endDate)
@@ -104,68 +62,31 @@ class GoogleCalendarManager {
             throw CalendarError.apiError("Failed to construct URL")
         }
 
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        let response: GoogleEventsResponse = try await CalendarManagerSupport.fetchAuthorizedJSON(
+            url: url,
+            account: account,
+            decode: GoogleEventsResponse.self,
+            operation: "fetch events"
+        )
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw CalendarError.apiError("Invalid response")
-        }
-
-        // Handle 401 Unauthorized - token expired
-        if httpResponse.statusCode == 401 && retryCount == 0 {
-            Logger.auth.warning("Access token expired for \(account.email, privacy: .private), refreshing...")
-            // Clear cached token to force refresh
-            _ = KeychainManager.shared.deleteAccessToken(forAccount: account.email)
-
-            // Retry once with refreshed token
-            return try await fetchEvents(
-                forCalendar: calendarId,
-                calendarInfo: calendarInfo,
-                account: account,
-                startDate: startDate,
-                endDate: endDate,
-                retryCount: 1
-            )
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            // Mark account as having auth issues if retry also failed
-            if httpResponse.statusCode == 401 {
-                CalendarManagerSupport.markAccountAuthFailed(account, status: .expired)
-            }
-            throw CalendarError.apiError("Failed to fetch events (HTTP \(httpResponse.statusCode))")
-        }
-
-        // Success - mark account as valid
-        CalendarManagerSupport.markAccountAuthValid(account)
-
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let items = json["items"] as? [[String: Any]] else {
-            return []
-        }
-
-        // Use the calendarInfo passed in (which includes custom colors)
-        return items.compactMap { item in
-            parseGoogleEvent(item, calendarId: calendarId, calendarInfo: calendarInfo)
+        return (response.items ?? []).compactMap { event in
+            parseGoogleEvent(event, calendarId: calendarId, calendarInfo: calendarInfo)
         }
     }
 
     private func parseGoogleEvent(
-        _ item: [String: Any],
+        _ event: GoogleCalendarEvent,
         calendarId: String,
         calendarInfo: CalendarInfo
     ) -> CalendarEvent? {
-        guard let eventId = item["id"] as? String,
-              let summary = item["summary"] as? String,
-              let start = item["start"] as? [String: Any],
-              let end = item["end"] as? [String: Any] else {
+        guard let summary = event.summary,
+              let start = event.start,
+              let end = event.end else {
             return nil
         }
 
-        let startDateString = start["dateTime"] as? String ?? start["date"] as? String ?? ""
-        let endDateString = end["dateTime"] as? String ?? end["date"] as? String ?? ""
+        let startDateString = start.dateTime ?? start.date ?? ""
+        let endDateString = end.dateTime ?? end.date ?? ""
 
         let dateFormatter = ISO8601DateFormatter()
         guard let startDate = dateFormatter.date(from: startDateString),
@@ -173,104 +94,76 @@ class GoogleCalendarManager {
             return nil
         }
 
-        let location = item["location"] as? String
-        let description = item["description"] as? String
+        let conferenceLink = extractConferenceLink(
+            entryPoints: event.conferenceData?.entryPoints,
+            description: event.description,
+            location: event.location
+        )
 
-        let conferenceLink = extractConferenceLink(from: item, description: description, location: location)
+        let reminders = parseReminders(event.reminders)
 
-        let reminders = parseReminders(from: item)
-
-        let attendees = item["attendees"] as? [[String: Any]] ?? []
-        let attendeeCount = attendees.count
+        let attendees = event.attendees ?? []
         let attendeeNames = attendees.compactMap { attendee -> String? in
-            if let name = attendee["displayName"] as? String, !name.isEmpty {
-                return name
-            }
-            return attendee["email"] as? String
+            if let name = attendee.displayName, !name.isEmpty { return name }
+            return attendee.email
         }
 
         return CalendarEvent(
-            id: eventId,
+            id: event.id,
             title: summary,
             startDate: startDate,
             endDate: endDate,
-            location: location,
-            description: description,
+            location: event.location,
+            description: event.description,
             conferenceLink: conferenceLink,
             calendarId: calendarId,
             calendarName: calendarInfo.name,
             calendarColorHex: calendarInfo.colorHex,
             provider: .google,
             reminders: reminders,
-            attendeeCount: attendeeCount,
+            attendeeCount: attendees.count,
             attendeeNames: attendeeNames,
             accountEmail: calendarInfo.accountEmail
         )
     }
 
     private func extractConferenceLink(
-        from item: [String: Any],
+        entryPoints: [GoogleEntryPoint]?,
         description: String?,
         location: String?
     ) -> String? {
-        if let conferenceData = item["conferenceData"] as? [String: Any],
-           let entryPoints = conferenceData["entryPoints"] as? [[String: Any]] {
+        if let entryPoints {
             for entryPoint in entryPoints {
-                if let uri = entryPoint["uri"] as? String,
-                   MeetingLinkParser.isValidMeetingLink(uri) {
+                if let uri = entryPoint.uri, MeetingLinkParser.isValidMeetingLink(uri) {
                     return uri
                 }
             }
         }
 
-        if let description = description,
-           let link = MeetingLinkParser.findMeetingLink(in: description) {
+        if let description, let link = MeetingLinkParser.findMeetingLink(in: description) {
             return link
         }
 
-        if let location = location,
-           let link = MeetingLinkParser.findMeetingLink(in: location) {
+        if let location, let link = MeetingLinkParser.findMeetingLink(in: location) {
             return link
         }
 
         return nil
     }
 
-    private func parseReminders(from item: [String: Any]) -> [EventReminder] {
-        guard let reminders = item["reminders"] as? [String: Any] else {
-            return []
-        }
+    private func parseReminders(_ reminders: GoogleReminders?) -> [EventReminder] {
+        guard let reminders else { return [] }
 
-        if let useDefault = reminders["useDefault"] as? Bool, useDefault {
+        if reminders.useDefault == true {
             return [EventReminder(minutesBefore: 10)]
         }
 
-        guard let overrides = reminders["overrides"] as? [[String: Any]] else {
-            return []
-        }
+        guard let overrides = reminders.overrides else { return [] }
 
         return overrides.compactMap { override in
-            guard let method = override["method"] as? String,
-                  method == "popup",
-                  let minutes = override["minutes"] as? Int else {
-                return nil
-            }
+            guard override.method == "popup", let minutes = override.minutes else { return nil }
             return EventReminder(minutesBefore: minutes)
         }
-    }
-
-    private func getCalendarInfo(calendarId: String, account: CalendarAccount) async throws -> CalendarInfo {
-        let calendars = try await fetchCalendarList(forAccount: account)
-        guard let calendar = calendars.first(where: { $0.id == calendarId }) else {
-            return CalendarInfo(
-                id: calendarId,
-                name: "Calendar",
-                colorHex: "#4285F4",
-                provider: .google,
-                accountEmail: account.email
-            )
-        }
-        return calendar
     }
 
     private func googleColorIdToHex(_ colorId: String) -> String {
@@ -280,23 +173,5 @@ class GoogleCalendarManager {
             "9": "#16A765", "10": "#43B581", "11": "#0B8043", "12": "#16A765"
         ]
         return colors[colorId] ?? "#4285F4"
-    }
-
-}
-
-enum CalendarError: LocalizedError {
-    case apiError(String)
-    case parseError(String)
-    case authError(String)
-
-    var errorDescription: String? {
-        switch self {
-        case .apiError(let message):
-            return "API Error: \(message)"
-        case .parseError(let message):
-            return "Parse Error: \(message)"
-        case .authError(let message):
-            return "Auth Error: \(message)"
-        }
     }
 }
