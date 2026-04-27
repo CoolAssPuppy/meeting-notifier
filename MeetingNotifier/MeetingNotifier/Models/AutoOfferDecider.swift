@@ -31,6 +31,7 @@ enum AutoOfferDecider {
         isMicActive: Bool,
         candidates: [CalendarEvent],
         doubleBookingPreference: DoubleBookingPreference,
+        preferredMeeting: CalendarEvent? = nil,
         now: Date = Date()
     ) -> Decision {
         guard state == .idle,
@@ -39,6 +40,9 @@ enum AutoOfferDecider {
               autoOfferEnabled,
               isMicActive else {
             return .skip
+        }
+        if let preferredMeeting, isMeetingEligible(preferredMeeting, now: now) {
+            return .start(preferredMeeting)
         }
         return .start(selectMeeting(from: candidates, now: now, preference: doubleBookingPreference))
     }
@@ -64,5 +68,9 @@ enum AutoOfferDecider {
         case .moreAttendees:
             return active.max(by: { $0.attendeeCount < $1.attendeeCount })
         }
+    }
+
+    private static func isMeetingEligible(_ meeting: CalendarEvent, now: Date) -> Bool {
+        meeting.startDate <= now.addingTimeInterval(matchLookahead) && meeting.endDate > now
     }
 }

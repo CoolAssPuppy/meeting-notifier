@@ -106,6 +106,26 @@ final class AutoOfferDeciderTests: XCTestCase {
         XCTAssertEqual(result, .start(event))
     }
 
+    func testDecide_prefersUserSelectedMeetingWhenEligible() {
+        let now = Date()
+        let active = makeEvent(id: "active", start: now.addingTimeInterval(-60), end: now.addingTimeInterval(1800), attendeeCount: 12)
+        let selected = makeEvent(id: "selected", start: now.addingTimeInterval(30), end: now.addingTimeInterval(3600), attendeeCount: 2)
+
+        let result = AutoOfferDecider.decide(
+            state: .idle,
+            suppressAutoStart: false,
+            notetakerEnabled: true,
+            autoOfferEnabled: true,
+            isMicActive: true,
+            candidates: [active, selected],
+            doubleBookingPreference: .moreAttendees,
+            preferredMeeting: selected,
+            now: now
+        )
+
+        XCTAssertEqual(result, .start(selected))
+    }
+
     // MARK: - selectMeeting window
 
     func testSelectMeeting_includesEventStartingWithinFiveMinutes() {

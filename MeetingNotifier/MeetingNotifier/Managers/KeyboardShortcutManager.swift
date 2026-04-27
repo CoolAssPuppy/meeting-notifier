@@ -111,6 +111,7 @@ class KeyboardShortcutManager: ObservableObject {
         if let nextMeeting = events.first(where: { $0.startDate >= now && $0.hasVideoLink }) {
             if let conferenceLink = nextMeeting.conferenceLink,
                let url = URL(string: conferenceLink) {
+                TranscriptionCoordinator.shared.registerUserSelectedMeeting(nextMeeting)
                 AppSettings.shared.openURL(url, accountEmail: nextMeeting.accountEmail)
 
                 // Show notification
@@ -180,4 +181,3 @@ enum ShortcutModifier {
         }
     }
 }
-
