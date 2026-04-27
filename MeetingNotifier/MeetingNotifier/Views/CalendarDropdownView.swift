@@ -161,6 +161,7 @@ private struct PopoverBody: View {
 
     private func handleTap(_ event: CalendarEvent) {
         guard let link = event.conferenceLink, let url = URL(string: link) else { return }
+        TranscriptionCoordinator.shared.registerUserSelectedMeeting(event)
         AppSettings.shared.openURL(url, accountEmail: event.accountEmail)
     }
 }
@@ -469,4 +470,3 @@ private struct PopoverFooter: View {
 // (MiniCalendarDrawer + CalendarChip + DayCell live in Views/MiniCalendarDrawer.swift)
 // (ThemeStrip lives in Views/ThemeStrip.swift)
 // (Color(hex:) lives in Views/Components/ColorHex.swift)
-

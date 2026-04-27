@@ -65,6 +65,7 @@ extension AppDelegate {
               let url = URL(string: conferenceLink) else {
             return
         }
+        TranscriptionCoordinator.shared.registerUserSelectedMeeting(meeting)
         AppSettings.shared.openURL(url, accountEmail: meeting.accountEmail)
     }
 }

@@ -22,7 +22,8 @@ final class TranscriptionCoordinatorTests: XCTestCase {
             lastSegmentTimestamp: wayPastTimeout,
             now: now,
             isMicActive: true,
-            timeout: timeout
+            timeout: timeout,
+            hardTimeout: timeout * 10
         )
 
         XCTAssertFalse(result)
@@ -38,7 +39,8 @@ final class TranscriptionCoordinatorTests: XCTestCase {
             lastSegmentTimestamp: pastTimeout,
             now: now,
             isMicActive: false,
-            timeout: timeout
+            timeout: timeout,
+            hardTimeout: timeout * 10
         )
 
         XCTAssertTrue(result)
@@ -53,9 +55,28 @@ final class TranscriptionCoordinatorTests: XCTestCase {
             lastSegmentTimestamp: recent,
             now: now,
             isMicActive: false,
-            timeout: timeout
+            timeout: timeout,
+            hardTimeout: timeout * 10
         )
 
         XCTAssertFalse(result)
+    }
+
+    // If the microphone signal never flips inactive (for example due to CoreAudio
+    // false positives), we still need a deterministic teardown after prolonged silence.
+    func test_shouldAutoStopForInactivity_whenMicActiveAndHardTimeoutExceeded_returnsTrue() {
+        let now = Date()
+        let hardTimeout: TimeInterval = 120
+        let pastHardTimeout = now.addingTimeInterval(-(hardTimeout + 1))
+
+        let result = TranscriptionCoordinator.shouldAutoStopForInactivity(
+            lastSegmentTimestamp: pastHardTimeout,
+            now: now,
+            isMicActive: true,
+            timeout: timeout,
+            hardTimeout: hardTimeout
+        )
+
+        XCTAssertTrue(result)
     }
 }

@@ -34,6 +34,14 @@ final class TranscriptionCoordinator: ObservableObject {
     private var inactivityTimer: Timer?
     private static let inactivityCheckInterval: TimeInterval = 10
     private static let inactivityTimeout: TimeInterval = 90
+    private static let inactivityHardTimeout: TimeInterval = 5 * 60
+
+    // If the user explicitly joins a meeting from the app UI, prefer that
+    // event for the next auto-offer trigger so transcripts bind to the meeting
+    // they clicked, even when another meeting is still active.
+    private var userSelectedMeeting: CalendarEvent?
+    private var userSelectedMeetingExpiry: Date?
+    private static let userSelectedMeetingTTL: TimeInterval = 10 * 60
 
     // Auto-save for crash recovery (Bug 3)
     private var autoSaveTimer: Timer?
@@ -204,6 +212,15 @@ final class TranscriptionCoordinator: ObservableObject {
 
         currentDocument = nil
         error = nil
+    }
+
+    /// Records the meeting the user intentionally joined from the app UI.
+    /// The next auto-offer trigger consumes this hint and prefers it over
+    /// heuristic calendar matching.
+    func registerUserSelectedMeeting(_ event: CalendarEvent) {
+        userSelectedMeeting = event
+        userSelectedMeetingExpiry = Date().addingTimeInterval(Self.userSelectedMeetingTTL)
+        Logger.transcription.info("Registered user-selected meeting: \(event.title)")
     }
 
     func pauseTranscription() {
@@ -493,6 +510,7 @@ final class TranscriptionCoordinator: ObservableObject {
     /// timer. Decision logic lives in `AutoOfferDecider`.
     private func handleAutoOfferTrigger(isMicActive: Bool) async {
         let settings = AppSettings.shared
+        let preferredMeeting = currentPreferredMeetingIfValid()
         let decision = AutoOfferDecider.decide(
             state: state,
             suppressAutoStart: suppressAutoStart,
@@ -500,10 +518,12 @@ final class TranscriptionCoordinator: ObservableObject {
             autoOfferEnabled: settings.autoOfferTranscription,
             isMicActive: isMicActive,
             candidates: CalendarDataManager.shared.events,
-            doubleBookingPreference: settings.doubleBookingPreference
+            doubleBookingPreference: settings.doubleBookingPreference,
+            preferredMeeting: preferredMeeting
         )
 
         guard case .start(let meeting) = decision else { return }
+        consumePreferredMeeting()
 
         if let meeting {
             Logger.transcription.info("Auto-starting transcription for: \(meeting.title)")
@@ -554,7 +574,8 @@ final class TranscriptionCoordinator: ObservableObject {
             lastSegmentTimestamp: lastTimestamp,
             now: now,
             isMicActive: micActive,
-            timeout: Self.inactivityTimeout
+            timeout: Self.inactivityTimeout,
+            hardTimeout: Self.inactivityHardTimeout
         ) else { return }
 
         let elapsed = now.timeIntervalSince(lastTimestamp)
@@ -573,10 +594,28 @@ final class TranscriptionCoordinator: ObservableObject {
         lastSegmentTimestamp: Date,
         now: Date,
         isMicActive: Bool,
-        timeout: TimeInterval
+        timeout: TimeInterval,
+        hardTimeout: TimeInterval
     ) -> Bool {
+        let elapsed = now.timeIntervalSince(lastSegmentTimestamp)
+        if elapsed >= hardTimeout { return true }
         guard !isMicActive else { return false }
-        return now.timeIntervalSince(lastSegmentTimestamp) >= timeout
+        return elapsed >= timeout
+    }
+
+    private func currentPreferredMeetingIfValid(now: Date = Date()) -> CalendarEvent? {
+        guard let meeting = userSelectedMeeting,
+              let expiry = userSelectedMeetingExpiry,
+              expiry > now else {
+            consumePreferredMeeting()
+            return nil
+        }
+        return meeting
+    }
+
+    private func consumePreferredMeeting() {
+        userSelectedMeeting = nil
+        userSelectedMeetingExpiry = nil
     }
 
     // MARK: - Auto-save for crash recovery
