@@ -175,7 +175,9 @@ PRs welcome. A few rules:
 
 ## License
 
-Custom Open Source License — see [LICENSE](LICENSE). You can fork and customize for personal use, but redistribution through the App Store requires permission. This protects the official MeetingNotifier while keeping the code open for learning.
+This project is licensed under the Mozilla Public License 2.0. See [LICENSE](LICENSE) for details.
+
+Copyright © 2026 Strategic Nerds, Inc.
 
 ## Credits
 
