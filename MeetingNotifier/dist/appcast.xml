@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
     <title>MeetingNotifier</title>
-    <link>https://downloads.strategicnerds.com/apps/meeting-notifier/appcast.xml</link>
+    <link>https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/appcast.xml</link>
     <description>MeetingNotifier updates</description>
     <language>en</language>
     <item>
@@ -17,7 +17,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.4.2.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.4.2.dmg"
         sparkle:edSignature="SdFDJRnReB+A+Ymd18HuO5AgLEWYgEDXnS0IdXGPbzhSPGIGnLY3PUicWBwQn3un6CbChcLwIFGK6vu/5WSWCA=="
         length="4336303"
         type="application/x-apple-diskimage" />
@@ -35,7 +35,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.4.1.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.4.1.dmg"
         sparkle:edSignature="XWNY4cfPXimx56aM6T9DI+iTwA36hStuIHDwFiCorumeTX6/r1Z6vuA4r5eRxavott18UA0cVTB2flpbg0CjBA=="
         length="4332208"
         type="application/x-apple-diskimage" />
@@ -53,7 +53,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.4.0.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.4.0.dmg"
         sparkle:edSignature="6zxJN3x689alKQfAtO8M6kOFQeug4bLGtosK4p861J3OwbbG83iQqcCHxZKdUTIjBaHAJ2XZsUOtmdOjbpYxCQ=="
         length="4305028"
         type="application/x-apple-diskimage" />
@@ -71,7 +71,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.10.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.10.dmg"
         sparkle:edSignature="dBgFNgWKvBGQ+iWzP+ebAgRzNygfsJ0DtD3EMSjGKyPtH9iZjsFdEvEgU+CTMLsDETUv862d9tOvQilDZ+MaCQ=="
         length="4232087"
         type="application/x-apple-diskimage" />
@@ -89,7 +89,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.9.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.9.dmg"
         sparkle:edSignature="oUvuOSODx1ONNJga0NPRZdtZ0CEdkDImgxnCsTu2gGyeBCYwQ18p7dm7G651P93VqmZSnxXtQ3QgXQC/P4oqBQ=="
         length="4232085"
         type="application/x-apple-diskimage" />
@@ -107,7 +107,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.8.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.8.dmg"
         sparkle:edSignature="8rlw4Il5cpJsiOZX/FPCdnq0Yo1lKziulYkX7Rb3eTZJJR5FaDhhLZaeCCCmNV0mhtsB8/4WKozrzwDzPg/CAg=="
         length="4246547"
         type="application/x-apple-diskimage" />
@@ -125,7 +125,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.7.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.7.dmg"
         sparkle:edSignature="PNL4vYzoGcC7DBPxZujTmkVHGxKt05yDDISF7z8vKrHtT3LIlktZIgk3EWECONfpVfLv1n8qnVfzzaYuXMDrAQ=="
         length="4218431"
         type="application/x-apple-diskimage" />
@@ -143,7 +143,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.6.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.6.dmg"
         sparkle:edSignature="Bz48f96wt9+9DuI3Hual5QyCEucA/qnd6jAGZC61ELFAZk+CtLuwaJ4kQ2P6NS89gLWsap0/yYZvzkvab7GaBQ=="
         length="4218435"
         type="application/x-apple-diskimage" />
@@ -161,7 +161,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.5.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.5.dmg"
         sparkle:edSignature="4DjrgDTmGmoPCRAuVDRCo916WogCpHf9tOr6GedZQ7gzPcChZF4nOIHKneO/bICsvDfQDIylcQF4A1LuGrzaCw=="
         length="3275903"
         type="application/x-apple-diskimage" />
@@ -179,7 +179,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.4.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.4.dmg"
         sparkle:edSignature="FkKTY80EK7U3wVF8B33lr8OpS+ClTfyNizetiXkVcNWKo8YBdKJNkYujYkg6n/ijlfYmj7eZwoR4AIu9OjtyAQ=="
         length="3275271"
         type="application/x-apple-diskimage" />
@@ -197,7 +197,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.3.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.3.dmg"
         sparkle:edSignature="Lup/Pf4ezo0rIw9DAvU0BafsjDxLYVnI5nD1j+erqD7mlc1J7n7CflncQkDBVEcbMISnGiWt+IUaslKsK2p3Dw=="
         length="3274261"
         type="application/x-apple-diskimage" />
@@ -215,7 +215,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.2.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.2.dmg"
         sparkle:edSignature="fGs6F5ZTtMqvjmps0tSmtOmP7xlezdLAxdXZcV1AsYwYf3dcaH/OyBlcwhtVkbd0ArqP5XEC+wXwZsGIbEwKBA=="
         length="3241575"
         type="application/x-apple-diskimage" />
@@ -233,7 +233,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.1.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.1.dmg"
         sparkle:edSignature="wgk/lq0ywH7ZYT5ciUf58pPeXB9S1lrdeiMndr640u0TfaenYRa/13J9ml865QN3c5/0euqTrbcbXDlto+xlDQ=="
         length="3241820"
         type="application/x-apple-diskimage" />
@@ -259,7 +259,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.3.0.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.3.0.dmg"
         sparkle:edSignature="VHstnpTPJ6XWeCaFpbf/TIig3KbroCoJbl/I3j/CprimfQ2JXnTeVMgi1m8A3gP+LsyNVvpTUXz8s/B/ATHKCA=="
         length="3241807"
         type="application/x-apple-diskimage" />
@@ -277,7 +277,7 @@
         </ul>
       ]]></description>
       <enclosure
-        url="https://downloads.strategicnerds.com/apps/meeting-notifier/MeetingNotifier-1.2.0.dmg"
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.2.0.dmg"
         sparkle:edSignature="MkVL+2cOhYaq+z84pWMhnwRCXyf2cISSquLu0yxq8P7KcPSaUtU/RUaj5WQQRZ4a4/Az+MI6wSrI1d4H5YdkAg=="
         length="3358867"
         type="application/x-apple-diskimage" />
