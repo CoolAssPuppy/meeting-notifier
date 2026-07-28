@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    Manual signing, not automatic. Automatic export signing asks Xcode to
+    resolve a Developer ID profile through a signed-in Apple ID account, and
+    this machine has none, so export died with "No Accounts". The profile named
+    below is a Developer ID (MAC_APP_DIRECT) profile for the
+    com.strategicnerds.meetingnotifier bundle identifier, issued against the
+    Developer ID Application certificate in the login keychain. The app needs a
+    profile at all because of its iCloud key-value-store entitlement and its
+    keychain access group.
+
+    If that certificate is rotated the profile stops matching and export fails
+    with "doesn't include signing certificate". Reissue the profile in the
+    developer portal, keep this name, and drop it in
+    ~/Library/Developer/Xcode/UserData/Provisioning Profiles/.
+-->
 <plist version="1.0">
 <dict>
     <key>method</key>
@@ -7,7 +22,14 @@
     <key>teamID</key>
     <string>955GSY56UT</string>
     <key>signingStyle</key>
-    <string>automatic</string>
+    <string>manual</string>
+    <key>signingCertificate</key>
+    <string>Developer ID Application</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.strategicnerds.meetingnotifier</key>
+        <string>Meeting Notifier Developer ID</string>
+    </dict>
     <key>uploadSymbols</key>
     <false/>
     <key>destination</key>

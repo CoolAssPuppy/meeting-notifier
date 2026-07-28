@@ -99,9 +99,23 @@ xcrun stapler validate "$DMG_OUT"
 spctl -a -t open --context context:primary-signature -v "$DMG_OUT"
 
 echo ""
-echo "Signing DMG with Sparkle (account: $SPARKLE_KEY_ACCOUNT)..."
 SPARKLE_OUT="${DMG_OUT%.dmg}.sparkle.txt"
-"$SIGN_UPDATE" --account "$SPARKLE_KEY_ACCOUNT" "$DMG_OUT" | tee "$SPARKLE_OUT"
+# The signing key lives in Doppler as well as the login keychain. Prefer
+# Doppler: the keychain item is per-machine and goes missing on a new Mac or
+# after a keychain reset, and an unsigned DMG in the appcast is an update every
+# installed copy refuses. Both hold the same key, whose public half is the
+# SUPublicEDKey baked into Info.plist.
+SPARKLE_PRIVATE_KEY=$(doppler secrets get SPARKLE_PRIVATE_KEY \
+  --project "${TELEMETRY_DOPPLER_PROJECT:-meeting-notifier}" \
+  --config "${TELEMETRY_DOPPLER_CONFIG:-prd}" --plain 2>/dev/null || true)
+
+if [[ -n "$SPARKLE_PRIVATE_KEY" ]]; then
+  echo "Signing DMG with Sparkle (key from Doppler)..."
+  printf '%s' "$SPARKLE_PRIVATE_KEY" | "$SIGN_UPDATE" --ed-key-file - "$DMG_OUT" | tee "$SPARKLE_OUT"
+else
+  echo "Signing DMG with Sparkle (account: $SPARKLE_KEY_ACCOUNT)..."
+  "$SIGN_UPDATE" --account "$SPARKLE_KEY_ACCOUNT" "$DMG_OUT" | tee "$SPARKLE_OUT"
+fi
 
 echo ""
 echo "============================================================"

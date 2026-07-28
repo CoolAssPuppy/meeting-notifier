@@ -98,6 +98,29 @@ echo "==> Regenerating Xcode project"
 (cd "$REPO_ROOT" && xcodegen generate)
 
 #----------------------------------------------------------------------
+# PostHog telemetry key
+#----------------------------------------------------------------------
+# Fetched from this app's OWN Doppler project, deliberately not from
+# $DOPPLER_PROJECT — that defaults to agent-server (where the shared Cloudflare
+# R2 credentials live) and its POSTHOG_PUBLIC_KEY belongs to a different app.
+#
+# The key used to be hardcoded in Info.plist, pointing at the Strategic Nerds
+# Blog project, which is why months of menu-bar events landed in the blog's
+# analytics. Info.plist now carries the $(POSTHOG_API_KEY) build setting and
+# Telemetry.setup() refuses the unsubstituted placeholder, so a build without
+# this step ships with capture silently disabled.
+TELEMETRY_DOPPLER_PROJECT="${TELEMETRY_DOPPLER_PROJECT:-meeting-notifier}"
+TELEMETRY_DOPPLER_CONFIG="${TELEMETRY_DOPPLER_CONFIG:-prd}"
+export TELEMETRY_DOPPLER_PROJECT TELEMETRY_DOPPLER_CONFIG
+echo "==> Loading the PostHog project key ($TELEMETRY_DOPPLER_PROJECT/$TELEMETRY_DOPPLER_CONFIG)"
+POSTHOG_PUBLIC_KEY=$(doppler secrets get POSTHOG_PUBLIC_KEY \
+  --project "$TELEMETRY_DOPPLER_PROJECT" --config "$TELEMETRY_DOPPLER_CONFIG" --plain 2>/dev/null || true)
+if [ -z "$POSTHOG_PUBLIC_KEY" ]; then
+  echo "Error: missing POSTHOG_PUBLIC_KEY in Doppler $TELEMETRY_DOPPLER_PROJECT/$TELEMETRY_DOPPLER_CONFIG"
+  exit 1
+fi
+
+#----------------------------------------------------------------------
 # 3. Archive
 #----------------------------------------------------------------------
 ARCHIVE="$DIST/MeetingNotifier-$VERSION.xcarchive"
@@ -108,12 +131,14 @@ xcodebuild -project "$REPO_ROOT/MeetingNotifier.xcodeproj" \
   -configuration Release \
   -archivePath "$ARCHIVE" \
   -allowProvisioningUpdates \
+  POSTHOG_API_KEY="$POSTHOG_PUBLIC_KEY" \
   archive | xcpretty 2>/dev/null || \
 xcodebuild -project "$REPO_ROOT/MeetingNotifier.xcodeproj" \
   -scheme MeetingNotifier \
   -configuration Release \
   -archivePath "$ARCHIVE" \
   -allowProvisioningUpdates \
+  POSTHOG_API_KEY="$POSTHOG_PUBLIC_KEY" \
   archive >/dev/null
 
 #----------------------------------------------------------------------
