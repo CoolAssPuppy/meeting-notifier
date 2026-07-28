@@ -327,7 +327,7 @@ private extension AppDelegate {
 
         TranscriptionCoordinator.shared.registerUserSelectedMeeting(event)
         AppSettings.shared.openURL(url, accountEmail: event.accountEmail)
-        Telemetry.capture("meeting.join_clicked", properties: [
+        Telemetry.capture(.meetingJoinClicked, properties: [
             "provider": Self.meetingPlatformTag(for: conferenceLink)
         ])
     }

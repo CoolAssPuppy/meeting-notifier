@@ -32,7 +32,7 @@ enum Telemetry {
     /// tasks, UI), and the concrete backend (PostHogSDK) is thread-safe
     /// internally. The only write happens once at `setup()`; reads after
     /// that are safe without a lock.
-    nonisolated(unsafe) private static var backend: TelemetryBackend?
+    nonisolated(unsafe) private static var backends: [TelemetryBackend] = []
 
     // MARK: - Public API
 
@@ -48,10 +48,8 @@ enum Telemetry {
     /// Updates the opt-in preference and propagates to the live backend.
     static func setOptedIn(_ value: Bool) {
         UserDefaults.standard.set(value, forKey: optInKey)
-        if value {
-            backend?.optIn()
-        } else {
-            backend?.optOut()
+        for backend in backends {
+            value ? backend.optIn() : backend.optOut()
         }
     }
 
@@ -75,7 +73,7 @@ enum Telemetry {
             distinctId: distinctId()
         )
         instance.setup()
-        backend = instance
+        backends = [instance]
 
         if isOptedIn {
             instance.optIn()
@@ -87,6 +85,12 @@ enum Telemetry {
     /// Captures a business-meaningful event. `properties` must never carry
     /// PII — no emails, no workspace names, no URLs, no user-entered text.
     /// `source` and `app_version` are attached automatically.
+    static func capture(_ event: TelemetryEvent, properties: [String: Any] = [:]) {
+        capture(event.rawValue, properties: properties)
+    }
+
+    /// String overload, for the rare call site that builds a name dynamically.
+    /// Prefer the `TelemetryEvent` version so names cannot drift.
     static func capture(_ event: String, properties: [String: Any] = [:]) {
         guard isOptedIn else { return }
         var props = properties
@@ -97,7 +101,9 @@ enum Telemetry {
         if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
             props["app_version"] = version
         }
-        backend?.capture(event: event, properties: props)
+        for backend in backends {
+            backend.capture(event: event, properties: props)
+        }
     }
 
     // MARK: - Private helpers

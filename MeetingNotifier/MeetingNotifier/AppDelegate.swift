@@ -31,7 +31,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         startMenuBarUpdates()
         NSApp.setActivationPolicy(.accessory)
 
-        Telemetry.capture("app.launched")
+        Telemetry.capture(.appLaunched)
         reportUpdateInstalledIfNeeded()
 
         _ = NotificationManager.shared
@@ -70,7 +70,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let previous = defaults.string(forKey: key)
         defaults.set(current, forKey: key)
         guard let previous, !previous.isEmpty, previous != current else { return }
-        Telemetry.capture("update.installed", properties: ["from": previous, "to": current])
+        Telemetry.capture(.updateInstalled, properties: ["from": previous, "to": current])
     }
 
     // MARK: - Setup
@@ -143,7 +143,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         startMonitoringForClicksOutsidePopover()
-        Telemetry.capture("menu.opened")
+        Telemetry.capture(.menuOpened)
     }
 
     func closePopover() {
@@ -211,9 +211,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in
                 switch result {
                 case .success:
-                    Telemetry.capture("account.added", properties: ["provider": "google"])
+                    Telemetry.capture(.accountAdded, properties: ["provider": "google"])
                 case .failure(let error):
-                    Telemetry.capture("account.signin_failed", properties: ["provider": "google"])
+                    Telemetry.capture(.accountSigninFailed, properties: ["provider": "google"])
                     let alert = NSAlert()
                     alert.messageText = "Failed to Add Account"
                     alert.informativeText = error.localizedDescription
@@ -229,9 +229,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in
                 switch result {
                 case .success:
-                    Telemetry.capture("account.added", properties: ["provider": "microsoft"])
+                    Telemetry.capture(.accountAdded, properties: ["provider": "microsoft"])
                 case .failure(let error):
-                    Telemetry.capture("account.signin_failed", properties: ["provider": "microsoft"])
+                    Telemetry.capture(.accountSigninFailed, properties: ["provider": "microsoft"])
                     let alert = NSAlert()
                     alert.messageText = "Failed to Add Account"
                     alert.informativeText = error.localizedDescription

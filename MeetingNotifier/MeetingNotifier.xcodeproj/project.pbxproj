@@ -104,6 +104,7 @@
 		CF588E6D08E23060E3FC5629 /* CalendarAPIResponsesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C6A40187C180348CE0EFF24 /* CalendarAPIResponsesTests.swift */; };
 		D6FE633046029A4F81C78698 /* SettingsSyncToggleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BED4F17142ADBEB5C9B466A0 /* SettingsSyncToggleTests.swift */; };
 		D9BA7C56DE7C72136534835E /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F287A0EEAA4F3F0255EEE0E /* Sidebar.swift */; };
+		DAF0A42490A3B112B9AF4895 /* TelemetryEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 201782BD8C87D2117AB55F87 /* TelemetryEvent.swift */; };
 		DF244A80DBAAF0C4F17C2948 /* short-chimes.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */; };
 		E064F3159172854639D8B309 /* URLOpener.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59C3716DAD76D88D869537A /* URLOpener.swift */; };
 		E2742A0513E8DF038E207B85 /* UpdaterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00795A09A483B48CABA97AC /* UpdaterManager.swift */; };
@@ -142,6 +143,7 @@
 		1A07EBED89754C9EBBFBE7DE /* AppDelegate+PeekWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+PeekWindow.swift"; sourceTree = "<group>"; };
 		1D9C3C893129A7573A00289F /* NotetakerEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotetakerEnums.swift; sourceTree = "<group>"; };
 		1F287A0EEAA4F3F0255EEE0E /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidebar.swift; sourceTree = "<group>"; };
+		201782BD8C87D2117AB55F87 /* TelemetryEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryEvent.swift; sourceTree = "<group>"; };
 		216DD6E619E6472E64DFD4FB /* AutoOfferDeciderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoOfferDeciderTests.swift; sourceTree = "<group>"; };
 		24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = "short-chimes.aiff"; sourceTree = "<group>"; };
 		252500A71F0AFBFAFFED45BC /* TranscriptionEngineProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionEngineProtocol.swift; sourceTree = "<group>"; };
@@ -300,6 +302,7 @@
 				C8EE58D1E1ABD7E19E32CF79 /* MeetingLinkParser.swift */,
 				B7E28947141FFCB9E7F6B9F1 /* SubfolderResolver.swift */,
 				19E2EB416FE247CF900688CD /* Telemetry.swift */,
+				201782BD8C87D2117AB55F87 /* TelemetryEvent.swift */,
 				39D9DA8E82CA17B9EA4C10CA /* TranscriptFormatter.swift */,
 				9BD9F9309637C70EAC7033F4 /* TranscriptRecoveryStore.swift */,
 				A00795A09A483B48CABA97AC /* UpdaterManager.swift */,
@@ -668,6 +671,7 @@
 				49A784AB9FB732B73E748321 /* SystemAudioCapturer.swift in Sources */,
 				43A0AF9C785B3D5D3BE9E018 /* SystemAudioEnergyTracker.swift in Sources */,
 				0CB52A97759E8744115DCC42 /* Telemetry.swift in Sources */,
+				DAF0A42490A3B112B9AF4895 /* TelemetryEvent.swift in Sources */,
 				B6473CA53DD63EFBCD8A9A66 /* Theme.swift in Sources */,
 				2AC3E996EB85E02442D0BED4 /* ThemeStore.swift in Sources */,
 				C7CC3CB9BC1A55942E69605F /* ThemeStrip.swift in Sources */,
