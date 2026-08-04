@@ -18,6 +18,7 @@ enum TelemetryEvent: String {
     case appLaunched = "app_launched"
     case meetingJoinClicked = "meeting_join_clicked"
     case menuOpened = "menu_opened"
+    case menuStyleChanged = "menu_style_changed"
     case notificationClicked = "notification_clicked"
     case notificationShown = "notification_shown"
     case shortcutUsed = "shortcut_used"

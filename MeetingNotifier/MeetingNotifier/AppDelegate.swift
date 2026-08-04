@@ -8,7 +8,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var settingsWindow: NSWindow?
     private var popover: NSPopover?
-    var nativeMenu: NSMenu?
+    var rightClickMenu: NSMenu?
+    private let menuStyleStore = MenuStyleStore.shared
     private var menuBarUpdateTimer: Timer?
     private var eventMonitor: Any?
     var peekWindowPanel: PeekWindowPanel?
@@ -27,7 +28,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupMenuBar()
         setupPopover()
-        setupNativeMenu()
         startMenuBarUpdates()
         NSApp.setActivationPolicy(.accessory)
 
@@ -80,9 +80,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem?.button {
             updateMenuBarText()
-            button.action = #selector(menuBarButtonClicked)
             button.target = self
+            button.action = #selector(menuBarButtonClicked)
+            // Without this the button only fires on left-mouse-up, and
+            // `menuBarButtonClicked` would never see a right-click to route.
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
+
+        rightClickMenu = createRightClickMenu()
     }
 
     private func setupPopover() {
@@ -91,11 +96,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover?.contentViewController = hostingController
         popover?.behavior = .semitransient
         popover?.appearance = NSAppearance(named: .aqua)
-    }
-
-    private func setupNativeMenu() {
-        nativeMenu = createNativeMenu()
-        nativeMenu?.delegate = self
     }
 
     private func startMenuBarUpdates() {
@@ -109,8 +109,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Dropdown toggle
 
+    /// The keyboard shortcut and the notification both open whichever dropdown
+    /// the user picked, so the two styles behave the same everywhere.
     @objc func toggleDropdown() {
-        togglePopover()
+        if menuStyleStore.current == .classic {
+            showClassicMenu()
+        } else {
+            togglePopover()
+        }
     }
 
     @objc private func handleAccountsDidUpdate() {
@@ -120,7 +126,49 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func menuBarButtonClicked() {
-        togglePopover()
+        let event = NSApp.currentEvent
+        let isRightClick = event?.type == .rightMouseUp
+            || (event?.modifierFlags.contains(.control) ?? false)
+
+        if isRightClick {
+            showRightClickMenu()
+        } else {
+            toggleDropdown()
+        }
+    }
+
+    // MARK: - Classic menu
+
+    private func showRightClickMenu() {
+        guard let menu = rightClickMenu else { return }
+        updateTranscriptionMenuItem(in: menu)
+        applySystemAppearance(to: menu)
+        present(menu: menu)
+    }
+
+    /// Built fresh on every click: meetings, countdowns and travel times all
+    /// change between openings, and an `NSMenu` is a snapshot, not a live view.
+    private func showClassicMenu() {
+        // A popover left open from a style switch would otherwise sit under
+        // the menu.
+        closePopover()
+
+        let menu = ClassicMenuBuilder.makeMenu(content: classicMenuContent(),
+                                               actions: classicMenuActions())
+        applySystemAppearance(to: menu)
+        present(menu: menu)
+        Telemetry.capture(.menuOpened, properties: ["style": MenuStyle.classic.rawValue])
+    }
+
+    /// Pops a menu from the status item, then detaches it so the next
+    /// left-click still reaches `menuBarButtonClicked`.
+    private func present(menu: NSMenu) {
+        guard let statusItem else { return }
+        statusItem.menu = menu
+        statusItem.button?.performClick(nil)
+        DispatchQueue.main.async { [weak statusItem] in
+            statusItem?.menu = nil
+        }
     }
 
     private func togglePopover() {
@@ -143,7 +191,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         startMonitoringForClicksOutsidePopover()
-        Telemetry.capture(.menuOpened)
+        Telemetry.capture(.menuOpened, properties: ["style": MenuStyle.pretty.rawValue])
     }
 
     func closePopover() {
@@ -321,16 +369,5 @@ extension AppDelegate {
     func applySystemAppearance(to menu: NSMenu) {
         let isDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
         menu.appearance = NSAppearance(named: isDarkMode ? .darkAqua : .aqua)
-    }
-}
-
-// MARK: - NSMenuDelegate
-
-extension AppDelegate: NSMenuDelegate {
-    func menuWillOpen(_ menu: NSMenu) {
-        if menu == nativeMenu {
-            applySystemAppearance(to: menu)
-            updateNativeMenu(menu)
-        }
     }
 }

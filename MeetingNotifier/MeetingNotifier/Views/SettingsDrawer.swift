@@ -22,6 +22,7 @@ struct SettingsDrawer: View {
                 HStack(alignment: .top, spacing: 14) {
                     VStack(spacing: 14) {
                         generalCard
+                        menuStyleCard
                         menuBarCard
                     }.frame(maxWidth: .infinity)
 
@@ -97,6 +98,20 @@ struct SettingsDrawer: View {
                         }
                     )).toggleStyle(.switch).labelsHidden().tint(theme.primary)
                 }
+            }
+        }
+    }
+
+    private var menuStyleCard: some View {
+        AppCard("Dropdown style") {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Choose what the menu bar icon opens. Classic is a standard macOS menu with a flyout per meeting, and it follows your system light or dark appearance instead of the theme.")
+                    .font(.system(size: 10))
+                    .foregroundStyle(theme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom, 12)
+
+                MenuStylePicker()
             }
         }
     }
