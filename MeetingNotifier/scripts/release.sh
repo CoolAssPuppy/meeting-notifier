@@ -67,9 +67,25 @@ if ! "${WRANGLER[@]}" --version >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then
-  echo "Error: notarytool profile '$NOTARY_PROFILE' not found or invalid."
-  echo "Run: xcrun notarytool store-credentials \"$NOTARY_PROFILE\" --apple-id ... --team-id ... --password ..."
+# Notary auth. The app-specific password is shared across the fleet and lives
+# in Doppler, so pull it from there unless credentials are already supplied.
+# A stored keychain profile still works, but storing one needs a GUI session —
+# an automated shell can't create it. Matches command-center's release.sh.
+NOTARY_APPLE_ID="${NOTARY_APPLE_ID:-prashant_sridharan@hotmail.com}"
+NOTARY_TEAM_ID="${NOTARY_TEAM_ID:-955GSY56UT}"
+if [ -z "${NOTARY_PASSWORD:-}" ]; then
+  NOTARY_PASSWORD="$(doppler secrets get SPARKLE_APP_SPECIFIC_PASSWORD \
+    --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" --plain 2>/dev/null || true)"
+fi
+if [ -n "${NOTARY_PASSWORD:-}" ]; then
+  NOTARY_AUTH=(--apple-id "$NOTARY_APPLE_ID" --team-id "$NOTARY_TEAM_ID" --password "$NOTARY_PASSWORD")
+  export NOTARY_APPLE_ID NOTARY_TEAM_ID NOTARY_PASSWORD
+elif xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then
+  NOTARY_AUTH=(--keychain-profile "$NOTARY_PROFILE")
+else
+  echo "Error: no notary credentials."
+  echo "Either set SPARKLE_APP_SPECIFIC_PASSWORD in Doppler $DOPPLER_PROJECT/$DOPPLER_CONFIG,"
+  echo "or run: xcrun notarytool store-credentials \"$NOTARY_PROFILE\" --apple-id ... --team-id ... --password ..."
   exit 1
 fi
 
@@ -165,7 +181,7 @@ fi
 echo "==> Notarizing .app (takes a few minutes)"
 APP_ZIP="$EXPORT_DIR/MeetingNotifier.app.zip"
 ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$APP_ZIP"
-xcrun notarytool submit "$APP_ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
+xcrun notarytool submit "$APP_ZIP" "${NOTARY_AUTH[@]}" --wait
 rm -f "$APP_ZIP"
 
 echo "==> Stapling .app"

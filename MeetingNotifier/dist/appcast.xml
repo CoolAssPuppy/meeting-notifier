@@ -6,6 +6,24 @@
     <description>MeetingNotifier updates</description>
     <language>en</language>
     <item>
+      <title>Version 1.4.4</title>
+      <pubDate>Wed, 05 Aug 2026 01:45:54 +0000</pubDate>
+      <sparkle:version>21</sparkle:version>
+      <sparkle:shortVersionString>1.4.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul>
+          <li>New Classic dropdown style: a standard macOS menu of your day, with a flyout per meeting that leads with Join Google Meet, Join Zoom, and the rest.</li><li>Pick Pretty or Classic in Settings.</li><li>Right-click the menu bar icon for refresh, transcription, settings, and updates.</li>
+        </ul>
+      ]]></description>
+      <enclosure
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.4.4.dmg"
+        sparkle:edSignature="pIHr/2vFRGmLd/etgaTNFpFr01IFv0BfyuKxqCkbqflUb6+usyuWJyBFqDF5kvQP1fC4qyeZ4ecAzcwU8ZDxAw=="
+        length="4411275"
+        type="application/x-apple-diskimage" />
+    </item>
+
+    <item>
       <title>Version 1.4.3</title>
       <pubDate>Tue, 28 Jul 2026 23:50:11 +0000</pubDate>
       <sparkle:version>20</sparkle:version>
