@@ -24,9 +24,6 @@ struct PaywallSheet: View {
     @ObservedObject private var entitlement = EntitlementManager.shared
     @Environment(\.theme) private var theme
 
-    @State private var licenseKey = ""
-    @State private var activating = false
-    @State private var errorMessage: String?
     @State private var showingKeyField = false
 
     private var isEntitled: Bool { entitlement.isEntitled }
@@ -134,54 +131,14 @@ struct PaywallSheet: View {
             }
             .buttonStyle(.plain)
 
-            if showingKeyField { keyField }
-        }
-    }
-
-    private var keyField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(PaywallCopy.keyLocationHint)
-                .font(.system(size: 10))
-                .foregroundStyle(theme.tertiary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            TextField(PaywallCopy.keyFieldPlaceholder, text: $licenseKey)
-                .textFieldStyle(.plain)
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(theme.foreground)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .fill(theme.cardInset)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .strokeBorder(theme.borderStrong, lineWidth: 1)
-                )
-                .onSubmit(activate)
-
-            HStack {
-                if let errorMessage {
-                    Text(errorMessage)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(theme.destructive)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 8)
-                AppPrimaryButton(title: activating ? "Activating…" : "Activate",
-                                 isDisabled: trimmedKey.isEmpty || activating,
-                                 action: activate)
+            if showingKeyField {
+                LicenseKeyField(layout: .stacked)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     // MARK: Actions
-
-    private var trimmedKey: String {
-        licenseKey.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
 
     private func subscribe() {
         guard let url = PolarConfig.checkoutURL else { return }
@@ -190,46 +147,6 @@ struct PaywallSheet: View {
         // Checkout finishes in the browser and the key arrives by email, so open
         // the paste field now rather than making them find it on their return.
         withAnimation { showingKeyField = true }
-    }
-
-    private func activate() {
-        let key = trimmedKey
-        guard !key.isEmpty, !activating else { return }
-        activating = true
-        errorMessage = nil
-        Task {
-            do {
-                try await entitlement.activate(key: key)
-                activating = false
-                licenseKey = ""
-                Telemetry.capture(.licenseActivated)
-            } catch {
-                activating = false
-                errorMessage = error.userMessage
-                Telemetry.capture(.licenseActivationFailed,
-                                  properties: ["reason": Self.failureReason(for: error)])
-            }
-        }
-    }
-
-    /// A coarse, non-identifying label for why an activation failed. The key
-    /// itself never goes near telemetry.
-    static func failureReason(for error: Error) -> String {
-        switch error {
-        case let licenseError as LicenseError:
-            switch licenseError {
-            case .notConfigured:           return "not_configured"
-            case .invalidKey:              return "invalid_key"
-            case .wrongProduct:            return "wrong_product"
-            case .activationLimitReached:  return "activation_limit"
-            case .requestFailed:           return "request_failed"
-            case .invalidResponse:         return "invalid_response"
-            }
-        case is URLError:
-            return "network"
-        default:
-            return "unknown"
-        }
     }
 }
 

@@ -19,10 +19,7 @@ struct SubscriptionCard: View {
     @ObservedObject private var entitlement = EntitlementManager.shared
     @Environment(\.theme) private var theme
 
-    @State private var licenseKey = ""
-    @State private var activating = false
     @State private var removing = false
-    @State private var errorMessage: String?
     @State private var showingKeyField = false
 
     var body: some View {
@@ -37,7 +34,9 @@ struct SubscriptionCard: View {
 
                 if showingKeyField {
                     AppRowDivider().padding(.vertical, 10)
-                    keyField
+                    LicenseKeyField(layout: .inline) {
+                        withAnimation { showingKeyField = false }
+                    }
                 }
 
                 if entitlement.hasStoredKey {
@@ -137,44 +136,6 @@ struct SubscriptionCard: View {
         }
     }
 
-    private var keyField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(PaywallCopy.keyLocationHint)
-                .font(.system(size: 10))
-                .foregroundStyle(theme.tertiary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            HStack(spacing: 6) {
-                TextField(PaywallCopy.keyFieldPlaceholder, text: $licenseKey)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(theme.foreground)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-                            .fill(theme.cardInset)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-                            .strokeBorder(theme.borderStrong, lineWidth: 1)
-                    )
-                    .onSubmit(activate)
-
-                AppPrimaryButton(title: activating ? "Activating…" : "Activate",
-                                 isDisabled: trimmedKey.isEmpty || activating,
-                                 action: activate)
-            }
-
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(theme.destructive)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
     private var removeRow: some View {
         AppSettingRow(
             PaywallCopy.removeLicenseButton,
@@ -190,36 +151,13 @@ struct SubscriptionCard: View {
 
     // MARK: Behavior
 
-    private var trimmedKey: String {
-        licenseKey.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
     private func subscribe() {
         guard let url = PolarConfig.checkoutURL else { return }
         Telemetry.capture(.subscribeClicked, properties: ["trigger": PaywallTrigger.settings.rawValue])
         NSWorkspace.shared.open(url)
+        // The key arrives by email, so open the paste field now rather than
+        // making them find it again on their return.
         withAnimation { showingKeyField = true }
-    }
-
-    private func activate() {
-        let key = trimmedKey
-        guard !key.isEmpty, !activating else { return }
-        activating = true
-        errorMessage = nil
-        Task {
-            do {
-                try await entitlement.activate(key: key)
-                activating = false
-                licenseKey = ""
-                showingKeyField = false
-                Telemetry.capture(.licenseActivated)
-            } catch {
-                activating = false
-                errorMessage = error.userMessage
-                Telemetry.capture(.licenseActivationFailed,
-                                  properties: ["reason": PaywallSheet.failureReason(for: error)])
-            }
-        }
     }
 
     private func remove() {

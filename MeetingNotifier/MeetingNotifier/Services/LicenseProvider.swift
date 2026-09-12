@@ -42,8 +42,6 @@ struct LicenseStatus: Equatable, Sendable {
     /// The benefit the key was issued against, checked against `PolarBenefitID`
     /// when that is configured. See `PolarLicenseClient` for why.
     let benefitId: String?
-
-    var isGranted: Bool { state == .granted }
 }
 
 /// Provider-neutral license operations. Network failures arrive as the

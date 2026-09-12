@@ -132,11 +132,6 @@ final class EntitlementManager: ObservableObject {
         scheduleDailyCheck()
     }
 
-    func stop() {
-        dailyTask?.cancel()
-        dailyTask = nil
-    }
-
     // MARK: Derived gate
 
     /// The one question every gate asks. True only while the license is granted
