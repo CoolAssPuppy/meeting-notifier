@@ -34,6 +34,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Telemetry.capture(.appLaunched)
         reportUpdateInstalledIfNeeded()
 
+        // Before the first calendar refresh, so the gate is answered from a
+        // cached record rather than racing the launch validate.
+        EntitlementManager.shared.start()
+
         _ = NotificationManager.shared
         _ = KeyboardShortcutManager.shared
         _ = LocationManager.shared
@@ -54,6 +58,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(handleAccountsDidUpdate), name: .accountsDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(showTranscriptionBanner), name: .transcriptionDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(hideTranscriptionBanner), name: .transcriptionDidStop, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleEntitlementChanged), name: .entitlementChanged, object: nil)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -254,7 +259,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Redraws the menu bar after a license activates or lapses.
+    /// `CalendarDataManager` refreshes itself off the same notification; this
+    /// covers the title, which is rendered from the event list rather than
+    /// bound to it.
+    @objc private func handleEntitlementChanged() {
+        updateMenuBarText()
+    }
+
+    /// Brings up the main window with the paywall sheet on top. `MainView` hosts
+    /// the sheet, because it is the only view guaranteed to exist by the time
+    /// the notification lands.
+    func showPaywall(trigger: PaywallTrigger) {
+        closePopover()
+        Telemetry.capture(.paywallShown, properties: ["trigger": trigger.rawValue])
+        showMainWindow()
+        DrawerState.shared.openDrawer = .none
+        NotificationCenter.default.post(name: .showPaywall, object: trigger)
+    }
+
+    /// True when another calendar can be connected. False opens the paywall and
+    /// tells the caller to stop, so the OAuth window never appears for an
+    /// account that could not run anyway.
+    private func ensureCanAddAccount() -> Bool {
+        if AppSettings.shared.canAddAnotherAccount { return true }
+        showPaywall(trigger: .addAccount)
+        return false
+    }
+
     @objc func addGoogleAccount() {
+        guard ensureCanAddAccount() else { return }
         AuthManager.shared.addGoogleAccount { result in
             Task { @MainActor in
                 switch result {
@@ -273,6 +307,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func addMicrosoftAccount() {
+        guard ensureCanAddAccount() else { return }
         AuthManager.shared.addMicrosoftAccount { result in
             Task { @MainActor in
                 switch result {

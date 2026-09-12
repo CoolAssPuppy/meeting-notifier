@@ -12,6 +12,10 @@ struct Sidebar: View {
 
     @ObservedObject private var appSettings = AppSettings.shared
     @ObservedObject private var drawerState = DrawerState.shared
+    /// Observed but never read: `isLocked` answers from the persisted record,
+    /// and the accounts array does not change when a license activates, so
+    /// without this the pills would not redraw until something else did.
+    @ObservedObject private var entitlement = EntitlementManager.shared
     @Environment(\.theme) private var theme
 
     var body: some View {
@@ -70,6 +74,7 @@ struct Sidebar: View {
                     SidebarAccountRow(
                         account: account,
                         isSelected: selectedEmail == account.email,
+                        isLocked: appSettings.isLocked(account),
                         onTap: { selectedEmail = account.email }
                     )
                 }
@@ -121,6 +126,7 @@ struct Sidebar: View {
 private struct SidebarAccountRow: View {
     let account: CalendarAccount
     let isSelected: Bool
+    let isLocked: Bool
     let onTap: () -> Void
 
     @Environment(\.theme) private var theme
@@ -176,6 +182,8 @@ private struct SidebarAccountRow: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 11))
                 .foregroundStyle(theme.destructive)
+        } else if isLocked {
+            AppStatusPill(text: PaywallCopy.lockedBadge, style: .tinted(theme.warning))
         }
     }
 

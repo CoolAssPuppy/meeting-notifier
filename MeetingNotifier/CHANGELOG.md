@@ -8,16 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Meeting Notifier Pro, a paid plan sold through Polar. The first calendar
+  account stays free; connecting more needs a subscription. Yearly, pay what you
+  want, $1.99 minimum.
+- License keys activate per Mac, up to five, and can be released from Settings.
+  Entitlement is cached locally and re-checked at launch and daily, with grace:
+  a network failure never locks out someone who paid.
+- Subscription card in Settings: state, checkout, license activation, and
+  "Remove from this Mac".
+- A "Locked" badge in the sidebar and a banner on a paused account, with "Use
+  this one instead" to hand that account the free slot.
+- `scripts/test-state.sh` for the Polar sandbox pass: back up and restore
+  UserDefaults, trim accounts, forget a license. OAuth tokens are never touched.
+- `./scripts/debug.sh --polar` bakes the Polar sandbox config into a local build.
 - Initial release preparation
-- Automated deployment pipeline with Fastlane
-- TestFlight and App Store deployment automation
 - OAuth token refresh with automatic retry on 401 errors
 - User notifications for authentication failures
 - Menu bar warning indicators for auth issues
 - Account reconnection UI in Settings
 
 ### Changed
-- N/A
+- `scripts/release.sh` reads the five `POLAR_*` values from Doppler and refuses
+  to build when an organization id is set without a benefit id. That combination
+  ships a build accepting a license key from any Strategic Nerds app.
+
+### Removed
+- The Venmo "Buy me coffee" link in Settings. The subscription replaces it.
+- `Configuration.storekit` and `APP_STORE_SUBMISSION.md`. Distribution is
+  Developer ID through Sparkle and R2; there was no StoreKit code behind either
+  file, and the submission guide described version 1.0.
 
 ### Fixed
 - N/A

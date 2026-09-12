@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		014823739783AF5814FEE2C4 /* PaywallCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 677BD0DB9A3A9CDB524CC091 /* PaywallCopy.swift */; };
 		02865F41E58DDDB177B64CA1 /* CalendarError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BCE45161F88886811A0ECF8 /* CalendarError.swift */; };
 		02F14ED899D60656A0148DEA /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C973A67D89458DD083B57122 /* Logger.swift */; };
 		082D83340C0CB8EC6E2BF674 /* TranscriptSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C5C033BBD4E2CDC73AB8BE /* TranscriptSegment.swift */; };
@@ -22,6 +23,7 @@
 		1B5B2FA00653E24598C8FDCD /* MeetingNotifierApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */; };
 		1E3CCA98EA2EBC5A866BC5EB /* MenuStylePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDFFDC5672654FC927766633 /* MenuStylePicker.swift */; };
 		20BE190394370E27FCEA106E /* AudioCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835B2D4677C3216532E4D2F8 /* AudioCaptureManager.swift */; };
+		20F08E7CBDFD5CC9D1AC12ED /* SubscriptionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21A9880A57FF256C587EC156 /* SubscriptionCard.swift */; };
 		2249875E7C549815626329D1 /* TranscriptionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1D2E92430A8DABBD238EFF /* TranscriptionCoordinator.swift */; };
 		250BE4CE61711DF41DF4D49E /* AppDelegate+MenuBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8EB3916F7E0ACF791240188 /* AppDelegate+MenuBar.swift */; };
 		28FC0A3BB60B42E65BE0F7D0 /* GoogleCalendarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E301D2D473AD68869340219 /* GoogleCalendarManager.swift */; };
@@ -31,6 +33,7 @@
 		2B74E69F17C19B1BD56A1A71 /* NotificationTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A9725B3752DD3D40D9550B /* NotificationTracking.swift */; };
 		2D69727FEEEBE21425C8F304 /* CalendarManagerSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5801A08817F1347CC789B461 /* CalendarManagerSupport.swift */; };
 		2EE3E1664C262AF5850942E5 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5160B1E52B5A00F482766B12 /* AccountView.swift */; };
+		3483B360E32875988C06407F /* EntitlementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 943D25CE5566905E82BDD689 /* EntitlementTests.swift */; };
 		3495480168727F822E8D0144 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AED2E8EFE8470709B6C7175 /* LocationManager.swift */; };
 		3499D9FC4A3127DFEC48C122 /* MicrosoftOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3369D61B617FA8A1C9783DC /* MicrosoftOAuthManager.swift */; };
 		35497EE8A01E972EBECC2E6A /* SubfolderResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B4D23E9CB4828D25F2496E /* SubfolderResolverTests.swift */; };
@@ -64,18 +67,23 @@
 		6A958A23C98E0684C3F9EE51 /* KeyboardShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59855C9FC086F41F1C199A1 /* KeyboardShortcutManager.swift */; };
 		6B7C9788421A8600C21B8C5F /* NotetakerEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9C3C893129A7573A00289F /* NotetakerEnums.swift */; };
 		6E62F8AF34EADA81D66303ED /* SystemAudioCapturerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9436C04C33075F21056F0136 /* SystemAudioCapturerTests.swift */; };
+		712506B6C6E62630331A2C72 /* PolarConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA14A086B45B6FD9C8E05024 /* PolarConfig.swift */; };
+		73C3BC950BA48C2364134569 /* PolarLicenseClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207145430F3D485C749FF737 /* PolarLicenseClientTests.swift */; };
 		74F8164D787398021A34A91E /* MenuStyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C82DBEAED3E8D43CABEFBD /* MenuStyleStore.swift */; };
+		7A48100465FC758D5FDB6B12 /* EntitlementManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F486D386C9DC11461AB75B02 /* EntitlementManager.swift */; };
 		7CAEFDCE34D0A7957E63CB27 /* TranscriptFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95A42B25C0C37FC78CC5E356 /* TranscriptFormatterTests.swift */; };
 		88AEBDFD4A0ECC98684340DF /* TranscriptSegmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3816F76B19E8A2B9066233D /* TranscriptSegmentTests.swift */; };
 		8965316C3F4841EDCDD7696E /* MicrosoftOAuthSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450EC6160178097C2B91113D /* MicrosoftOAuthSecret.swift */; };
 		8999645F9D9FF2E87B7840E0 /* MicrosoftCalendarURLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D2E4CEF500DE50114FFAA47 /* MicrosoftCalendarURLTests.swift */; };
 		8DA3B8D291ACC90059784E7F /* WisprEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B29DDB763CCF0F1A656EC4 /* WisprEngine.swift */; };
 		8E5FA48BE49463B53E5F81EA /* TranscriptionCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F8C3A686E6230D31878C57 /* TranscriptionCoordinatorTests.swift */; };
+		976E5D989E15DE260B54FFAF /* LicenseProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = EADA056F02D999D4805518EC /* LicenseProvider.swift */; };
 		992364D690F08F4200947A57 /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DE6DDF6CCD22795185BEE2 /* Formatters.swift */; };
 		99E69EC1F494C3391CE9B754 /* SubfolderResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E28947141FFCB9E7F6B9F1 /* SubfolderResolver.swift */; };
 		99F4FB49FB388A19F1655209 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCC9D82CBF7D02034E51715 /* AppDelegate.swift */; };
 		9C46766CA94368E5A1704D96 /* MeetingDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7A930C8E20FF89C64623CB /* MeetingDetector.swift */; };
 		9CCEE1F8A40552995F440A19 /* CalendarEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273BC90CE5F91540FDC6E055 /* CalendarEventTests.swift */; };
+		9F14DF12FB568B2B6B62248D /* PolarLicenseClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F705E8D5D2D37C607379925E /* PolarLicenseClient.swift */; };
 		9F96EF11748E6B80B46EE989 /* TranscriptionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D562369ADABD9CD00155B49 /* TranscriptionError.swift */; };
 		A13A8AB7FF5A2603B365A56D /* AISummarizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8EC26D995B010F0BF9A137E /* AISummarizer.swift */; };
 		A243DDD94D49FA5439144A4F /* microsoft.png in Resources */ = {isa = PBXBuildFile; fileRef = AD899C544CCC4FBF71F6F194 /* microsoft.png */; };
@@ -118,6 +126,7 @@
 		F1F42C1D81E159E2B35EDB0A /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9ACB73815F0A34303289527 /* MainView.swift */; };
 		F2574EE8EBD71A3BF09F5E4E /* AppDelegate+PeekWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A07EBED89754C9EBBFBE7DE /* AppDelegate+PeekWindow.swift */; };
 		F2651BD8E3E8E23356BF7FAE /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA9AFE2BED7188EE32F46B6 /* AppSettings.swift */; };
+		F3D986D93206AF1D592352AF /* PaywallSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BFB5FADFF08C74C0FC1799 /* PaywallSheet.swift */; };
 		F3E7562B45866CE45B03CF99 /* TranscriptDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C437ED23247C4CFAEF2ED28 /* TranscriptDocument.swift */; };
 		F5A755558D543CA77318491D /* WindowChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 269BDBC1C7B3E07537106FE9 /* WindowChrome.swift */; };
 		F63A31E67C62E9BF5FD0ED9D /* URLRequiredTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26ACAD554A7DB179A7549F04 /* URLRequiredTests.swift */; };
@@ -143,13 +152,16 @@
 		0F4F84649D52C627DB9372A5 /* ClassicMenuBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassicMenuBuilder.swift; sourceTree = "<group>"; };
 		1112CFED9032AB54B3A4ED09 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		13BF0360CDF7986C60D9CF2C /* zoom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = zoom.png; sourceTree = "<group>"; };
+		13BFB5FADFF08C74C0FC1799 /* PaywallSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallSheet.swift; sourceTree = "<group>"; };
 		1612900B2D43945D64CCB667 /* TranscriptDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptDocumentTests.swift; sourceTree = "<group>"; };
 		19E2EB416FE247CF900688CD /* Telemetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Telemetry.swift; sourceTree = "<group>"; };
 		1A07EBED89754C9EBBFBE7DE /* AppDelegate+PeekWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+PeekWindow.swift"; sourceTree = "<group>"; };
 		1D9C3C893129A7573A00289F /* NotetakerEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotetakerEnums.swift; sourceTree = "<group>"; };
 		1F287A0EEAA4F3F0255EEE0E /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidebar.swift; sourceTree = "<group>"; };
 		201782BD8C87D2117AB55F87 /* TelemetryEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryEvent.swift; sourceTree = "<group>"; };
+		207145430F3D485C749FF737 /* PolarLicenseClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolarLicenseClientTests.swift; sourceTree = "<group>"; };
 		216DD6E619E6472E64DFD4FB /* AutoOfferDeciderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoOfferDeciderTests.swift; sourceTree = "<group>"; };
+		21A9880A57FF256C587EC156 /* SubscriptionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionCard.swift; sourceTree = "<group>"; };
 		24C5FF4652CF585ADD15D6A2 /* short-chimes.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = "short-chimes.aiff"; sourceTree = "<group>"; };
 		252500A71F0AFBFAFFED45BC /* TranscriptionEngineProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionEngineProtocol.swift; sourceTree = "<group>"; };
 		2601E7378274259BCD5445ED /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
@@ -183,6 +195,7 @@
 		6204D43D0ECFAC0F7EAC7C14 /* MeetingNotifierTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeetingNotifierTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		657B7E4221A3335BED35452F /* ThemeStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeStrip.swift; sourceTree = "<group>"; };
 		661BE1388A8E58777DDA9A81 /* ColorHex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHex.swift; sourceTree = "<group>"; };
+		677BD0DB9A3A9CDB524CC091 /* PaywallCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallCopy.swift; sourceTree = "<group>"; };
 		68D727670FEA4120BE81D4B4 /* MicrosoftCalendarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrosoftCalendarManager.swift; sourceTree = "<group>"; };
 		6E301D2D473AD68869340219 /* GoogleCalendarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleCalendarManager.swift; sourceTree = "<group>"; };
 		75F8C3A686E6230D31878C57 /* TranscriptionCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionCoordinatorTests.swift; sourceTree = "<group>"; };
@@ -202,6 +215,7 @@
 		8F9ABCEF9D4F0F2F9AC4DCC4 /* AutoOfferDecider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoOfferDecider.swift; sourceTree = "<group>"; };
 		8FC3285303293546DEEAB083 /* teams.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teams.png; sourceTree = "<group>"; };
 		9436C04C33075F21056F0136 /* SystemAudioCapturerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAudioCapturerTests.swift; sourceTree = "<group>"; };
+		943D25CE5566905E82BDD689 /* EntitlementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementTests.swift; sourceTree = "<group>"; };
 		95A42B25C0C37FC78CC5E356 /* TranscriptFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptFormatterTests.swift; sourceTree = "<group>"; };
 		96B347F6F258BB22D15183BA /* AppDelegate+UITesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+UITesting.swift"; sourceTree = "<group>"; };
 		97C2E63AB365F5F779088F39 /* meet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = meet.png; sourceTree = "<group>"; };
@@ -234,6 +248,7 @@
 		C7A9725B3752DD3D40D9550B /* NotificationTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTracking.swift; sourceTree = "<group>"; };
 		C8EE58D1E1ABD7E19E32CF79 /* MeetingLinkParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingLinkParser.swift; sourceTree = "<group>"; };
 		C973A67D89458DD083B57122 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		CA14A086B45B6FD9C8E05024 /* PolarConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolarConfig.swift; sourceTree = "<group>"; };
 		CCABAFE7E2E2ED047BAA676C /* MicrosoftOAuthSecret.swift.template */ = {isa = PBXFileReference; path = MicrosoftOAuthSecret.swift.template; sourceTree = "<group>"; };
 		CCEBDBD4FCAD97582B2702C2 /* AppSettings+iCloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppSettings+iCloudSync.swift"; sourceTree = "<group>"; };
 		CE765DC8FD99B9AB97192D5A /* SettingsEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEnums.swift; sourceTree = "<group>"; };
@@ -246,8 +261,11 @@
 		DF916CB5D1C8F583CB7B575A /* CalendarDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDataManager.swift; sourceTree = "<group>"; };
 		E3263D0433A3BE51231DAF1A /* AppDelegate+Menu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Menu.swift"; sourceTree = "<group>"; };
 		E8B29DDB763CCF0F1A656EC4 /* WisprEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WisprEngine.swift; sourceTree = "<group>"; };
+		EADA056F02D999D4805518EC /* LicenseProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseProvider.swift; sourceTree = "<group>"; };
 		ED2B2BC410ACA8AD613115BE /* MicLevelBars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicLevelBars.swift; sourceTree = "<group>"; };
 		F24AC5D93CB6C4FE8277BB3A /* EventWindowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventWindowTests.swift; sourceTree = "<group>"; };
+		F486D386C9DC11461AB75B02 /* EntitlementManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementManager.swift; sourceTree = "<group>"; };
+		F705E8D5D2D37C607379925E /* PolarLicenseClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolarLicenseClient.swift; sourceTree = "<group>"; };
 		F9ACB73815F0A34303289527 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		FA33B92040C92A34F2AEEBF2 /* TranscriptionBannerPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionBannerPanel.swift; sourceTree = "<group>"; };
 		FD1ADEAC2590B3EC21020B5D /* PeekWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeekWindowView.swift; sourceTree = "<group>"; };
@@ -305,10 +323,14 @@
 				2CA9AFE2BED7188EE32F46B6 /* AppSettings.swift */,
 				CCEBDBD4FCAD97582B2702C2 /* AppSettings+iCloudSync.swift */,
 				5801A08817F1347CC789B461 /* CalendarManagerSupport.swift */,
+				F486D386C9DC11461AB75B02 /* EntitlementManager.swift */,
 				37DE6DDF6CCD22795185BEE2 /* Formatters.swift */,
 				2601E7378274259BCD5445ED /* KeychainManager.swift */,
+				EADA056F02D999D4805518EC /* LicenseProvider.swift */,
 				C973A67D89458DD083B57122 /* Logger.swift */,
 				C8EE58D1E1ABD7E19E32CF79 /* MeetingLinkParser.swift */,
+				CA14A086B45B6FD9C8E05024 /* PolarConfig.swift */,
+				F705E8D5D2D37C607379925E /* PolarLicenseClient.swift */,
 				B7E28947141FFCB9E7F6B9F1 /* SubfolderResolver.swift */,
 				19E2EB416FE247CF900688CD /* Telemetry.swift */,
 				201782BD8C87D2117AB55F87 /* TelemetryEvent.swift */,
@@ -328,6 +350,7 @@
 				BDFFDC5672654FC927766633 /* MenuStylePicker.swift */,
 				ED2B2BC410ACA8AD613115BE /* MicLevelBars.swift */,
 				3FF99799F37F008F3A10FC8B /* SharedComponents.swift */,
+				21A9880A57FF256C587EC156 /* SubscriptionCard.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -422,6 +445,8 @@
 				9DDD98EFF40324E91A618954 /* ClassicMenuFooterView.swift */,
 				F9ACB73815F0A34303289527 /* MainView.swift */,
 				C33D2B46A8704C6E4796CDF9 /* MiniCalendarDrawer.swift */,
+				677BD0DB9A3A9CDB524CC091 /* PaywallCopy.swift */,
+				13BFB5FADFF08C74C0FC1799 /* PaywallSheet.swift */,
 				9DF3BBBC2E1AE14477753DE3 /* PeekWindowPanel.swift */,
 				FD1ADEAC2590B3EC21020B5D /* PeekWindowView.swift */,
 				78F2D07B35A00315CFE20F32 /* SettingsDrawer.swift */,
@@ -445,8 +470,10 @@
 				216DD6E619E6472E64DFD4FB /* AutoOfferDeciderTests.swift */,
 				0C6A40187C180348CE0EFF24 /* CalendarAPIResponsesTests.swift */,
 				273BC90CE5F91540FDC6E055 /* CalendarEventTests.swift */,
+				943D25CE5566905E82BDD689 /* EntitlementTests.swift */,
 				F24AC5D93CB6C4FE8277BB3A /* EventWindowTests.swift */,
 				8D2E4CEF500DE50114FFAA47 /* MicrosoftCalendarURLTests.swift */,
+				207145430F3D485C749FF737 /* PolarLicenseClientTests.swift */,
 				BED4F17142ADBEB5C9B466A0 /* SettingsSyncToggleTests.swift */,
 				B8B4D23E9CB4828D25F2496E /* SubfolderResolverTests.swift */,
 				9436C04C33075F21056F0136 /* SystemAudioCapturerTests.swift */,
@@ -606,8 +633,10 @@
 				CC55F502696D03AEA6398FE8 /* AutoOfferDeciderTests.swift in Sources */,
 				CF588E6D08E23060E3FC5629 /* CalendarAPIResponsesTests.swift in Sources */,
 				9CCEE1F8A40552995F440A19 /* CalendarEventTests.swift in Sources */,
+				3483B360E32875988C06407F /* EntitlementTests.swift in Sources */,
 				369738E13460BCA26B4996B2 /* EventWindowTests.swift in Sources */,
 				8999645F9D9FF2E87B7840E0 /* MicrosoftCalendarURLTests.swift in Sources */,
+				73C3BC950BA48C2364134569 /* PolarLicenseClientTests.swift in Sources */,
 				D6FE633046029A4F81C78698 /* SettingsSyncToggleTests.swift in Sources */,
 				35497EE8A01E972EBECC2E6A /* SubfolderResolverTests.swift in Sources */,
 				6E62F8AF34EADA81D66303ED /* SystemAudioCapturerTests.swift in Sources */,
@@ -651,6 +680,7 @@
 				C3277ED4EC94053115FE5764 /* ColorHex.swift in Sources */,
 				3CFF191707A6873AB78AE022 /* DeepgramEngine.swift in Sources */,
 				C61869E1240B6F4C44C9723B /* EchoDeduplicator.swift in Sources */,
+				7A48100465FC758D5FDB6B12 /* EntitlementManager.swift in Sources */,
 				0A30127DBB3A63EC3F6D9BC7 /* EventWindow.swift in Sources */,
 				992364D690F08F4200947A57 /* Formatters.swift in Sources */,
 				28FC0A3BB60B42E65BE0F7D0 /* GoogleCalendarManager.swift in Sources */,
@@ -658,6 +688,7 @@
 				EACF75B30F09777B54E6F7C0 /* GoogleOAuthSecret.swift in Sources */,
 				6A958A23C98E0684C3F9EE51 /* KeyboardShortcutManager.swift in Sources */,
 				C652F7D18D0798CEAD4950F7 /* KeychainManager.swift in Sources */,
+				976E5D989E15DE260B54FFAF /* LicenseProvider.swift in Sources */,
 				3495480168727F822E8D0144 /* LocationManager.swift in Sources */,
 				02F14ED899D60656A0148DEA /* Logger.swift in Sources */,
 				F1F42C1D81E159E2B35EDB0A /* MainView.swift in Sources */,
@@ -676,14 +707,19 @@
 				36F54450635365BF67EE7D82 /* NotificationNames.swift in Sources */,
 				2B74E69F17C19B1BD56A1A71 /* NotificationTracking.swift in Sources */,
 				5E4747146655C7374F3CAF0A /* OAuthRefreshSupport.swift in Sources */,
+				014823739783AF5814FEE2C4 /* PaywallCopy.swift in Sources */,
+				F3D986D93206AF1D592352AF /* PaywallSheet.swift in Sources */,
 				2ACA9BB27BF2E12477834B46 /* PeekWindowPanel.swift in Sources */,
 				B8EDE83CF410B38B60BA5AF1 /* PeekWindowView.swift in Sources */,
+				712506B6C6E62630331A2C72 /* PolarConfig.swift in Sources */,
+				9F14DF12FB568B2B6B62248D /* PolarLicenseClient.swift in Sources */,
 				0B2CEB881BA89E604069EE78 /* SettingsDrawer.swift in Sources */,
 				2B12A43BDB157FD1310672A6 /* SettingsEnums.swift in Sources */,
 				CE982325638A4A49FC95D290 /* SharedComponents.swift in Sources */,
 				D9BA7C56DE7C72136534835E /* Sidebar.swift in Sources */,
 				103D45956BAC1AEF57FB8B39 /* SpeechAnalyzerEngine.swift in Sources */,
 				99E69EC1F494C3391CE9B754 /* SubfolderResolver.swift in Sources */,
+				20F08E7CBDFD5CC9D1AC12ED /* SubscriptionCard.swift in Sources */,
 				49A784AB9FB732B73E748321 /* SystemAudioCapturer.swift in Sources */,
 				43A0AF9C785B3D5D3BE9E018 /* SystemAudioEnergyTracker.swift in Sources */,
 				0CB52A97759E8744115DCC42 /* Telemetry.swift in Sources */,

@@ -14,6 +14,7 @@ struct MainView: View {
     @StateObject private var drawerState = DrawerState.shared
 
     @State private var selectedAccountEmail: String?
+    @State private var paywallTrigger: PaywallTrigger?
 
     var body: some View {
         let theme = themeStore.palette
@@ -26,6 +27,8 @@ struct MainView: View {
                 .frame(width: 0, height: 0)
 
             drawerOverlay(theme: theme)
+
+            paywallOverlay
         }
         .environment(\.theme, theme)
         .environment(\.colorScheme, theme.isDark ? .dark : .light)
@@ -34,6 +37,33 @@ struct MainView: View {
                 selectedAccountEmail = appSettings.accounts.first?.email
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .showPaywall)) { note in
+            withAnimation(.easeOut(duration: 0.2)) {
+                paywallTrigger = note.object as? PaywallTrigger ?? .addAccount
+            }
+        }
+    }
+
+    /// The paywall rides above the drawers rather than inside one, because it is
+    /// raised from the menu bar and from the Add account button as often as it
+    /// is from Settings.
+    @ViewBuilder
+    private var paywallOverlay: some View {
+        if let trigger = paywallTrigger {
+            Color.black.opacity(0.55)
+                .ignoresSafeArea()
+                .transition(.opacity)
+                .onTapGesture { closePaywall() }
+
+            PaywallSheet(trigger: trigger, onClose: closePaywall)
+                .frame(maxHeight: .infinity)
+                .padding(.vertical, 40)
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
+        }
+    }
+
+    private func closePaywall() {
+        withAnimation(.easeOut(duration: 0.2)) { paywallTrigger = nil }
     }
 
     @ViewBuilder

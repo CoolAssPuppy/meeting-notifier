@@ -21,6 +21,39 @@ enum AppDateFormatters {
         df.dateFormat = "EEE MMM d"
         return df
     }()
+
+    /// "April 21, 2026" — the subscription card's renewal date.
+    static let longDate: DateFormatter = {
+        let df = DateFormatter()
+        df.dateStyle = .long
+        df.timeStyle = .none
+        return df
+    }()
+
+    /// Parses an ISO 8601 timestamp with or without fractional seconds. Polar
+    /// sends fractional seconds on some fields and not others, and
+    /// `ISO8601DateFormatter` returns nil rather than tolerating the mismatch.
+    static func parseISO8601(_ string: String) -> Date? {
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = withFraction.date(from: string) { return date }
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        return plain.date(from: string)
+    }
+}
+
+extension Error {
+    /// The message to show a person for a thrown error. Prefers a
+    /// `LocalizedError` description, because ours are written for humans, and
+    /// falls back to the `NSError` description, which is where URLError's "The
+    /// Internet connection appears to be offline." and friends live.
+    var userMessage: String {
+        if let localized = (self as? LocalizedError)?.errorDescription, !localized.isEmpty {
+            return localized
+        }
+        return (self as NSError).localizedDescription
+    }
 }
 
 extension Date {

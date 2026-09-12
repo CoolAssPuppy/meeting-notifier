@@ -168,6 +168,12 @@ struct AppSecondaryButton: View {
 struct AppPrimaryButton: View {
     let title: String
     var systemImage: String? = nil
+    /// Greys the button out and stops the tap. The paywall needs it: the
+    /// Subscribe button has nowhere to go until a checkout URL is configured.
+    var isDisabled: Bool = false
+    /// Stretches the button across its container instead of hugging the label,
+    /// which is what the paywall sheet's single call to action wants.
+    var fillsWidth: Bool = false
     let action: () -> Void
 
     @Environment(\.theme) private var theme
@@ -176,24 +182,33 @@ struct AppPrimaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
+                if fillsWidth { Spacer(minLength: 0) }
                 if let systemImage {
                     Image(systemName: systemImage)
                         .font(.system(size: 11, weight: .semibold))
                 }
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
+                if fillsWidth { Spacer(minLength: 0) }
             }
             .foregroundStyle(theme.primaryForeground)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
+            .frame(maxWidth: fillsWidth ? .infinity : nil)
             .background(
                 Capsule(style: .continuous)
                     .fill(theme.primaryGradient)
-                    .opacity(isHovered ? 0.92 : 1.0)
+                    .opacity(backgroundOpacity)
             )
         }
         .buttonStyle(.plain)
+        .disabled(isDisabled)
         .onHover { isHovered = $0 }
+    }
+
+    private var backgroundOpacity: Double {
+        if isDisabled { return 0.4 }
+        return isHovered ? 0.92 : 1.0
     }
 }
 

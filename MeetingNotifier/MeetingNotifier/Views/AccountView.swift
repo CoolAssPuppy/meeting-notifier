@@ -11,9 +11,12 @@ struct AccountView: View {
     let account: CalendarAccount
 
     @ObservedObject private var appSettings = AppSettings.shared
+    @ObservedObject private var entitlement = EntitlementManager.shared
     @Environment(\.theme) private var theme
 
     @State private var calendars: [CalendarInfo] = []
+
+    private var isLocked: Bool { appSettings.isLocked(account) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -26,18 +29,22 @@ struct AccountView: View {
                 }
 
             ScrollView(showsIndicators: false) {
-                HStack(alignment: .top, spacing: 14) {
-                    VStack(spacing: 14) {
-                        identityCard
-                        calendarsCard
-                    }
-                    .frame(maxWidth: .infinity)
+                VStack(spacing: 14) {
+                    if isLocked { lockedBanner }
 
-                    VStack(spacing: 14) {
-                        notificationsCard
-                        managementCard
+                    HStack(alignment: .top, spacing: 14) {
+                        VStack(spacing: 14) {
+                            identityCard
+                            calendarsCard
+                        }
+                        .frame(maxWidth: .infinity)
+
+                        VStack(spacing: 14) {
+                            notificationsCard
+                            managementCard
+                        }
+                        .frame(maxWidth: .infinity)
                     }
-                    .frame(maxWidth: .infinity)
                 }
                 .padding(.horizontal, 28)
                 .padding(.top, 18)
@@ -140,6 +147,54 @@ struct AccountView: View {
         case .needsAuth: return "Needs authentication"
         case .revoked: return "Access revoked"
         }
+    }
+
+    // MARK: - Locked banner
+
+    /// Shown on an account the subscription is holding back. Two ways out: pay,
+    /// or hand this account the free slot and pause the other one.
+    private var lockedBanner: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "lock.fill")
+                .font(.system(size: 15))
+                .foregroundStyle(theme.warning)
+                .frame(width: 34, height: 34)
+                .background(
+                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                        .fill(theme.warning.opacity(0.12))
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(PaywallCopy.lockedBannerTitle)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(theme.foreground)
+                Text(PaywallCopy.lockedBannerBody)
+                    .font(.system(size: 11))
+                    .foregroundStyle(theme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 6) {
+                AppPrimaryButton(title: PaywallCopy.subscribeButton) {
+                    AppDelegate.shared?.showPaywall(trigger: .lockedAccount)
+                }
+                AppSecondaryButton(title: PaywallCopy.makeFreeButton) {
+                    appSettings.makeFree(account)
+                }
+                .help(PaywallCopy.makeFreeDescription)
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .fill(theme.card)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .strokeBorder(theme.warning.opacity(0.35), lineWidth: 1)
+        )
     }
 
     // MARK: - Identity card

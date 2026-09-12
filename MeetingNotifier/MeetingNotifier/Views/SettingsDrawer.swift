@@ -21,6 +21,7 @@ struct SettingsDrawer: View {
             ScrollView(showsIndicators: false) {
                 HStack(alignment: .top, spacing: 14) {
                     VStack(spacing: 14) {
+                        SubscriptionCard()
                         generalCard
                         menuStyleCard
                         menuBarCard
@@ -261,15 +262,6 @@ struct SettingsDrawer: View {
                     ),
                     title: "coolasspuppy/meeting-notifier",
                     url: "https://github.com/coolasspuppy/meeting-notifier"
-                )
-                contactRow(
-                    iconView: AnyView(
-                        Image(systemName: "cup.and.saucer.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(theme.muted)
-                    ),
-                    title: "Buy me coffee",
-                    url: "https://venmo.com/u/coolasspuppy"
                 )
                 contactRow(
                     iconView: AnyView(

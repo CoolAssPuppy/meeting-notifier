@@ -42,6 +42,16 @@
 	<string>$(POSTHOG_API_KEY)</string>
 	<key>POSTHOG_HOST</key>
 	<string>https://us.i.posthog.com</string>
+	<key>PolarAPIBase</key>
+	<string>$(POLAR_API_BASE)</string>
+	<key>PolarBenefitID</key>
+	<string>$(POLAR_BENEFIT_ID)</string>
+	<key>PolarCheckoutURL</key>
+	<string>$(POLAR_CHECKOUT_URL)</string>
+	<key>PolarOrgID</key>
+	<string>$(POLAR_ORG_ID)</string>
+	<key>PolarPortalURL</key>
+	<string>$(POLAR_PORTAL_URL)</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
