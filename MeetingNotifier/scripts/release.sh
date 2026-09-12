@@ -150,8 +150,9 @@ fi
 # on organization membership, so that build accepts a Mail Notifier or Sync Bar
 # key and gives this app away. The guard below refuses to build it.
 #
-# POLAR_API_BASE is empty in production and empty is a real value there, not a
-# missing one, so it is fetched without a presence check.
+# POLAR_API_BASE may be empty (PolarConfig defaults to the live API) or the live
+# API spelled out. Either is production. Anything else points the build at
+# Polar's sandbox, where no real money moves, so that gets a warning.
 echo "==> Loading the Polar subscription config ($TELEMETRY_DOPPLER_PROJECT/$TELEMETRY_DOPPLER_CONFIG)"
 polar_secret() {
   doppler secrets get "$1" \
@@ -174,7 +175,10 @@ if [ -z "$POLAR_ORG_ID" ]; then
   echo "    No Polar org configured. Building with no paywall, every account unlocked."
 else
   echo "    Polar org $POLAR_ORG_ID, benefit $POLAR_BENEFIT_ID"
-  [ -n "$POLAR_API_BASE" ] && echo "    WARNING: POLAR_API_BASE is $POLAR_API_BASE, not the live API"
+  case "$POLAR_API_BASE" in
+    ""|"https://api.polar.sh") ;;
+    *) echo "    WARNING: POLAR_API_BASE is $POLAR_API_BASE, not the live API." ;;
+  esac
 fi
 
 #----------------------------------------------------------------------
