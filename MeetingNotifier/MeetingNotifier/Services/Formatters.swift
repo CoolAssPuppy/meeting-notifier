@@ -72,6 +72,18 @@ extension Bundle {
         infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
 
+    /// An Info.plist string that the build substitutes from an xcodebuild
+    /// setting, or nil when it was never set.
+    ///
+    /// An unresolved build setting does not arrive as an empty string: it
+    /// arrives as the literal "$(NAME)". Every reader of these keys has to know
+    /// that, so the rule lives here once rather than in each of them.
+    func substitutedString(forInfoDictionaryKey key: String) -> String? {
+        guard let raw = object(forInfoDictionaryKey: key) as? String else { return nil }
+        if raw.isEmpty || raw.hasPrefix("$(") { return nil }
+        return raw
+    }
+
     /// "1.2.0 (build 4)" — marketing version + build number.
     var appVersionWithBuild: String {
         let v = appVersionString

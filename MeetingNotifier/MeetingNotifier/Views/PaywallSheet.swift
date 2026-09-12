@@ -141,9 +141,7 @@ struct PaywallSheet: View {
     // MARK: Actions
 
     private func subscribe() {
-        guard let url = PolarConfig.checkoutURL else { return }
-        Telemetry.capture(.subscribeClicked, properties: ["trigger": trigger.rawValue])
-        NSWorkspace.shared.open(url)
+        guard PolarConfig.openCheckout(trigger: trigger) else { return }
         // Checkout finishes in the browser and the key arrives by email, so open
         // the paste field now rather than making them find it on their return.
         withAnimation { showingKeyField = true }

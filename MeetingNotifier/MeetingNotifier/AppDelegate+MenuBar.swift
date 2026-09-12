@@ -13,7 +13,9 @@ extension AppDelegate {
     func updateMenuBarText() {
         guard let button = statusItem?.button else { return }
 
-        let hasAuthIssues = AppSettings.shared.accounts.contains { $0.authStatus != .valid }
+        // Only accounts that are actually running. A locked account with stale
+        // tokens must not black out the menu bar for the free one.
+        let hasAuthIssues = AppSettings.shared.activeAccounts.contains { $0.authStatus != .valid }
 
         if hasAuthIssues {
             button.title = "\u{26A0}\u{FE0F}"

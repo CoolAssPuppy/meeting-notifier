@@ -38,7 +38,7 @@ struct MainView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .showPaywall)) { note in
-            withAnimation(.easeOut(duration: 0.2)) {
+            withAnimation(.overlayDismiss) {
                 paywallTrigger = note.object as? PaywallTrigger ?? .addAccount
             }
         }
@@ -50,10 +50,7 @@ struct MainView: View {
     @ViewBuilder
     private var paywallOverlay: some View {
         if let trigger = paywallTrigger {
-            Color.black.opacity(0.55)
-                .ignoresSafeArea()
-                .transition(.opacity)
-                .onTapGesture { closePaywall() }
+            scrim { closePaywall() }
 
             PaywallSheet(trigger: trigger, onClose: closePaywall)
                 .frame(maxHeight: .infinity)
@@ -62,8 +59,18 @@ struct MainView: View {
         }
     }
 
+    /// The dimmed backdrop behind any overlay. Shared so the paywall and the
+    /// drawers dim by the same amount and dismiss at the same speed; they used
+    /// to differ by 60ms for no reason.
+    private func scrim(onTap: @escaping () -> Void) -> some View {
+        Color.black.opacity(0.55)
+            .ignoresSafeArea()
+            .transition(.opacity)
+            .onTapGesture(perform: onTap)
+    }
+
     private func closePaywall() {
-        withAnimation(.easeOut(duration: 0.2)) { paywallTrigger = nil }
+        withAnimation(.overlayDismiss) { paywallTrigger = nil }
     }
 
     @ViewBuilder
@@ -86,14 +93,9 @@ struct MainView: View {
     @ViewBuilder
     private func drawerOverlay(theme: ThemePalette) -> some View {
         if drawerState.openDrawer != .none {
-            Color.black.opacity(0.55)
-                .ignoresSafeArea()
-                .transition(.opacity)
-                .onTapGesture {
-                    withAnimation(.easeOut(duration: 0.26)) {
-                        drawerState.openDrawer = .none
-                    }
-                }
+            scrim {
+                withAnimation(.overlayDismiss) { drawerState.openDrawer = .none }
+            }
 
             Group {
                 switch drawerState.openDrawer {
@@ -113,10 +115,13 @@ struct MainView: View {
     }
 
     private func close() {
-        withAnimation(.easeOut(duration: 0.26)) {
-            drawerState.openDrawer = .none
-        }
+        withAnimation(.overlayDismiss) { drawerState.openDrawer = .none }
     }
+}
+
+extension Animation {
+    /// The one timing every overlay in the main window opens and closes with.
+    static let overlayDismiss = Animation.easeOut(duration: 0.26)
 }
 
 // MARK: - Drawer state

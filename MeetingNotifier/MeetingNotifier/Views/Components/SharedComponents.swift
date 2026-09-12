@@ -182,14 +182,12 @@ struct AppPrimaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                if fillsWidth { Spacer(minLength: 0) }
                 if let systemImage {
                     Image(systemName: systemImage)
                         .font(.system(size: 11, weight: .semibold))
                 }
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
-                if fillsWidth { Spacer(minLength: 0) }
             }
             .foregroundStyle(theme.primaryForeground)
             .padding(.horizontal, 14)

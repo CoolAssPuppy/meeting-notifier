@@ -22,6 +22,7 @@
 //
 
 import Foundation
+import AppKit
 
 enum PolarConfig {
     /// Polar organization UUID. Required: the license-key endpoints take it as
@@ -62,6 +63,21 @@ enum PolarConfig {
     /// enough to gate the paid capability and show the paste field.
     static var isConfigured: Bool { !organizationId.isEmpty }
 
+    /// Opens hosted checkout and records which entry point sent them.
+    ///
+    /// Both the paywall sheet and the Settings card had their own copy of this,
+    /// which meant the telemetry property and the nil-URL guard had to be kept
+    /// in step across two files. Returns false when there is nowhere to go, so
+    /// the caller can leave its key field closed.
+    @MainActor
+    @discardableResult
+    static func openCheckout(trigger: PaywallTrigger) -> Bool {
+        guard let url = checkoutURL else { return false }
+        Telemetry.capture(.subscribeClicked, properties: ["trigger": trigger.rawValue])
+        NSWorkspace.shared.open(url)
+        return true
+    }
+
     // MARK: Resolution
 
     private static func url(infoKey: String, env: String) -> URL? {
@@ -73,9 +89,6 @@ enum PolarConfig {
         if let fromEnv = ProcessInfo.processInfo.environment[env], !fromEnv.isEmpty {
             return fromEnv
         }
-        guard let raw = Bundle.main.object(forInfoDictionaryKey: infoKey) as? String else { return "" }
-        // An unresolved build setting arrives as the literal "$(NAME)".
-        if raw.isEmpty || raw.hasPrefix("$(") { return "" }
-        return raw
+        return Bundle.main.substitutedString(forInfoDictionaryKey: infoKey) ?? ""
     }
 }

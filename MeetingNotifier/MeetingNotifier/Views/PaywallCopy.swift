@@ -108,13 +108,12 @@ enum PaywallCopy {
 
 /// What asked for the paywall. The sheet reads the same either way; this exists
 /// so the telemetry can tell which entry point converts.
-enum PaywallTrigger: String, Identifiable {
+enum PaywallTrigger: String {
     /// The person tried to connect a second calendar account.
     case addAccount = "add_account"
     /// The person opened an account that the subscription has paused.
     case lockedAccount = "locked_account"
-    /// The Subscribe button in Settings, which no gate prompted.
+    /// The Subscribe button in Settings, which no gate prompted. Telemetry
+    /// only: this one never opens the sheet.
     case settings = "settings"
-
-    var id: String { rawValue }
 }

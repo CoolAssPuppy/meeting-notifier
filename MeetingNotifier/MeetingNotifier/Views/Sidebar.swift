@@ -12,9 +12,9 @@ struct Sidebar: View {
 
     @ObservedObject private var appSettings = AppSettings.shared
     @ObservedObject private var drawerState = DrawerState.shared
-    /// Observed but never read: `isLocked` answers from the persisted record,
-    /// and the accounts array does not change when a license activates, so
-    /// without this the pills would not redraw until something else did.
+    /// `lockedAccountIDs` answers from this manager's published record, and the
+    /// accounts array does not change when a license activates, so without this
+    /// the pills would not redraw until something else moved.
     @ObservedObject private var entitlement = EntitlementManager.shared
     @Environment(\.theme) private var theme
 
@@ -68,13 +68,16 @@ struct Sidebar: View {
     }
 
     private var accountList: some View {
-        ScrollView(showsIndicators: false) {
+        // Resolved once for the whole list. Asking per row re-ran the partition
+        // for every account on every redraw.
+        let lockedIDs = appSettings.lockedAccountIDs
+        return ScrollView(showsIndicators: false) {
             LazyVStack(alignment: .leading, spacing: 2) {
                 ForEach(appSettings.accounts) { account in
                     SidebarAccountRow(
                         account: account,
                         isSelected: selectedEmail == account.email,
-                        isLocked: appSettings.isLocked(account),
+                        isLocked: lockedIDs.contains(account.id),
                         onTap: { selectedEmail = account.email }
                     )
                 }

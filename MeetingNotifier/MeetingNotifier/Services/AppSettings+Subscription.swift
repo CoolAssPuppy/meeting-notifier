@@ -53,18 +53,30 @@ extension AppSettings {
         return (Array(accounts.prefix(cut)), Array(accounts.dropFirst(cut)))
     }
 
+    /// The entitlement as the manager holds it in memory. Everything here is
+    /// `@MainActor`, so there is no reason to decode the persisted copy again —
+    /// and `Sidebar` calls `isLocked` once per row, which made that decode
+    /// happen N times per redraw.
+    private var isEntitledNow: Bool { EntitlementManager.shared.isEntitled }
+
     /// Qualifying accounts allowed to run under the current entitlement.
     var activeAccounts: [CalendarAccount] {
-        Self.partition(qualifyingAccounts, isEntitled: EntitlementManager.isEntitledNow()).active
+        Self.partition(qualifyingAccounts, isEntitled: isEntitledNow).active
     }
 
     /// Qualifying accounts the subscription is holding back. Empty when entitled.
     var lockedAccounts: [CalendarAccount] {
-        Self.partition(qualifyingAccounts, isEntitled: EntitlementManager.isEntitledNow()).locked
+        Self.partition(qualifyingAccounts, isEntitled: isEntitledNow).locked
+    }
+
+    /// The ids of every paused account, for callers checking many accounts in a
+    /// row. `Sidebar` builds this once per redraw rather than asking per row.
+    var lockedAccountIDs: Set<String> {
+        Set(lockedAccounts.map(\.id))
     }
 
     /// True when the given account is one the subscription has paused. Drives
-    /// the sidebar badge and the account banner.
+    /// the account banner. In a loop, prefer `lockedAccountIDs`.
     func isLocked(_ account: CalendarAccount) -> Bool {
         lockedAccounts.contains { $0.id == account.id }
     }
@@ -72,7 +84,7 @@ extension AppSettings {
     /// True when another account can be connected without paying. The first one
     /// is always free.
     var canAddAnotherAccount: Bool {
-        if EntitlementManager.isEntitledNow() { return true }
+        if isEntitledNow { return true }
         return qualifyingAccounts.count < Self.freeAccountLimit
     }
 

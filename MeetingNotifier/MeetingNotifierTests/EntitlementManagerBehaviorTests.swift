@@ -63,6 +63,13 @@ private actor DeactivationLog {
     var last: (key: String, activationId: String)? { calls.last }
 }
 
+/// A reference box so the notification observer can count without capturing a
+/// `var` in an escaping closure.
+private final class CountBox {
+    private(set) var count = 0
+    func bump() { count += 1 }
+}
+
 /// File scope rather than a property, because `EntitlementManager.clock` is
 /// `@Sendable` and cannot capture the test case.
 private let testNow = Date(timeIntervalSince1970: 1_800_000_000)
@@ -179,6 +186,82 @@ final class EntitlementManagerBehaviorTests: XCTestCase {
         await manager.validateNow()
 
         XCTAssertEqual(manager.record?.state, .revoked)
+    }
+
+    // MARK: Notifying consumers
+
+    /// `.entitlementChanged` costs a full calendar refetch in
+    /// `CalendarDataManager`, so it must fire when the gate moves and stay quiet
+    /// when it does not.
+    private func countingEntitlementChanges(during body: () async -> Void) async -> Int {
+        let box = CountBox()
+        let token = NotificationCenter.default.addObserver(
+            forName: .entitlementChanged, object: nil, queue: .main) { _ in box.bump() }
+        defer { NotificationCenter.default.removeObserver(token) }
+        await body()
+        return box.count
+    }
+
+    func testARepeatValidateWithNoChangeDoesNotNotify() async throws {
+        // Every validate stamps a fresh lastValidatedAt, so a naive != check
+        // fired every time and refetched every calendar once a day for nothing.
+        let store = FakeCredentialStore()
+        store.values = ["license.key": "KEY-123", "license.activation_id": "activation_1"]
+        let granted = LicenseStatus(state: .granted, expiresAt: nil, customerId: "cus_1", benefitId: "b1")
+        let provider = FakeProvider(validateResult: .success(granted), deactivated: DeactivationLog())
+        let manager = EntitlementManager(provider: provider, store: store,
+                                         defaults: try makeDefaults(), clock: { testNow })
+
+        await manager.validateNow()  // first one establishes the record
+        let posts = await countingEntitlementChanges { await manager.validateNow() }
+
+        XCTAssertEqual(posts, 0, "An unchanged entitlement must not trigger a calendar refetch")
+    }
+
+    func testLapsingNotifies() async throws {
+        let store = FakeCredentialStore()
+        store.values = ["license.key": "KEY-123", "license.activation_id": "activation_1"]
+        let revoked = LicenseStatus(state: .revoked, expiresAt: nil, customerId: "cus_1", benefitId: "b1")
+        let provider = FakeProvider(validateResult: .success(revoked), deactivated: DeactivationLog())
+        let defaults = try makeDefaults()
+        let granted = EntitlementRecord(statusRaw: LicenseStatus.State.granted.rawValue,
+                                        expiresAt: nil, customerId: "cus_1", lastValidatedAt: testNow)
+        defaults.set(try JSONEncoder().encode(granted), forKey: EntitlementManager.storageKey)
+        let manager = EntitlementManager(provider: provider, store: store,
+                                         defaults: defaults, clock: { testNow })
+
+        let posts = await countingEntitlementChanges { await manager.validateNow() }
+
+        XCTAssertEqual(posts, 1, "Losing entitlement has to reach CalendarDataManager")
+    }
+
+    // MARK: Stored-key flag
+
+    func testHasStoredKeyTracksActivationAndRemoval() async throws {
+        let store = FakeCredentialStore()
+        let manager = EntitlementManager(provider: FakeProvider(deactivated: DeactivationLog()),
+                                         store: store,
+                                         defaults: try makeDefaults(),
+                                         clock: { testNow })
+        XCTAssertFalse(manager.hasStoredKey)
+
+        try await manager.activate(key: "KEY-123")
+        XCTAssertTrue(manager.hasStoredKey)
+
+        await manager.removeLicense()
+        XCTAssertFalse(manager.hasStoredKey)
+    }
+
+    func testHasStoredKeyIsSeededFromTheStoreAtLaunch() throws {
+        let store = FakeCredentialStore()
+        store.values = ["license.key": "KEY-123"]
+
+        let manager = EntitlementManager(provider: FakeProvider(deactivated: DeactivationLog()),
+                                         store: store,
+                                         defaults: try makeDefaults(),
+                                         clock: { testNow })
+
+        XCTAssertTrue(manager.hasStoredKey)
     }
 
     // MARK: Removal

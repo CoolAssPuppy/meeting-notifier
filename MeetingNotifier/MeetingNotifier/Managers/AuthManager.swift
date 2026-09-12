@@ -68,6 +68,20 @@ class AuthManager {
                         return
                     }
 
+                    // The gate belongs here rather than at the button, because
+                    // this is the first point that knows WHICH account this is.
+                    // Re-authorizing an account you already own is not an add and
+                    // must never hit the paywall, or a free-tier user whose token
+                    // expired is trapped with no way to repair it.
+                    let isNewAccount = AppSettings.shared.account(forEmail: email) == nil
+                    if isNewAccount && !AppSettings.shared.canAddAnotherAccount {
+                        Logger.auth.info("Dropping a completed authorization: the free tier is full.")
+                        AppDelegate.shared?.showPaywall(trigger: .addAccount)
+                        completion(.failure(authError("A subscription is needed to connect another calendar.",
+                                                     code: Self.paywallRejectionCode)))
+                        return
+                    }
+
                     var account = CalendarAccount(
                         email: email,
                         provider: provider,
@@ -120,10 +134,24 @@ class AuthManager {
 
 }
 
-private func authError(_ message: String) -> NSError {
+extension AuthManager {
+    /// Domain and code for "authorization succeeded, but the free tier is full".
+    /// `AppDelegate` suppresses its alert: the paywall sheet is already up, and
+    /// an alert on top of it would refuse the same click twice.
+    static let paywallRejectionCode = 402
+
+    static func isPaywallRejection(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == authErrorDomain && nsError.code == paywallRejectionCode
+    }
+}
+
+private let authErrorDomain = "AuthManager"
+
+private func authError(_ message: String, code: Int = -1) -> NSError {
     NSError(
-        domain: "AuthManager",
-        code: -1,
+        domain: authErrorDomain,
+        code: code,
         userInfo: [NSLocalizedDescriptionKey: message]
     )
 }

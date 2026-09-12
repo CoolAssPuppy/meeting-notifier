@@ -79,7 +79,10 @@ struct MiniCalendarDrawer: View {
     private func loadCalendars() {
         Task { @MainActor in
             var collected: [CalendarInfo] = []
-            for account in appSettings.accounts where account.isEnabled {
+            // `activeAccounts`, not `accounts`: the raw list includes accounts
+            // the subscription has paused, and fetching their calendars here
+            // handed a free-tier user working access to a locked calendar.
+            for account in appSettings.activeAccounts {
                 let all = await CalendarDataManager.shared.fetchCalendarsForAccount(account)
                 let selected = all.filter { account.selectedCalendarIds.contains($0.id) }
                 collected.append(contentsOf: selected)

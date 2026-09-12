@@ -19,11 +19,11 @@ struct LicenseKeyField: View {
     /// How the field and its button sit together. The paywall sheet has a full
     /// column to work with; the Settings card has one cramped row.
     enum Layout {
+        /// Field on its own line, button below it. The paywall sheet has a
+        /// column to spend.
         case stacked
+        /// Field and button side by side, for the cramped Settings row.
         case inline
-
-        var cornerRadius: CGFloat { self == .stacked ? AppRadius.md : AppRadius.sm }
-        var verticalPadding: CGFloat { self == .stacked ? 8 : 6 }
     }
 
     var layout: Layout = .stacked
@@ -65,20 +65,14 @@ struct LicenseKeyField: View {
     // MARK: Pieces
 
     private var textField: some View {
+        // `appInsetField()` is the chrome every other text input in the app
+        // uses. Hand-rolling it here made this the one field with a heavier
+        // border, for no stated reason.
         TextField(PaywallCopy.keyFieldPlaceholder, text: $licenseKey)
             .textFieldStyle(.plain)
             .font(.system(size: 11, design: .monospaced))
             .foregroundStyle(theme.foreground)
-            .padding(.horizontal, 10)
-            .padding(.vertical, layout.verticalPadding)
-            .background(
-                RoundedRectangle(cornerRadius: layout.cornerRadius, style: .continuous)
-                    .fill(theme.cardInset)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: layout.cornerRadius, style: .continuous)
-                    .strokeBorder(theme.borderStrong, lineWidth: 1)
-            )
+            .appInsetField()
             .onSubmit(activate)
     }
 

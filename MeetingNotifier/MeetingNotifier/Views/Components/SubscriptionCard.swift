@@ -152,9 +152,7 @@ struct SubscriptionCard: View {
     // MARK: Behavior
 
     private func subscribe() {
-        guard let url = PolarConfig.checkoutURL else { return }
-        Telemetry.capture(.subscribeClicked, properties: ["trigger": PaywallTrigger.settings.rawValue])
-        NSWorkspace.shared.open(url)
+        guard PolarConfig.openCheckout(trigger: .settings) else { return }
         // The key arrives by email, so open the paste field now rather than
         // making them find it again on their return.
         withAnimation { showingKeyField = true }

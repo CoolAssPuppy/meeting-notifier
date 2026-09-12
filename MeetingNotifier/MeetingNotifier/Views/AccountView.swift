@@ -11,6 +11,9 @@ struct AccountView: View {
     let account: CalendarAccount
 
     @ObservedObject private var appSettings = AppSettings.shared
+    /// `isLocked` answers from this manager's published record rather than from
+    /// `appSettings.accounts`, so without this the locked banner would not
+    /// disappear the moment a key activates.
     @ObservedObject private var entitlement = EntitlementManager.shared
     @Environment(\.theme) private var theme
 

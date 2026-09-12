@@ -288,49 +288,50 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func addGoogleAccount() {
+        // An early-out so the common "add a second calendar" case never opens a
+        // browser it is going to refuse. `AuthManager` holds the real gate.
         guard ensureCanAddAccount() else { return }
-        AuthManager.shared.addGoogleAccount { result in
-            Task { @MainActor in
-                switch result {
-                case .success:
-                    Telemetry.capture(.accountAdded, properties: ["provider": "google"])
-                case .failure(let error):
-                    Telemetry.capture(.accountSigninFailed, properties: ["provider": "google"])
-                    let alert = NSAlert()
-                    alert.messageText = "Failed to Add Account"
-                    alert.informativeText = error.localizedDescription
-                    alert.alertStyle = .critical
-                    alert.runModal()
-                }
-            }
-        }
+        AuthManager.shared.addGoogleAccount { Self.reportAccountResult($0, provider: "google") }
     }
 
     @objc func addMicrosoftAccount() {
+        // An early-out so the common "add a second calendar" case never opens a
+        // browser it is going to refuse. `AuthManager` holds the real gate.
         guard ensureCanAddAccount() else { return }
-        AuthManager.shared.addMicrosoftAccount { result in
-            Task { @MainActor in
-                switch result {
-                case .success:
-                    Telemetry.capture(.accountAdded, properties: ["provider": "microsoft"])
-                case .failure(let error):
-                    Telemetry.capture(.accountSigninFailed, properties: ["provider": "microsoft"])
-                    let alert = NSAlert()
-                    alert.messageText = "Failed to Add Account"
-                    alert.informativeText = error.localizedDescription
-                    alert.alertStyle = .critical
-                    alert.runModal()
-                }
-            }
-        }
+        AuthManager.shared.addMicrosoftAccount { Self.reportAccountResult($0, provider: "microsoft") }
     }
 
+    /// Repairs an account that already exists. Deliberately skips
+    /// `ensureCanAddAccount`: this is not an add, and on the free tier the
+    /// up-front check would refuse to let someone fix the account they own.
+    /// `AuthManager` still gates on the extracted email, so this cannot be used
+    /// to sneak a new account in.
     func reauthorizeAccount(_ account: CalendarAccount) {
         switch account.provider {
         case .google:
-            addGoogleAccount()
+            AuthManager.shared.addGoogleAccount { Self.reportAccountResult($0, provider: "google") }
         case .microsoft:
-            addMicrosoftAccount()
+            AuthManager.shared.addMicrosoftAccount { Self.reportAccountResult($0, provider: "microsoft") }
+        }
+    }
+
+    /// Shared success/failure handling for every account authorization.
+    /// The paywall rejection is silent here: `AuthManager` has already raised
+    /// the sheet, and an alert on top of it would be two refusals for one click.
+    private static func reportAccountResult(_ result: Result<CalendarAccount, Error>, provider: String) {
+        Task { @MainActor in
+            switch result {
+            case .success:
+                Telemetry.capture(.accountAdded, properties: ["provider": provider])
+            case .failure(let error):
+                Telemetry.capture(.accountSigninFailed, properties: ["provider": provider])
+                guard !AuthManager.isPaywallRejection(error) else { return }
+                let alert = NSAlert()
+                alert.messageText = "Failed to Add Account"
+                alert.informativeText = error.localizedDescription
+                alert.alertStyle = .critical
+                alert.runModal()
+            }
         }
     }
 

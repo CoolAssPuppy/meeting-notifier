@@ -118,6 +118,7 @@ final class EntitlementManager: ObservableObject {
         self.clock = clock
         self.timeZone = timeZone
         self.record = Self.loadRecord(from: defaults)
+        self.hasStoredKey = !(store.licenseValue(for: Self.licenseKeyAccount) ?? "").isEmpty
     }
 
     // MARK: Lifecycle
@@ -140,10 +141,26 @@ final class EntitlementManager: ObservableObject {
         state == .active || state == .unavailable
     }
 
+    /// True when there is no gate to enforce at all.
+    ///
+    /// A UI-testing run unlocks everything, because the screenshot tests seed
+    /// fake accounts and would otherwise photograph locked badges. So does a
+    /// build with no Polar organization, which is what a fork or a local dev
+    /// build looks like: shipping a paywall nobody can pay through would just
+    /// break the app.
+    ///
+    /// Both readers of the gate consult this one property. They used to carry
+    /// their own copies and disagreed about `--uitesting`, so a UI-testing run
+    /// unlocked every account while the Settings card still showed the
+    /// free-tier pitch.
+    nonisolated static var isGateDisabled: Bool {
+        CommandLine.arguments.contains("--uitesting") || !PolarConfig.isConfigured
+    }
+
     /// Distinguishes "never subscribed" from "subscribed and lapsed", which the
     /// Settings card and the paywall word differently.
     var state: EntitlementState {
-        guard PolarConfig.isConfigured else { return .unavailable }
+        guard !Self.isGateDisabled else { return .unavailable }
         guard let record else { return .none }
         return Self.isEntitled(record: record, now: clock()) ? .active : .lapsed
     }
@@ -154,10 +171,11 @@ final class EntitlementManager: ObservableObject {
 
     /// True once a key has been stored on this device, regardless of whether it
     /// still validates. Drives "Remove from this Mac" in Settings.
-    var hasStoredKey: Bool {
-        guard let key = store.licenseValue(for: Self.licenseKeyAccount) else { return false }
-        return !key.isEmpty
-    }
+    ///
+    /// Cached rather than asked each time: `SubscriptionCard.body` reads it on
+    /// every redraw, and the answer costs an XPC round trip to `securityd`. It
+    /// only changes in `persist`, which is the one writer.
+    @Published private(set) var hasStoredKey: Bool = false
 
     // MARK: Operations
 
@@ -218,20 +236,13 @@ final class EntitlementManager: ObservableObject {
         return true
     }
 
-    /// The gate, read from the same persisted record the `isEntitled` property
-    /// serves, without needing the manager itself. `CalendarDataManager` reads
-    /// it on every refresh.
-    ///
-    /// Two fail-open paths. A UI-testing run unlocks everything, because the
-    /// screenshot tests seed fake accounts and would otherwise photograph two
-    /// locked badges. And an unconfigured build (no Polar organization, which is
-    /// what a fork or a local dev build looks like) is treated as fully
-    /// entitled, because shipping a paywall nobody can pay through would just
-    /// break the app.
+    /// The gate read from the persisted record without needing the manager.
+    /// Kept for callers that have no access to the singleton; production reads
+    /// go through `EntitlementManager.shared.isEntitled`, which answers from the
+    /// in-memory record instead of decoding JSON.
     nonisolated static func isEntitledNow(defaults: UserDefaults = .standard,
                                           now: Date = Date()) -> Bool {
-        guard !CommandLine.arguments.contains("--uitesting") else { return true }
-        guard PolarConfig.isConfigured else { return true }
+        guard !isGateDisabled else { return true }
         return isEntitled(record: loadRecord(from: defaults), now: now)
     }
 
@@ -271,20 +282,32 @@ final class EntitlementManager: ObservableObject {
     // MARK: Internals
 
     private func apply(_ updated: EntitlementRecord) {
-        guard updated != record else { return }
+        // Every successful validate stamps a fresh `lastValidatedAt`, so the
+        // records always differ and a plain `updated != record` check would
+        // never suppress anything. Compare what the gate actually reads.
+        let wasEntitled = Self.isEntitled(record: record, now: clock())
+        let isEntitledNow = Self.isEntitled(record: updated, now: clock())
+        let gateChanged = wasEntitled != isEntitledNow
+            || updated.statusRaw != record?.statusRaw
+            || updated.expiresAt != record?.expiresAt
+
         record = updated
         if let data = try? JSONEncoder().encode(updated) {
             defaults.set(data, forKey: Self.storageKey)
         }
-        // The event list is built from the entitlement, so a change has to reach
-        // `CalendarDataManager` and the menu bar, not only the SwiftUI views
-        // bound to `record`.
+
+        // Only when something a consumer cares about moved. The notification
+        // costs a full calendar refetch in `CalendarDataManager`, so posting it
+        // on every daily re-check doubled the request volume for every
+        // subscriber.
+        guard gateChanged else { return }
         NotificationCenter.default.post(name: .entitlementChanged, object: nil)
     }
 
     private func persist(licenseKey: String?, activationId: String?) {
         store.setLicenseValue(licenseKey, for: Self.licenseKeyAccount)
         store.setLicenseValue(activationId, for: Self.activationIdAccount)
+        hasStoredKey = !(licenseKey ?? "").isEmpty
     }
 
     private func scheduleDailyCheck() {
