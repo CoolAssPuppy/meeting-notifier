@@ -21,13 +21,13 @@ struct SettingsDrawer: View {
             ScrollView(showsIndicators: false) {
                 HStack(alignment: .top, spacing: 14) {
                     VStack(spacing: 14) {
-                        SubscriptionCard()
                         generalCard
                         menuStyleCard
                         menuBarCard
                     }.frame(maxWidth: .infinity)
 
                     VStack(spacing: 14) {
+                        SubscriptionCard()
                         meetingLinkCard
                         privacyCard
                         updatesCard

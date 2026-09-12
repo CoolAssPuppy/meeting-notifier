@@ -54,9 +54,10 @@ enum PaywallCopy {
     /// Shown in place of the subscribe controls once the person has paid.
     static let activeNote = "\(planName) is active. Every calendar is unlocked."
 
-    /// The collapsed link that reveals the license paste field. Folded away
-    /// because it is for the few people who already paid.
-    static let hasKeyPrompt = "Already have a license key?"
+    /// The collapsed link that reveals the license paste field. Kept short: in
+    /// the Settings card it sits beside the Subscribe button in a half-width
+    /// column, and the long version pushed that button onto two lines.
+    static let hasKeyPrompt = "Have a key?"
 
     static let keyFieldPlaceholder = "Paste your license key"
 

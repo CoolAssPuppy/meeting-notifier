@@ -130,6 +130,8 @@ struct AppSecondaryButton: View {
                 }
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
             .foregroundStyle(tintColor)
             .padding(.horizontal, 11)
@@ -188,6 +190,8 @@ struct AppPrimaryButton: View {
                 }
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
             .foregroundStyle(theme.primaryForeground)
             .padding(.horizontal, 14)
