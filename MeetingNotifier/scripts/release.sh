@@ -231,6 +231,15 @@ if [ ! -d "$APP_PATH" ]; then
 fi
 
 #----------------------------------------------------------------------
+# 4a. Refuse to ship a credential compiled into the binary
+#----------------------------------------------------------------------
+# Runs on the exported Release .app, before notarizing, because notarizing and
+# uploading are the irreversible steps. gitignore has always covered
+# *Secret.swift and the values were never committed, so every repo-level check
+# passed while secrets shipped inside the DMG. Nothing looked at the artifact.
+"$SCRIPTS/check-no-secrets.sh" "$APP_PATH"
+
+#----------------------------------------------------------------------
 # 5. Notarize + staple the .app
 #----------------------------------------------------------------------
 echo "==> Notarizing .app (takes a few minutes)"

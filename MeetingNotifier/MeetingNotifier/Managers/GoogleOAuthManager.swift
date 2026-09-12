@@ -12,13 +12,22 @@ class GoogleOAuthManager {
 
     /// OAuth client secret, if the local GoogleOAuthSecret.swift supplies a real value.
     ///
-    /// A native macOS app can never keep a client secret actually secret. The security
-    /// boundary for this install is PKCE (automatically enabled by AppAuth) plus the
-    /// custom-scheme redirect bound to this app. If your Google Cloud OAuth app is
-    /// configured as a "Desktop / installed" or "iOS" client, leave the secret field
-    /// empty — Google will accept PKCE-only requests. A value is only passed through
-    /// when the local secret file contains a non-placeholder string, for compatibility
-    /// with legacy OAuth app configurations that still require one.
+    /// A native macOS app can never keep a client secret actually secret, and this
+    /// one is recoverable from the shipped binary with `strings`. That is expected
+    /// rather than a leak: Google's own guidance for installed apps is that the
+    /// secret "is obviously not treated as a secret", and PKCE (enabled
+    /// automatically by AppAuth) plus the custom-scheme redirect are the real
+    /// security boundary.
+    ///
+    /// It cannot be removed. This comment used to claim a Desktop client would
+    /// accept PKCE-only requests; that is false. Verified 2026-09-12 against
+    /// `https://oauth2.googleapis.com/token` with this exact client id: omitting
+    /// the secret returns `invalid_request / client_secret is missing.` while
+    /// sending it returns `invalid_grant` for the same bad refresh token. Empty
+    /// this file and every Google account stops refreshing.
+    ///
+    /// Microsoft is the opposite case and the secret there IS gone: see
+    /// `MicrosoftOAuthSecret.swift`.
     static var clientSecret: String? {
         let raw = GoogleOAuthSecret.secret
         if raw.isEmpty { return nil }
