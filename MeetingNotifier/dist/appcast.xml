@@ -6,6 +6,24 @@
     <description>MeetingNotifier updates</description>
     <language>en</language>
     <item>
+      <title>Version 1.5.0</title>
+      <pubDate>Sat, 12 Sep 2026 22:47:20 +0000</pubDate>
+      <sparkle:version>22</sparkle:version>
+      <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul>
+          <h3>Meeting Notifier Pro</h3><p>Your first calendar account stays free. Connecting more is now a subscription, priced at whatever you think is fair.</p><ul><li>Subscribe from Settings, or when you add a second calendar</li><li>License keys activate on up to five Macs, and can be released from Settings</li><li>Your subscription keeps working offline</li></ul><h3>Also in this release</h3><ul><li>The Microsoft client secret no longer ships inside the app</li><li>Releases now refuse to build if a credential is compiled into the binary</li></ul>
+        </ul>
+      ]]></description>
+      <enclosure
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.5.0.dmg"
+        sparkle:edSignature="G6t0GWitYOYbpE+VA2H63YA8fQfWovoQk7omaGphgdzR5sifBFdFpFv/hcSF/uR+Z5vSmQgMtKIrsnGipNSIAg=="
+        length="4561954"
+        type="application/x-apple-diskimage" />
+    </item>
+
+    <item>
       <title>Version 1.4.4</title>
       <pubDate>Wed, 05 Aug 2026 01:45:54 +0000</pubDate>
       <sparkle:version>21</sparkle:version>

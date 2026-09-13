@@ -1,0 +1,94 @@
+//
+//  PolarConfig.swift
+//  MeetingNotifier
+//
+//  Copyright (c) 2026 Strategic Nerds. All rights reserved.
+//
+//  Polar settings, resolved at runtime the same way `POSTHOG_API_KEY` is: the
+//  values arrive as xcodebuild build settings (scripts/release.sh reads them
+//  from Doppler and passes them on the command line), Info.plist carries a
+//  `$(NAME)` placeholder for each, and the build substitutes them into the
+//  bundle. A process-environment override is honored first so
+//  `doppler run -- ./scripts/debug.sh` works in development without a rebuild.
+//
+//  None of these are secret. The organization and benefit ids are public UUIDs,
+//  and the checkout and portal links are meant to be shared. No Polar access
+//  token exists in the app, because the three license-key endpoints it calls
+//  need no authentication.
+//
+//  Every value resolves to empty or nil when unset, and `isConfigured` reports
+//  the subscription as unavailable, which leaves the app permanently on the free
+//  tier. That is what makes a fork or an unconfigured dev build usable.
+//
+
+import Foundation
+import AppKit
+
+enum PolarConfig {
+    /// Polar organization UUID. Required: the license-key endpoints take it as
+    /// the tenant, and there is no entitlement without it.
+    static var organizationId: String { value(infoKey: "PolarOrgID", env: "POLAR_ORG_ID") }
+
+    /// The License Keys benefit UUID. Required in any shipped build.
+    ///
+    /// Meeting Notifier lives in the shared Strategic Nerds Polar organization
+    /// alongside Mail Notifier and Sync Bar, and Polar's license endpoint grants
+    /// on organization membership: every active key in the org validates against
+    /// every product in it. This pin is the only thing separating them, so
+    /// leaving it empty gives Meeting Notifier away to subscribers of any
+    /// sibling app.
+    static var benefitId: String { value(infoKey: "PolarBenefitID", env: "POLAR_BENEFIT_ID") }
+
+    /// True for a build that sells subscriptions but forgot the product pin.
+    /// `AppDelegate` logs this at launch, because the symptom otherwise is
+    /// silent revenue leaking to people who paid for a different app.
+    static var isBenefitPinMissing: Bool { isConfigured && benefitId.isEmpty }
+
+    /// Hosted checkout the Subscribe button opens. nil until the Polar product
+    /// exists, which disables the button rather than opening a dead link.
+    static var checkoutURL: URL? { url(infoKey: "PolarCheckoutURL", env: "POLAR_CHECKOUT_URL") }
+
+    /// Polar customer portal, where a subscriber manages or cancels. Linked from
+    /// the Settings subscription card.
+    static var portalURL: URL? { url(infoKey: "PolarPortalURL", env: "POLAR_PORTAL_URL") }
+
+    /// Polar API base. Empty in production (defaults to the live API); set to
+    /// `https://sandbox-api.polar.sh` to run against Polar's sandbox, which is a
+    /// wholly separate account with test cards and no real money.
+    static var apiBaseURL: URL {
+        url(infoKey: "PolarAPIBase", env: "POLAR_API_BASE") ?? URL.required("https://api.polar.sh")
+    }
+
+    /// License keys validate without a server, so an organization id alone is
+    /// enough to gate the paid capability and show the paste field.
+    static var isConfigured: Bool { !organizationId.isEmpty }
+
+    /// Opens hosted checkout and records which entry point sent them.
+    ///
+    /// Both the paywall sheet and the Settings card had their own copy of this,
+    /// which meant the telemetry property and the nil-URL guard had to be kept
+    /// in step across two files. Returns false when there is nowhere to go, so
+    /// the caller can leave its key field closed.
+    @MainActor
+    @discardableResult
+    static func openCheckout(trigger: PaywallTrigger) -> Bool {
+        guard let url = checkoutURL else { return false }
+        Telemetry.capture(.subscribeClicked, properties: ["trigger": trigger.rawValue])
+        NSWorkspace.shared.open(url)
+        return true
+    }
+
+    // MARK: Resolution
+
+    private static func url(infoKey: String, env: String) -> URL? {
+        let raw = value(infoKey: infoKey, env: env)
+        return raw.isEmpty ? nil : URL(string: raw)
+    }
+
+    private static func value(infoKey: String, env: String) -> String {
+        if let fromEnv = ProcessInfo.processInfo.environment[env], !fromEnv.isEmpty {
+            return fromEnv
+        }
+        return Bundle.main.substitutedString(forInfoDictionaryKey: infoKey) ?? ""
+    }
+}

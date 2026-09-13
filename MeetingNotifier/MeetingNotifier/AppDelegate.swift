@@ -34,6 +34,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Telemetry.capture(.appLaunched)
         reportUpdateInstalledIfNeeded()
 
+        // Before the first calendar refresh, so the gate is answered from a
+        // cached record rather than racing the launch validate.
+        EntitlementManager.shared.start()
+
         _ = NotificationManager.shared
         _ = KeyboardShortcutManager.shared
         _ = LocationManager.shared
@@ -54,6 +58,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(handleAccountsDidUpdate), name: .accountsDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(showTranscriptionBanner), name: .transcriptionDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(hideTranscriptionBanner), name: .transcriptionDidStop, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleEntitlementChanged), name: .entitlementChanged, object: nil)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -254,48 +259,79 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Redraws the menu bar after a license activates or lapses.
+    /// `CalendarDataManager` refreshes itself off the same notification; this
+    /// covers the title, which is rendered from the event list rather than
+    /// bound to it.
+    @objc private func handleEntitlementChanged() {
+        updateMenuBarText()
+    }
+
+    /// Brings up the main window with the paywall sheet on top. `MainView` hosts
+    /// the sheet, because it is the only view guaranteed to exist by the time
+    /// the notification lands.
+    func showPaywall(trigger: PaywallTrigger) {
+        closePopover()
+        Telemetry.capture(.paywallShown, properties: ["trigger": trigger.rawValue])
+        showMainWindow()
+        DrawerState.shared.openDrawer = .none
+        NotificationCenter.default.post(name: .showPaywall, object: trigger)
+    }
+
+    /// True when another calendar can be connected. False opens the paywall and
+    /// tells the caller to stop, so the OAuth window never appears for an
+    /// account that could not run anyway.
+    private func ensureCanAddAccount() -> Bool {
+        if AppSettings.shared.canAddAnotherAccount { return true }
+        showPaywall(trigger: .addAccount)
+        return false
+    }
+
     @objc func addGoogleAccount() {
-        AuthManager.shared.addGoogleAccount { result in
-            Task { @MainActor in
-                switch result {
-                case .success:
-                    Telemetry.capture(.accountAdded, properties: ["provider": "google"])
-                case .failure(let error):
-                    Telemetry.capture(.accountSigninFailed, properties: ["provider": "google"])
-                    let alert = NSAlert()
-                    alert.messageText = "Failed to Add Account"
-                    alert.informativeText = error.localizedDescription
-                    alert.alertStyle = .critical
-                    alert.runModal()
-                }
-            }
-        }
+        // An early-out so the common "add a second calendar" case never opens a
+        // browser it is going to refuse. `AuthManager` holds the real gate.
+        guard ensureCanAddAccount() else { return }
+        AuthManager.shared.addGoogleAccount { Self.reportAccountResult($0, provider: "google") }
     }
 
     @objc func addMicrosoftAccount() {
-        AuthManager.shared.addMicrosoftAccount { result in
-            Task { @MainActor in
-                switch result {
-                case .success:
-                    Telemetry.capture(.accountAdded, properties: ["provider": "microsoft"])
-                case .failure(let error):
-                    Telemetry.capture(.accountSigninFailed, properties: ["provider": "microsoft"])
-                    let alert = NSAlert()
-                    alert.messageText = "Failed to Add Account"
-                    alert.informativeText = error.localizedDescription
-                    alert.alertStyle = .critical
-                    alert.runModal()
-                }
-            }
-        }
+        // An early-out so the common "add a second calendar" case never opens a
+        // browser it is going to refuse. `AuthManager` holds the real gate.
+        guard ensureCanAddAccount() else { return }
+        AuthManager.shared.addMicrosoftAccount { Self.reportAccountResult($0, provider: "microsoft") }
     }
 
+    /// Repairs an account that already exists. Deliberately skips
+    /// `ensureCanAddAccount`: this is not an add, and on the free tier the
+    /// up-front check would refuse to let someone fix the account they own.
+    /// `AuthManager` still gates on the extracted email, so this cannot be used
+    /// to sneak a new account in.
     func reauthorizeAccount(_ account: CalendarAccount) {
         switch account.provider {
         case .google:
-            addGoogleAccount()
+            AuthManager.shared.addGoogleAccount { Self.reportAccountResult($0, provider: "google") }
         case .microsoft:
-            addMicrosoftAccount()
+            AuthManager.shared.addMicrosoftAccount { Self.reportAccountResult($0, provider: "microsoft") }
+        }
+    }
+
+    /// Shared success/failure handling for every account authorization.
+    /// The paywall rejection is silent here: `AuthManager` has already raised
+    /// the sheet, and an alert on top of it would be two refusals for one click.
+    private static func reportAccountResult(_ result: Result<CalendarAccount, Error>, provider: String) {
+        Task { @MainActor in
+            switch result {
+            case .success:
+                Telemetry.capture(.accountAdded, properties: ["provider": provider])
+            case .failure(let error):
+                Telemetry.capture(.accountSigninFailed, properties: ["provider": provider])
+                guard !AuthManager.isPaywallRejection(error) else { return }
+                let alert = NSAlert()
+                alert.messageText = "Failed to Add Account"
+                alert.informativeText = error.localizedDescription
+                alert.alertStyle = .critical
+                alert.runModal()
+            }
         }
     }
 

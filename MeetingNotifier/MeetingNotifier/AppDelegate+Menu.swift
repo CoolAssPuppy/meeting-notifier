@@ -106,7 +106,7 @@ extension AppDelegate {
             tomorrow: dataManager.tomorrowEvents(),
             isLoading: dataManager.isLoading,
             hasAccounts: !settings.accounts.isEmpty,
-            hasAuthError: settings.accounts.contains { $0.authStatus != .valid },
+            hasAuthError: settings.activeAccounts.contains { $0.authStatus != .valid },
             isNotetakerEnabled: settings.notetakerEnabled,
             travelInfo: { event in
                 guard settings.showTravelTimeAlerts else { return nil }

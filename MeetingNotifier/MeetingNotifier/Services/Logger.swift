@@ -20,4 +20,5 @@ extension Logger {
     static let settings = Logger(subsystem: subsystem, category: "settings")
     static let transcription = Logger(subsystem: subsystem, category: "transcription")
     static let audio = Logger(subsystem: subsystem, category: "audio")
+    static let license = Logger(subsystem: subsystem, category: "license")
 }

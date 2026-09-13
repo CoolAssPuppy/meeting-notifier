@@ -137,6 +137,51 @@ if [ -z "$POSTHOG_PUBLIC_KEY" ]; then
 fi
 
 #----------------------------------------------------------------------
+# Polar subscription config
+#----------------------------------------------------------------------
+# Five public values, same Doppler project and config as the PostHog key above,
+# reaching Info.plist by the same route: an xcodebuild build setting substituted
+# into a $(NAME) placeholder. None of them are secret; they ship inside the app
+# bundle the way the OAuth client ids do.
+#
+# Leaving all five empty is legitimate and ships a build with no paywall and
+# every calendar account unlocked, which is what a fork gets. What is NOT
+# legitimate is an org id without a benefit id: Polar's license endpoint grants
+# on organization membership, so that build accepts a Mail Notifier or Sync Bar
+# key and gives this app away. The guard below refuses to build it.
+#
+# POLAR_API_BASE may be empty (PolarConfig defaults to the live API) or the live
+# API spelled out. Either is production. Anything else points the build at
+# Polar's sandbox, where no real money moves, so that gets a warning.
+echo "==> Loading the Polar subscription config ($TELEMETRY_DOPPLER_PROJECT/$TELEMETRY_DOPPLER_CONFIG)"
+polar_secret() {
+  doppler secrets get "$1" \
+    --project "$TELEMETRY_DOPPLER_PROJECT" --config "$TELEMETRY_DOPPLER_CONFIG" --plain 2>/dev/null || true
+}
+POLAR_ORG_ID=$(polar_secret POLAR_ORG_ID)
+POLAR_BENEFIT_ID=$(polar_secret POLAR_BENEFIT_ID)
+POLAR_CHECKOUT_URL=$(polar_secret POLAR_CHECKOUT_URL)
+POLAR_PORTAL_URL=$(polar_secret POLAR_PORTAL_URL)
+POLAR_API_BASE=$(polar_secret POLAR_API_BASE)
+
+if [ -n "$POLAR_ORG_ID" ] && [ -z "$POLAR_BENEFIT_ID" ]; then
+  echo "Error: POLAR_ORG_ID is set but POLAR_BENEFIT_ID is empty."
+  echo "       That build sells subscriptions and accepts a license key from any"
+  echo "       Strategic Nerds app. See tasks/polar-setup.md, section 1.5."
+  exit 1
+fi
+
+if [ -z "$POLAR_ORG_ID" ]; then
+  echo "    No Polar org configured. Building with no paywall, every account unlocked."
+else
+  echo "    Polar org $POLAR_ORG_ID, benefit $POLAR_BENEFIT_ID"
+  case "$POLAR_API_BASE" in
+    ""|"https://api.polar.sh") ;;
+    *) echo "    WARNING: POLAR_API_BASE is $POLAR_API_BASE, not the live API." ;;
+  esac
+fi
+
+#----------------------------------------------------------------------
 # 3. Archive
 #----------------------------------------------------------------------
 ARCHIVE="$DIST/MeetingNotifier-$VERSION.xcarchive"
@@ -148,6 +193,11 @@ xcodebuild -project "$REPO_ROOT/MeetingNotifier.xcodeproj" \
   -archivePath "$ARCHIVE" \
   -allowProvisioningUpdates \
   POSTHOG_API_KEY="$POSTHOG_PUBLIC_KEY" \
+  POLAR_ORG_ID="$POLAR_ORG_ID" \
+  POLAR_BENEFIT_ID="$POLAR_BENEFIT_ID" \
+  POLAR_CHECKOUT_URL="$POLAR_CHECKOUT_URL" \
+  POLAR_PORTAL_URL="$POLAR_PORTAL_URL" \
+  POLAR_API_BASE="$POLAR_API_BASE" \
   archive | xcpretty 2>/dev/null || \
 xcodebuild -project "$REPO_ROOT/MeetingNotifier.xcodeproj" \
   -scheme MeetingNotifier \
@@ -155,6 +205,11 @@ xcodebuild -project "$REPO_ROOT/MeetingNotifier.xcodeproj" \
   -archivePath "$ARCHIVE" \
   -allowProvisioningUpdates \
   POSTHOG_API_KEY="$POSTHOG_PUBLIC_KEY" \
+  POLAR_ORG_ID="$POLAR_ORG_ID" \
+  POLAR_BENEFIT_ID="$POLAR_BENEFIT_ID" \
+  POLAR_CHECKOUT_URL="$POLAR_CHECKOUT_URL" \
+  POLAR_PORTAL_URL="$POLAR_PORTAL_URL" \
+  POLAR_API_BASE="$POLAR_API_BASE" \
   archive >/dev/null
 
 #----------------------------------------------------------------------
@@ -174,6 +229,15 @@ if [ ! -d "$APP_PATH" ]; then
   echo "Error: export did not produce $APP_PATH"
   exit 1
 fi
+
+#----------------------------------------------------------------------
+# 4a. Refuse to ship a credential compiled into the binary
+#----------------------------------------------------------------------
+# Runs on the exported Release .app, before notarizing, because notarizing and
+# uploading are the irreversible steps. gitignore has always covered
+# *Secret.swift and the values were never committed, so every repo-level check
+# passed while secrets shipped inside the DMG. Nothing looked at the artifact.
+"$SCRIPTS/check-no-secrets.sh" "$APP_PATH"
 
 #----------------------------------------------------------------------
 # 5. Notarize + staple the .app

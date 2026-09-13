@@ -27,6 +27,7 @@ struct SettingsDrawer: View {
                     }.frame(maxWidth: .infinity)
 
                     VStack(spacing: 14) {
+                        SubscriptionCard()
                         meetingLinkCard
                         privacyCard
                         updatesCard
@@ -261,15 +262,6 @@ struct SettingsDrawer: View {
                     ),
                     title: "coolasspuppy/meeting-notifier",
                     url: "https://github.com/coolasspuppy/meeting-notifier"
-                )
-                contactRow(
-                    iconView: AnyView(
-                        Image(systemName: "cup.and.saucer.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(theme.muted)
-                    ),
-                    title: "Buy me coffee",
-                    url: "https://venmo.com/u/coolasspuppy"
                 )
                 contactRow(
                     iconView: AnyView(

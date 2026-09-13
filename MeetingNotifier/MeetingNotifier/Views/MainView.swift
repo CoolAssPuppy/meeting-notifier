@@ -14,6 +14,7 @@ struct MainView: View {
     @StateObject private var drawerState = DrawerState.shared
 
     @State private var selectedAccountEmail: String?
+    @State private var paywallTrigger: PaywallTrigger?
 
     var body: some View {
         let theme = themeStore.palette
@@ -26,6 +27,8 @@ struct MainView: View {
                 .frame(width: 0, height: 0)
 
             drawerOverlay(theme: theme)
+
+            paywallOverlay
         }
         .environment(\.theme, theme)
         .environment(\.colorScheme, theme.isDark ? .dark : .light)
@@ -34,6 +37,40 @@ struct MainView: View {
                 selectedAccountEmail = appSettings.accounts.first?.email
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .showPaywall)) { note in
+            withAnimation(.overlayDismiss) {
+                paywallTrigger = note.object as? PaywallTrigger ?? .addAccount
+            }
+        }
+    }
+
+    /// The paywall rides above the drawers rather than inside one, because it is
+    /// raised from the menu bar and from the Add account button as often as it
+    /// is from Settings.
+    @ViewBuilder
+    private var paywallOverlay: some View {
+        if let trigger = paywallTrigger {
+            scrim { closePaywall() }
+
+            PaywallSheet(trigger: trigger, onClose: closePaywall)
+                .frame(maxHeight: .infinity)
+                .padding(.vertical, 40)
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
+        }
+    }
+
+    /// The dimmed backdrop behind any overlay. Shared so the paywall and the
+    /// drawers dim by the same amount and dismiss at the same speed; they used
+    /// to differ by 60ms for no reason.
+    private func scrim(onTap: @escaping () -> Void) -> some View {
+        Color.black.opacity(0.55)
+            .ignoresSafeArea()
+            .transition(.opacity)
+            .onTapGesture(perform: onTap)
+    }
+
+    private func closePaywall() {
+        withAnimation(.overlayDismiss) { paywallTrigger = nil }
     }
 
     @ViewBuilder
@@ -56,14 +93,9 @@ struct MainView: View {
     @ViewBuilder
     private func drawerOverlay(theme: ThemePalette) -> some View {
         if drawerState.openDrawer != .none {
-            Color.black.opacity(0.55)
-                .ignoresSafeArea()
-                .transition(.opacity)
-                .onTapGesture {
-                    withAnimation(.easeOut(duration: 0.26)) {
-                        drawerState.openDrawer = .none
-                    }
-                }
+            scrim {
+                withAnimation(.overlayDismiss) { drawerState.openDrawer = .none }
+            }
 
             Group {
                 switch drawerState.openDrawer {
@@ -83,10 +115,13 @@ struct MainView: View {
     }
 
     private func close() {
-        withAnimation(.easeOut(duration: 0.26)) {
-            drawerState.openDrawer = .none
-        }
+        withAnimation(.overlayDismiss) { drawerState.openDrawer = .none }
     }
+}
+
+extension Animation {
+    /// The one timing every overlay in the main window opens and closes with.
+    static let overlayDismiss = Animation.easeOut(duration: 0.26)
 }
 
 // MARK: - Drawer state

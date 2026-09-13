@@ -53,6 +53,17 @@ class CalendarDataManager: ObservableObject {
                 self?.scheduleDebouncedRefresh()
             }
             .store(in: &cancellables)
+
+        // Activating or losing a license changes which accounts may run without
+        // the accounts array itself changing, so the observer above never fires
+        // for it.
+        NotificationCenter.default
+            .publisher(for: .entitlementChanged)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.scheduleDebouncedRefresh()
+            }
+            .store(in: &cancellables)
     }
 
     /// Cancel any in-flight refresh and start a fresh one. Used by the
@@ -76,7 +87,12 @@ class CalendarDataManager: ObservableObject {
         errorMessage = nil
 
         do {
-            let accounts = AppSettings.shared.accounts.filter { $0.isEnabled && $0.authStatus == .valid }
+            // The one place the subscription is enforced. Everything downstream
+            // reads `CalendarDataManager.shared.events`: the menu bar, the
+            // dropdown, notifications, keyboard shortcuts, and the transcription
+            // auto-offer. Filtering here covers all of them, so no other manager
+            // needs a gate of its own.
+            let accounts = AppSettings.shared.activeAccounts
             var allEvents: [CalendarEvent] = []
 
             for account in accounts {

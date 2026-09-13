@@ -55,16 +55,13 @@ enum Telemetry {
 
     /// Boots the current backend. Called once from AppDelegate.
     static func setup() {
-        guard
-            let apiKey = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_API_KEY") as? String,
-            !apiKey.isEmpty,
-            // Reject the unsubstituted XcodeGen/Xcode build setting placeholder
-            // ("$(POSTHOG_API_KEY)") that survives when the env var is unset.
-            !apiKey.hasPrefix("$(")
-        else {
+        // A missing key, an empty one, or the unsubstituted "$(POSTHOG_API_KEY)"
+        // placeholder all mean the same thing: this build has no project to
+        // write to, so capture stays off.
+        guard let apiKey = Bundle.main.substitutedString(forInfoDictionaryKey: "POSTHOG_API_KEY") else {
             return
         }
-        let host = (Bundle.main.object(forInfoDictionaryKey: "POSTHOG_HOST") as? String)
+        let host = Bundle.main.substitutedString(forInfoDictionaryKey: "POSTHOG_HOST")
             ?? "https://us.i.posthog.com"
 
         let instance = PostHogBackend(
