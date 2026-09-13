@@ -68,3 +68,8 @@ MeetingNotifier/.wrangler/
 # Local snapshots taken by scripts/test-state.sh. They hold the real
 # UserDefaults, account emails included.
 MeetingNotifier/dist/test-state/
+
+# Polar setup notes. Untracked on purpose: this repo is public and the file
+# carries per-subscription margins, the comp-discount strategy, and the
+# dashboard values behind the paywall.
+tasks/polar-setup.md
