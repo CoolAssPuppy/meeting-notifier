@@ -19,21 +19,18 @@ struct SettingsDrawer: View {
             header
 
             ScrollView(showsIndicators: false) {
-                HStack(alignment: .top, spacing: 14) {
-                    VStack(spacing: 14) {
-                        generalCard
-                        menuStyleCard
-                        menuBarCard
-                    }.frame(maxWidth: .infinity)
-
-                    VStack(spacing: 14) {
-                        SubscriptionCard()
-                        meetingLinkCard
-                        privacyCard
-                        updatesCard
-                        contactCard
-                    }.frame(maxWidth: .infinity)
+                VStack(spacing: 14) {
+                    generalCard
+                    menuStyleCard
+                    menuBarCard
+                    meetingLinkCard
+                    privacyCard
+                    SubscriptionCard()
+                    updatesCard
+                    contactCard
                 }
+                .frame(maxWidth: 620)
+                .frame(maxWidth: .infinity)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 20)
             }
@@ -45,15 +42,9 @@ struct SettingsDrawer: View {
 
     private var header: some View {
         HStack(spacing: AppSpacing.lg) {
-            DrawerIcon(systemName: "gearshape")
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Settings")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(theme.foreground)
-                Text("General preferences · menu bar · updates")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(theme.muted)
-            }
+            Text("Settings")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(theme.foreground)
             Spacer(minLength: 0)
             CloseButton(onClose: onClose)
         }
@@ -72,6 +63,7 @@ struct SettingsDrawer: View {
                 AppSettingRow("Launch at login",
                               description: "Start Meeting Notifier when you sign in") {
                     Toggle("", isOn: $appSettings.launchAtLogin).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                        .accessibilityLabel("Launch at login")
                 }
                 AppRowDivider()
                 AppSettingRow("Double-booking preference",
@@ -82,11 +74,13 @@ struct SettingsDrawer: View {
                         }
                     }
                     .appBoxedPicker(width: 220)
+                    .accessibilityLabel("Double-booking preference")
                 }
                 AppRowDivider()
                 AppSettingRow("Mute sounds",
                               description: "Silence notification chimes") {
                     Toggle("", isOn: $appSettings.muteSounds).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                        .accessibilityLabel("Mute sounds")
                 }
                 AppRowDivider()
                 AppSettingRow("Send anonymous usage data",
@@ -98,23 +92,30 @@ struct SettingsDrawer: View {
                             Telemetry.setOptedIn(newValue)
                         }
                     )).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                        .accessibilityLabel("Send anonymous usage data")
                 }
             }
         }
     }
 
     private var menuStyleCard: some View {
-        AppCard("Dropdown style") {
+        AppCard("Appearance") {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Choose what the menu bar icon opens. Classic is a standard macOS menu with a flyout per meeting, and it follows your system light or dark appearance instead of the theme.")
-                    .font(.system(size: 10))
-                    .foregroundStyle(theme.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.bottom, 12)
+                AppSettingRow("Theme") {
+                    ThemeSelector()
+                }
+
+                AppRowDivider().padding(.vertical, 12)
+
+                Text("Dropdown style")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(theme.foreground)
+                    .padding(.bottom, 10)
 
                 MenuStylePicker()
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
     }
 
     private var menuBarCard: some View {
@@ -127,21 +128,25 @@ struct SettingsDrawer: View {
                             Text(m.rawValue).tag(m)
                         }
                     }.appBoxedPicker(width: 180)
+                        .accessibilityLabel("Display mode")
                 }
                 AppRowDivider()
                 AppSettingRow("Show icon",
                               description: nil) {
                     Toggle("", isOn: $appSettings.menuBarShowIcon).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                        .accessibilityLabel("Show icon")
                 }
                 AppRowDivider()
                 AppSettingRow("Show title",
                               description: nil) {
                     Toggle("", isOn: $appSettings.menuBarShowTitle).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                        .accessibilityLabel("Show title")
                 }
                 AppRowDivider()
                 AppSettingRow("Show countdown",
                               description: "Replace time with minutes-until") {
                     Toggle("", isOn: $appSettings.menuBarShowCountdown).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                        .accessibilityLabel("Show countdown")
                 }
                 AppRowDivider()
                 AppSettingRow("Urgent threshold",
@@ -153,6 +158,7 @@ struct SettingsDrawer: View {
                                 .foregroundStyle(theme.foreground)
                         }
                         .labelsHidden()
+                        .accessibilityLabel("Urgent threshold")
                     }
                 }
             }
@@ -165,6 +171,7 @@ struct SettingsDrawer: View {
                 AppSettingRow("Sync settings to iCloud",
                               description: "Mirror your preferences across your Macs") {
                     Toggle("", isOn: $appSettings.settingsSyncEnabled).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                        .accessibilityLabel("Sync settings to iCloud")
                 }
             }
         }
@@ -180,6 +187,7 @@ struct SettingsDrawer: View {
                             Text(app.rawValue).tag(app)
                         }
                     }.appBoxedPicker(width: 200)
+                        .accessibilityLabel("Open links in")
                 }
                 AppRowDivider()
                 AppSettingRow("Map provider",
@@ -189,11 +197,13 @@ struct SettingsDrawer: View {
                             Text(m.rawValue).tag(m)
                         }
                     }.appBoxedPicker(width: 160)
+                        .accessibilityLabel("Map provider")
                 }
                 AppRowDivider()
                 AppSettingRow("Travel time alerts",
                               description: "Warn if you need to leave soon") {
                     Toggle("", isOn: $appSettings.showTravelTimeAlerts).toggleStyle(.switch).labelsHidden().tint(theme.primary)
+                        .accessibilityLabel("Travel time alerts")
                 }
             }
         }
@@ -208,6 +218,7 @@ struct SettingsDrawer: View {
                         set: { UpdaterManager.shared.automaticallyChecksForUpdates = $0 }
                     ))
                     .labelsHidden()
+                    .accessibilityLabel("Automatically check for updates")
                     .toggleStyle(.switch)
                     .controlSize(.small)
                     .tint(theme.primary)

@@ -45,6 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added OAuth token expiration handling
 - Implemented auth status tracking for all accounts
 
+## [1.6.0] - 2026-11-08
+
+### Changed
+- Some UI cleanup.
+
 ## [1.0.0] - TBD
 
 ### Added

@@ -16,10 +16,10 @@ final class TranscriptionCoordinatorTests: XCTestCase {
     // used by some app, inactivity auto-stop must stay its hand.
     func test_shouldAutoStopForInactivity_whenMicIsActive_returnsFalseEvenPastTimeout() {
         let now = Date()
-        let wayPastTimeout = now.addingTimeInterval(-10_000)
+        let pastInactivityTimeout = now.addingTimeInterval(-(timeout + 1))
 
         let result = TranscriptionCoordinator.shouldAutoStopForInactivity(
-            lastSegmentTimestamp: wayPastTimeout,
+            lastSegmentTimestamp: pastInactivityTimeout,
             now: now,
             isMicActive: true,
             timeout: timeout,

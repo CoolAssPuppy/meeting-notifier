@@ -25,8 +25,8 @@ targets:
       properties:
         CFBundleName: $(PRODUCT_NAME)
         CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
-        CFBundleVersion: "22"
-        CFBundleShortVersionString: "1.5.0"
+        CFBundleVersion: "23"
+        CFBundleShortVersionString: "1.6.0"
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         LSUIElement: true
         NSHumanReadableCopyright: ""

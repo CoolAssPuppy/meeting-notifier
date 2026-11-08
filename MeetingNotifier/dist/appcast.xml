@@ -6,6 +6,24 @@
     <description>MeetingNotifier updates</description>
     <language>en</language>
     <item>
+      <title>Version 1.6.0</title>
+      <pubDate>Sun, 08 Nov 2026 07:46:10 +0000</pubDate>
+      <sparkle:version>23</sparkle:version>
+      <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul>
+          <li>Some UI cleanup.</li>
+        </ul>
+      ]]></description>
+      <enclosure
+        url="https://pub-9c8d72fe664b4ce18aac0d718b4e0346.r2.dev/apps/meeting-notifier/MeetingNotifier-1.6.0.dmg"
+        sparkle:edSignature="VGaMIwZKGJy1/b6vuSJM+810fyBoDz6iyrRZre0iXilxj/7UCpqEZNGSybawknxhJ3R7IN70+xnkHgjTiI+LBA=="
+        length="4582750"
+        type="application/x-apple-diskimage" />
+    </item>
+
+    <item>
       <title>Version 1.5.0</title>
       <pubDate>Sat, 12 Sep 2026 22:47:20 +0000</pubDate>
       <sparkle:version>22</sparkle:version>

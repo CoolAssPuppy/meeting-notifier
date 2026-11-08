@@ -53,26 +53,13 @@ struct CalendarDropdownView: View {
 
 private struct PopoverHeader: View {
     @ObservedObject private var dataManager = CalendarDataManager.shared
-    @ObservedObject private var appSettings = AppSettings.shared
     @Environment(\.theme) private var theme
 
     var body: some View {
         HStack(spacing: AppSpacing.lg) {
-            BrandMark(size: 26)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Meeting Notifier")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(theme.foreground)
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(appSettings.accounts.isEmpty ? theme.warning : theme.success)
-                        .frame(width: 6, height: 6)
-                    Text(statusLine)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(theme.muted)
-                }
-            }
+            Text("Meeting Notifier")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(theme.foreground)
 
             Spacer(minLength: AppSpacing.md)
 
@@ -81,13 +68,6 @@ private struct PopoverHeader: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(theme.surface)
-    }
-
-    private var statusLine: String {
-        let active = appSettings.accounts.filter(\.isEnabled).count
-        if active == 0 { return "No accounts connected" }
-        let totalCalendars = appSettings.accounts.reduce(0) { $0 + $1.selectedCalendarIds.count }
-        return "\(active) account\(active == 1 ? "" : "s") · \(totalCalendars) calendar\(totalCalendars == 1 ? "" : "s")"
     }
 
     @ViewBuilder
@@ -455,11 +435,18 @@ private struct PopoverFooter: View {
                 }
             }
             Spacer(minLength: 0)
-            ThemeStrip()
-            Spacer(minLength: 0)
-            AppIconButton(systemName: "power", help: "Quit", tint: .destructive) {
-                NSApp.terminate(nil)
+            Menu {
+                Button("Quit Meeting Notifier") { NSApp.terminate(nil) }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(theme.muted)
+                    .frame(width: 28, height: 28)
             }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .help("More options")
+            .accessibilityLabel("More options")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
@@ -468,5 +455,4 @@ private struct PopoverFooter: View {
 }
 
 // (MiniCalendarDrawer + CalendarChip + DayCell live in Views/MiniCalendarDrawer.swift)
-// (ThemeStrip lives in Views/ThemeStrip.swift)
 // (Color(hex:) lives in Views/Components/ColorHex.swift)
