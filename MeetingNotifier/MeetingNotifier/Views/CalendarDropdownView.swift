@@ -435,18 +435,9 @@ private struct PopoverFooter: View {
                 }
             }
             Spacer(minLength: 0)
-            Menu {
-                Button("Quit Meeting Notifier") { NSApp.terminate(nil) }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(theme.muted)
-                    .frame(width: 28, height: 28)
+            AppIconButton(systemName: "power", help: "Quit Meeting Notifier") {
+                NSApp.terminate(nil)
             }
-            .menuStyle(.borderlessButton)
-            .fixedSize()
-            .help("More options")
-            .accessibilityLabel("More options")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)

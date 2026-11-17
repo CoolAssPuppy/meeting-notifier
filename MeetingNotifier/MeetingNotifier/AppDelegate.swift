@@ -22,6 +22,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
+        // Unit tests use the app as their host. Starting the app here reads the
+        // keychain, and a Debug build signed differently from the installed
+        // copy gets a system access prompt that blocks the test runner.
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil,
+           !CommandLine.arguments.contains("--uitesting") {
+            return
+        }
+        #endif
+
         Telemetry.setup()
 
         TranscriptionCoordinator.recoverTranscriptIfNeeded()
@@ -359,6 +369,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showMainWindow() {
+        // The popover sits at `.popUpMenu` level and keeps key status, so a
+        // window opened from its footer would appear under it and never take
+        // typing. Every route into the main window closes it first.
+        closePopover()
         NSApp.activate(ignoringOtherApps: true)
 
         if let existingWindow = settingsWindow {

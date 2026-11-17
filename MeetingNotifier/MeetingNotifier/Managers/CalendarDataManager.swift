@@ -167,23 +167,47 @@ class CalendarDataManager: ObservableObject {
 
     private func fetchEventsForCalendar(_ calendarInfo: CalendarInfo, account: CalendarAccount) async throws -> [CalendarEvent] {
         let window = EventWindow.current()
+        return try await fetchEventsForCalendar(calendarInfo, account: account, from: window.start, to: window.end)
+    }
 
+    /// Events for the given calendars over any date range, for the mini
+    /// calendar's day dots. Separate from `events`, which only ever holds the
+    /// today/tomorrow window every other feature reads. Only active accounts
+    /// are queried, so a locked account's calendars stay locked here too.
+    func fetchEvents(for calendars: [CalendarInfo], from start: Date, to end: Date) async -> [CalendarEvent] {
+        guard !CommandLine.arguments.contains("--uitesting") else { return events }
+
+        let accounts = AppSettings.shared.activeAccounts
+        var collected: [CalendarEvent] = []
+        for info in calendars {
+            guard let account = accounts.first(where: { $0.email == info.accountEmail }) else { continue }
+            do {
+                collected += try await fetchEventsForCalendar(info, account: account, from: start, to: end)
+            } catch {
+                Logger.calendar.error("Error fetching month events for a calendar: \(error)")
+            }
+        }
+        return collected
+    }
+
+    private func fetchEventsForCalendar(_ calendarInfo: CalendarInfo, account: CalendarAccount,
+                                        from start: Date, to end: Date) async throws -> [CalendarEvent] {
         switch account.provider {
         case .google:
             return try await GoogleCalendarManager.shared.fetchEvents(
                 forCalendar: calendarInfo.id,
                 calendarInfo: calendarInfo,
                 account: account,
-                startDate: window.start,
-                endDate: window.end
+                startDate: start,
+                endDate: end
             )
         case .microsoft:
             return try await MicrosoftCalendarManager.shared.fetchEvents(
                 forCalendar: calendarInfo.id,
                 calendarInfo: calendarInfo,
                 account: account,
-                startDate: window.start,
-                endDate: window.end
+                startDate: start,
+                endDate: end
             )
         }
     }

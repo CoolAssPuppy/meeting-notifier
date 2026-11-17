@@ -82,3 +82,18 @@ filters events through `EventWindow`, which drops tomorrow before 5 PM.
 
 Not done: the test runner fails to launch (`test runner hung before
 establishing connection`) on clean `main` as well, so it is not from this work.
+
+## Menu fixes, calendar dots, quit button, icons (2026-11-17)
+
+- [x] Close the popover before opening the main window, settings or transcription (`AppDelegate.showMainWindow`)
+- [x] Mini calendar: multi-select calendar chips, saved between openings
+- [x] Mini calendar: colored dot per selected calendar on days with events; past days and finished-today calendars muted
+- [x] `CalendarDayDots` logic, failure list and 17 tests written before the code
+- [x] Quit control back to a power icon with a tooltip (Meeting Notifier, Linear Bar, Mail Notifier; Link Bar already had it)
+- [x] 60 icon options in Paper, page "Meeting Notifier icons"
+- [ ] Check the popover and drawer in the running Debug build
+
+### Review
+- Unit tests: 213 pass. `SettingsSyncToggleTests` was skipped: it reads the real keychain and waits on a macOS access prompt on this machine.
+- Unit-test runs now return early from `applicationDidFinishLaunching` (Debug only) so the test host does not hit the same prompt.
+- Google event fetch has no pagination; a calendar with more than 250 events in the visible six weeks would lose dots past that.

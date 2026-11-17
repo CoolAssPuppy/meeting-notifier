@@ -8,8 +8,9 @@
 import AppKit
 import SwiftUI
 
-/// Bottom drawer in the menu-bar popover that lets the user pick a calendar
-/// and jump to a specific day in the provider's web calendar UI.
+/// Bottom drawer in the menu-bar popover. The user picks one or more
+/// calendars, sees a colored dot under every day where each picked calendar
+/// has an event, and clicks a day to open it in the provider's web calendar.
 struct MiniCalendarDrawer: View {
     let onClose: () -> Void
 
@@ -17,7 +18,10 @@ struct MiniCalendarDrawer: View {
     @Environment(\.theme) private var theme
     @State private var visibleMonth: Date = Calendar.current.startOfMonth(for: Date())
     @State private var calendars: [CalendarInfo] = []
-    @State private var selectedCalendarKey: String?
+    @State private var monthEvents: [CalendarEvent] = []
+    /// Newline-joined calendar keys. `nil` until the user first picks, so a
+    /// fresh install starts with the first calendar on rather than none.
+    @AppStorage("miniCalendar.selectedCalendarKeys") private var storedSelection: String?
 
     private static let monthYear: DateFormatter = {
         let df = DateFormatter()
@@ -26,15 +30,36 @@ struct MiniCalendarDrawer: View {
     }()
 
     private static func key(for calendar: CalendarInfo) -> String {
-        "\(calendar.accountEmail)|\(calendar.id)"
+        CalendarDayDots.key(for: calendar)
     }
 
-    private var selectedCalendar: CalendarInfo? {
-        if let key = selectedCalendarKey,
-           let match = calendars.first(where: { Self.key(for: $0) == key }) {
-            return match
+    private var selectedKeys: Set<String> {
+        guard let storedSelection else {
+            return Set(calendars.prefix(1).map(Self.key(for:)))
         }
-        return calendars.first
+        return Set(storedSelection.split(separator: "\n").map(String.init))
+    }
+
+    /// Selected calendars in chip order, which is also the dot order.
+    private var selectedCalendars: [CalendarInfo] {
+        let keys = selectedKeys
+        return calendars.filter { keys.contains(Self.key(for: $0)) }
+    }
+
+    private func toggle(_ calendar: CalendarInfo) {
+        var keys = selectedKeys
+        let key = Self.key(for: calendar)
+        if keys.contains(key) {
+            keys.remove(key)
+        } else {
+            keys.insert(key)
+        }
+        storedSelection = keys.sorted().joined(separator: "\n")
+    }
+
+    /// Reloads the dots whenever the month or the selection changes.
+    private var dotsLoadID: String {
+        "\(visibleMonth.timeIntervalSince1970)|\(selectedCalendars.map(Self.key(for:)).joined(separator: ","))"
     }
 
     var body: some View {
@@ -57,6 +82,7 @@ struct MiniCalendarDrawer: View {
         .clipShape(UnevenRoundedRectangle(topLeadingRadius: AppRadius.lg, topTrailingRadius: AppRadius.lg, style: .continuous))
         .shadow(color: Color.black.opacity(0.18), radius: 10, y: -4)
         .onAppear { loadCalendars() }
+        .task(id: dotsLoadID) { await loadMonthEvents() }
     }
 
     private var calendarPicker: some View {
@@ -66,8 +92,8 @@ struct MiniCalendarDrawer: View {
                     let key = Self.key(for: calendar)
                     CalendarChip(
                         calendar: calendar,
-                        isSelected: (selectedCalendar.map(Self.key(for:)) ?? "") == key,
-                        onTap: { selectedCalendarKey = key }
+                        isSelected: selectedKeys.contains(key),
+                        onTap: { toggle(calendar) }
                     )
                 }
             }
@@ -88,10 +114,22 @@ struct MiniCalendarDrawer: View {
                 collected.append(contentsOf: selected)
             }
             calendars = collected
-            if selectedCalendarKey == nil, let first = collected.first {
-                selectedCalendarKey = Self.key(for: first)
-            }
         }
+    }
+
+    private func loadMonthEvents() async {
+        let picked = selectedCalendars
+        let cells = monthCells(for: visibleMonth)
+        guard !picked.isEmpty,
+              let first = cells.first?.date,
+              let last = cells.last?.date,
+              let end = Calendar.current.date(byAdding: .day, value: 1, to: last) else {
+            monthEvents = []
+            return
+        }
+        let fetched = await CalendarDataManager.shared.fetchEvents(for: picked, from: first, to: end)
+        guard !Task.isCancelled else { return }
+        monthEvents = fetched
     }
 
     private var header: some View {
@@ -129,9 +167,13 @@ struct MiniCalendarDrawer: View {
     private var daysGrid: some View {
         let cells = monthCells(for: visibleMonth)
         let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
+        let picked = selectedCalendars
+        let now = Date()
         return LazyVGrid(columns: columns, spacing: 4) {
             ForEach(cells) { cell in
-                DayCell(cell: cell) {
+                let dots = CalendarDayDots.dots(for: cell.date, events: monthEvents,
+                                                calendars: picked, now: now, calendar: .current)
+                DayCell(cell: cell, dots: dots) {
                     handleSelect(cell.date)
                 }
             }
@@ -174,7 +216,8 @@ struct MiniCalendarDrawer: View {
             }
             let inMonth = calendar.isDate(date, equalTo: month, toGranularity: .month)
             let isToday = calendar.isDate(date, inSameDayAs: today)
-            return DayCellModel(date: date, isInCurrentMonth: inMonth, isToday: isToday)
+            return DayCellModel(date: date, isInCurrentMonth: inMonth, isToday: isToday,
+                                isPast: date < today)
         }
     }
 
@@ -194,7 +237,8 @@ struct MiniCalendarDrawer: View {
         let month = cal.component(.month, from: date)
         let day = cal.component(.day, from: date)
 
-        guard let calendar = selectedCalendar else {
+        // With several calendars picked, the day opens in the first one.
+        guard let calendar = selectedCalendars.first ?? calendars.first else {
             return URL(string: "https://calendar.google.com/calendar/u/0/r/day/\(year)/\(month)/\(day)")
         }
 
@@ -265,23 +309,30 @@ private struct DayCellModel: Identifiable {
     let date: Date
     let isInCurrentMonth: Bool
     let isToday: Bool
+    let isPast: Bool
     var id: TimeInterval { date.timeIntervalSince1970 }
 }
 
 private struct DayCell: View {
     let cell: DayCellModel
+    let dots: [CalendarDayDot]
     let onTap: () -> Void
+
+    private static let maxDots = 4
 
     @Environment(\.theme) private var theme
     @State private var isHovered = false
 
     var body: some View {
         Button(action: onTap) {
-            Text("\(Calendar.current.component(.day, from: cell.date))")
-                .font(.system(size: 12, weight: cell.isToday ? .semibold : .medium))
-                .foregroundStyle(textColor)
+            VStack(spacing: 3) {
+                Text("\(Calendar.current.component(.day, from: cell.date))")
+                    .font(.system(size: 12, weight: cell.isToday ? .semibold : .medium))
+                    .foregroundStyle(textColor)
+                dotRow
+            }
                 .frame(maxWidth: .infinity)
-                .frame(height: 30)
+                .frame(height: 34)
                 .background(
                     RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                         .fill(backgroundFill)
@@ -295,9 +346,25 @@ private struct DayCell: View {
         .onHover { isHovered = $0 }
     }
 
+    /// Always laid out, even when empty, so every number sits at the same
+    /// height whether or not its day has dots.
+    private var dotRow: some View {
+        HStack(spacing: 2) {
+            ForEach(dots.prefix(Self.maxDots), id: \.calendarKey) { dot in
+                Circle()
+                    .fill(Color(hex: dot.colorHex) ?? theme.primary)
+                    .opacity(dot.isMuted ? 0.35 : 1)
+                    .frame(width: 4, height: 4)
+            }
+        }
+        .frame(height: 4)
+        .accessibilityHidden(true)
+    }
+
     private var textColor: Color {
         if cell.isToday { return theme.primary }
         if !cell.isInCurrentMonth { return theme.tertiary.opacity(0.6) }
+        if cell.isPast { return theme.muted }
         return theme.foreground
     }
 

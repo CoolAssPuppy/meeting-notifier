@@ -18,6 +18,7 @@
 		0EFC651EB43D4B9D9BB58687 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5326575BF5C8A6B7163F6C59 /* NotificationManager.swift */; };
 		0F152D63D8E217C7C4D5ACF6 /* TranscriptionEngineTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040611A14F4597A4FB355CCB /* TranscriptionEngineTypeTests.swift */; };
 		103D45956BAC1AEF57FB8B39 /* SpeechAnalyzerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475314D25149BE27157285CB /* SpeechAnalyzerEngine.swift */; };
+		126957A80B126B0B633F7999 /* CalendarDayDots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D30929B322985EEB8D61B51 /* CalendarDayDots.swift */; };
 		1603E9575133E8DA2E411724 /* ClassicMenuBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F84649D52C627DB9372A5 /* ClassicMenuBuilder.swift */; };
 		1A6D051CC496406BEF85A228 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 02F09D38E7A39AE7CCFE9BEA /* AppIntents.framework */; };
 		1B5B2FA00653E24598C8FDCD /* MeetingNotifierApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863E1D46F902305C0171E7CD /* MeetingNotifierApp.swift */; };
@@ -97,6 +98,7 @@
 		AB1345472685449E44D0187A /* MicLevelBars.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED2B2BC410ACA8AD613115BE /* MicLevelBars.swift */; };
 		AC43F85BB2CE421EB9F1386F /* TranscriptRecoveryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BD9F9309637C70EAC7033F4 /* TranscriptRecoveryStore.swift */; };
 		AD7530A7C0415650ECC26600 /* teams.png in Resources */ = {isa = PBXBuildFile; fileRef = 8FC3285303293546DEEAB083 /* teams.png */; };
+		AFCBAB45B8D541EF4718B60E /* CalendarDayDotsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDE46F506C3D680C38C44D1 /* CalendarDayDotsTests.swift */; };
 		B41089399E08A9CFE006EB8A /* AudioCaptureManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 275CCB6BA1B7B0CDDE6F3882 /* AudioCaptureManagerTests.swift */; };
 		B6473CA53DD63EFBCD8A9A66 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9332C7F200D9E2CE22D644 /* Theme.swift */; };
 		B8EDE83CF410B38B60BA5AF1 /* PeekWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1ADEAC2590B3EC21020B5D /* PeekWindowView.swift */; };
@@ -199,6 +201,7 @@
 		5610777B46B0DE424AA7D5C6 /* CalendarInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarInfo.swift; sourceTree = "<group>"; };
 		5801A08817F1347CC789B461 /* CalendarManagerSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarManagerSupport.swift; sourceTree = "<group>"; };
 		59C82DBEAED3E8D43CABEFBD /* MenuStyleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuStyleStore.swift; sourceTree = "<group>"; };
+		5D30929B322985EEB8D61B51 /* CalendarDayDots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDayDots.swift; sourceTree = "<group>"; };
 		6204D43D0ECFAC0F7EAC7C14 /* MeetingNotifierTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MeetingNotifierTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		661BE1388A8E58777DDA9A81 /* ColorHex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHex.swift; sourceTree = "<group>"; };
 		677BD0DB9A3A9CDB524CC091 /* PaywallCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallCopy.swift; sourceTree = "<group>"; };
@@ -238,6 +241,7 @@
 		A7C5C033BBD4E2CDC73AB8BE /* TranscriptSegment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptSegment.swift; sourceTree = "<group>"; };
 		A8CE3151B90368012D5C7D67 /* GoogleOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthManager.swift; sourceTree = "<group>"; };
 		AD899C544CCC4FBF71F6F194 /* microsoft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = microsoft.png; sourceTree = "<group>"; };
+		AFDE46F506C3D680C38C44D1 /* CalendarDayDotsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDayDotsTests.swift; sourceTree = "<group>"; };
 		B7E28947141FFCB9E7F6B9F1 /* SubfolderResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubfolderResolver.swift; sourceTree = "<group>"; };
 		B8B4D23E9CB4828D25F2496E /* SubfolderResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubfolderResolverTests.swift; sourceTree = "<group>"; };
 		B8EC26D995B010F0BF9A137E /* AISummarizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISummarizer.swift; sourceTree = "<group>"; };
@@ -306,6 +310,7 @@
 				8F9ABCEF9D4F0F2F9AC4DCC4 /* AutoOfferDecider.swift */,
 				8BB930ABC4D15FA71DACA836 /* CalendarAccount.swift */,
 				7A8C15F2E444691FACBDCF40 /* CalendarAPIResponses.swift */,
+				5D30929B322985EEB8D61B51 /* CalendarDayDots.swift */,
 				8BCE45161F88886811A0ECF8 /* CalendarError.swift */,
 				A212F3F7C08FDE2C041A044D /* CalendarEvent.swift */,
 				5610777B46B0DE424AA7D5C6 /* CalendarInfo.swift */,
@@ -477,6 +482,7 @@
 				275CCB6BA1B7B0CDDE6F3882 /* AudioCaptureManagerTests.swift */,
 				216DD6E619E6472E64DFD4FB /* AutoOfferDeciderTests.swift */,
 				0C6A40187C180348CE0EFF24 /* CalendarAPIResponsesTests.swift */,
+				AFDE46F506C3D680C38C44D1 /* CalendarDayDotsTests.swift */,
 				273BC90CE5F91540FDC6E055 /* CalendarEventTests.swift */,
 				2F476378C9671E389C0ED176 /* EntitlementManagerBehaviorTests.swift */,
 				943D25CE5566905E82BDD689 /* EntitlementTests.swift */,
@@ -641,6 +647,7 @@
 				B41089399E08A9CFE006EB8A /* AudioCaptureManagerTests.swift in Sources */,
 				CC55F502696D03AEA6398FE8 /* AutoOfferDeciderTests.swift in Sources */,
 				CF588E6D08E23060E3FC5629 /* CalendarAPIResponsesTests.swift in Sources */,
+				AFCBAB45B8D541EF4718B60E /* CalendarDayDotsTests.swift in Sources */,
 				9CCEE1F8A40552995F440A19 /* CalendarEventTests.swift in Sources */,
 				F39BEC6267F37A175693FE2D /* EntitlementManagerBehaviorTests.swift in Sources */,
 				3483B360E32875988C06407F /* EntitlementTests.swift in Sources */,
@@ -681,6 +688,7 @@
 				0D51B2305510A13E16D4C12D /* CalendarAPIResponses.swift in Sources */,
 				542922B088E340771E9B600C /* CalendarAccount.swift in Sources */,
 				BA077D439370F752C04A8452 /* CalendarDataManager.swift in Sources */,
+				126957A80B126B0B633F7999 /* CalendarDayDots.swift in Sources */,
 				5C62125D8187ECF9CA6B3A5D /* CalendarDropdownView.swift in Sources */,
 				02865F41E58DDDB177B64CA1 /* CalendarError.swift in Sources */,
 				5757E1FA5B8B1F354C6E49A6 /* CalendarEvent.swift in Sources */,
